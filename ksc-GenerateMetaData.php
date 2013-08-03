@@ -55,15 +55,16 @@ makeDir($szRootMetaDataDir);
 $arYearList = array(2011, 2012, 2013);
 
 // clips/shots will be organized into videos, max videos per year ~ 2,000
-$arMaxClipsPerVideo = array(2011 => 2, 2012 => 35, 2013 => 230);
+$arMaxClipsPerVideo = array(2011 => 10, 2012 => 35, 2013 => 230);
 
-if($argc !=2)
+if($argc !=3)
 {
-	printf("Usage: %s <Year>\n", $arg[0]);
-	printf("Usage: %s 2011\n", $arg[0]);
+	printf("Usage: %s <Year> <Pat>\n", $arg[0]);
+	printf("Usage: %s 2011 test|query\n", $arg[0]);
 	exit();
 }
 $nTargetYear = $argv[1];
+$szPat = $argv[2];
 
 foreach($arYearList as $nYear)
 {
@@ -71,42 +72,122 @@ foreach($arYearList as $nYear)
 	{
 		continue;
 	}
-	$szTVYear = sprintf("tv%d", nYear);
-	$szInputKeyFrameDir = sprintf("%s/%s/test", $szRootKeyFrameDir, $szTVYear);
+	$szTVYear = sprintf("tv%d", $nYear);
 	
-	$arDirList = collectDirsInOneDir($szInputKeyFrameDir);
-	$nMaxClipsPerVideo = $arMaxClipsPerVideo[$nYear];
-	
-	// each dir --> one clip/shot
-	$nIndex = 0;
-	$nVideoID = 0;
-	$arVideoList = array();
-	$szPrefix = sprintf("TRECVID%d", $nYear); // TRECVID2011_1 --> videoID
-	foreach($arDirList as $szDirName)
+	// for query
+	if($szPat == "query")
 	{
-		if(($nIndex % $nMaxClipsPerVideo) == 0)
-		{
-			$szVideoID = sprintf("%s_%d", $szPrefix, $nVideoID);
-			$nVideoID++;
-		}
-		$nIndex++;
-		$szSubDirName = sprintf("%s/%s", $szInputKeyFrameDir, $szDirName);
-		$arKeyFrameList = collectFilesInOneDir($szSubDirName, "", ".jpg");
-		sort($arKeyFrameList);
-		foreach($arKeyFrameList as $szKeyFrameID)
-		{
-			$szShotID = $szDirName; 
-			$arVideoList[$szVideoID][] = sprintf("%s#$#%s", $szShotID, $szKeyFrameID);
-		}
+	    $szInputKeyFrameDir = sprintf("%s/%s/query", $szRootKeyFrameDir, $szTVYear);
+	    $arDirList = collectDirsInOneDir($szInputKeyFrameDir);
+	    sort($arDirList);
+	    $arVideoList = array();
+	    foreach($arDirList as $szDirName)
+	    {
+    		$szVideoID = sprintf("Q_%d", $szDirName);
+	    	$szSubDirName = sprintf("%s/%s", $szInputKeyFrameDir, $szDirName);
+	    	$arKeyFrameList = collectFilesInOneDir($szSubDirName, "", ".jpg");
+	    	sort($arKeyFrameList);
+	    	$szShotID = $szDirName;
+	    
+    		foreach($arKeyFrameList as $szKeyFrameID)
+    		{
+    			$arVideoList[$szVideoID][] = sprintf("%s#$#%s", $szShotID, $szKeyFrameID);
+    			$nTotalKeyFrames++;
+    		}
+	    }
+	    $szOutputDir = sprintf("%s/%s/query", $szRootMetaDataDir, $szTVYear);
+	    makeDir($szOutputDir);
+	    $szFPOutputFN = sprintf("%s/%s/%s.query.lst", $szRootMetaDataDir, $szTVYear, $szTVYear); // tv2011.lst
+	    saveDataFromMem2File(array_keys($arVideoList), $szFPOutputFN);
+	    foreach($arVideoList as $szVideoID => $arKeyFrameList)
+	    {
+	    	$szFPOutputFN = sprintf("%s/%s.prg", $szOutputDir, $szVideoID); // tv2011.lst
+	    	saveDataFromMem2File($arKeyFrameList, $szFPOutputFN);
+	    }	     
 	}
 	
-	$szOutputDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
-	$szFPOutputFN = sprintf("%s/%s.lst", $szOutputDir, $szTVYear); // tv2011.lst
-	saveDataFromMem2File(array_keys($arVideoList), $szFPOutputFN);
-	foreach($arVideoList as $szVideoID => $arKeyFrameList)
+	// for test database
+	if($szPat == "test")
 	{
-		$szFPOutputFN = sprintf("%s/%s.lst", $szOutputDir, $szVideoID); // tv2011.lst
-		saveDataFromMem2File($arKeyFrameList, $szFPOutputFN);
+    	$szInputKeyFrameDir = sprintf("%s/%s/test", $szRootKeyFrameDir, $szTVYear);
+    	
+    	$arDirList = collectDirsInOneDir($szInputKeyFrameDir);
+    	sort($arDirList);
+    	$nMaxClipsPerVideo = $arMaxClipsPerVideo[$nYear];
+    	
+    	// each dir --> one clip/shot
+    	$nIndex = 0;
+    	$nVideoID = 0;
+    	$arVideoList = array();
+    	$szPrefix = sprintf("TRECVID%d", $nYear); // TRECVID2011_1 --> videoID
+    	$nTotalKeyFrames = 0;
+    	foreach($arDirList as $szDirName)
+    	{
+    		if(($nIndex % $nMaxClipsPerVideo) == 0)
+    		{
+    			$szVideoID = sprintf("%s_%d", $szPrefix, $nVideoID);
+    			$nVideoID++;
+    		}
+    		$nIndex++;
+    		$szSubDirName = sprintf("%s/%s", $szInputKeyFrameDir, $szDirName);
+    		$arKeyFrameList = collectFilesInOneDir($szSubDirName, "", ".jpg");
+    		sort($arKeyFrameList);
+    		$nNumKeyFrames = sizeof($arKeyFrameList);
+    		$szShotID = $szDirName;
+    		
+    		if($nYear == 2013)
+    		{
+    			$nMaxKFPerShot = 5;
+    			if($nNumKeyFrames <= $nMaxKFPerShot)
+    			{
+    			    foreach($arKeyFrameList as $szKeyFrameID)
+    			    {
+    			    	$arVideoList[$szVideoID][] = sprintf("%s#$#%s", $szShotID, $szKeyFrameID);
+    			    }			     
+    			}
+    			else
+    			{
+    			    $nMiddle1 = intval($nNumKeyFrames*0.1);
+    			    $nMiddle2 = intval($nNumKeyFrames*0.3);			    
+    			    $nMiddle3 = intval($nNumKeyFrames*0.5);
+    			    $nMiddle4 = intval($nNumKeyFrames*0.7);
+    			    $nMiddle5 = intval($nNumKeyFrames*0.9);
+    			    $arList[$nMiddle1] = 1;			    
+    			    $arList[$nMiddle2] = 1;			    
+    			    $arList[$nMiddle3] = 1;			    
+    			    $arList[$nMiddle4] = 1;			    
+    			    $arList[$nMiddle5] = 1;
+    			    foreach($arList as $nMiddle => $nTmp)
+    			    {
+    			        if(isset($arKeyFrameList[$nMiddle]))
+    			        {
+                            $szKeyFrameID = $arKeyFrameList[$nMiddle];
+    			            $arVideoList[$szVideoID][] = sprintf("%s#$#%s", $szShotID, $szKeyFrameID);
+    			            $nTotalKeyFrames++;
+    			        }			         
+    			    }			    
+    			}
+    		}
+    		else 
+    		{
+    			foreach($arKeyFrameList as $szKeyFrameID)
+    			{
+    				$arVideoList[$szVideoID][] = sprintf("%s#$#%s", $szShotID, $szKeyFrameID);
+    				$nTotalKeyFrames++;				
+    			}
+    		}
+    	}
+    	
+    	$szOutputDir = sprintf("%s/%s/test", $szRootMetaDataDir, $szTVYear);
+    	makeDir($szOutputDir);
+    	$szFPOutputFN = sprintf("%s/%s/%s.test.lst", $szRootMetaDataDir, $szTVYear, $szTVYear); // tv2011.lst
+    	saveDataFromMem2File(array_keys($arVideoList), $szFPOutputFN);
+    	foreach($arVideoList as $szVideoID => $arKeyFrameList)
+    	{
+    		$szFPOutputFN = sprintf("%s/%s.prg", $szOutputDir, $szVideoID); // tv2011.lst
+    		saveDataFromMem2File($arKeyFrameList, $szFPOutputFN);
+    	}
+    	printf("Total keyframes: %s\n", $nTotalKeyFrames);
 	}
 }
 

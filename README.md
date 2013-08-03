@@ -11,16 +11,19 @@ KAORI-INS - A Framework for Instance Search
 2. New repository
 - Create new repository kaori-ins: https://github.com/ledduy/kaori-ins.git
 
-3. Clone to local D:\
+3. Clone 
++ to local D:\ for coding
 - Ref:  http://wiki.eclipse.org/EGit/User_Guide#Working_with_remote_Repositories
 - Eclipse/Import
++ to server V:\ (per900b/raid0/ledduy)
+cd /net/per900b/raid0/ledduy/github-projects
+git clone https://github.com/ledduy/kaori-ins.git
 
 4. Datasets
 - TV2011: 
 + 3 keyframes/sec
-+ 100 keyframes/clip
 + Keyframe size; 352x288
-+ 20,982 clips --> 2.1M keyframes 
++ 20,982 clips --> 1,650,827 keyframes 
 + 25 topics (9023-9047)
 + All videos were chopped into 20 to 10s clips using ffmpeg
 + ~ 100 hours, BBC rushes
@@ -28,7 +31,8 @@ KAORI-INS - A Framework for Instance Search
 
 - TV2012
 + 3 keyframes/sec
-+ 74,958 clips --> 
++ 33 keyframes/clip
++ 74,958 clips --> 2,256,930 
 + 21 topics (9048-9068)
 + Keyframe size: 640x480
 + Flickr video
