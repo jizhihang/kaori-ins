@@ -55,7 +55,7 @@ makeDir($szRootMetaDataDir);
 $arYearList = array(2011, 2012, 2013);
 
 // clips/shots will be organized into videos, max videos per year ~ 2,000
-$arMaxClipsPerVideo = array(2011 => 10, 2012 => 35, 2013 => 230);
+$arMaxClipsPerVideo = array(2011 => 10, 2012 => 35, 2013 => 250);
 
 if($argc !=3)
 {
@@ -111,9 +111,17 @@ foreach($arYearList as $nYear)
 	{
     	$szInputKeyFrameDir = sprintf("%s/%s/test", $szRootKeyFrameDir, $szTVYear);
     	
-    	$arDirList = collectDirsInOneDir($szInputKeyFrameDir);
-    	sort($arDirList);
-    	$nMaxClipsPerVideo = $arMaxClipsPerVideo[$nYear];
+        $nMaxClipsPerVideo = $arMaxClipsPerVideo[$nYear];
+    	if($nYear == 2013)
+    	{
+            $szFPInputFN = sprintf("%s/%s/clips.txt", $szRootMetaDataDir, $szTVYear);
+    	    loadListFile($arDirList, $szFPInputFN);    
+    	}
+    	else 
+    	{
+    	   $arDirList = collectDirsInOneDir($szInputKeyFrameDir);
+    	   sort($arDirList);
+    	}
     	
     	// each dir --> one clip/shot
     	$nIndex = 0;
@@ -143,10 +151,12 @@ foreach($arYearList as $nYear)
     			    foreach($arKeyFrameList as $szKeyFrameID)
     			    {
     			    	$arVideoList[$szVideoID][] = sprintf("%s#$#%s", $szShotID, $szKeyFrameID);
+    			    	$nTotalKeyFrames++;
     			    }			     
     			}
     			else
     			{
+    			    $arList = array();
     			    $nMiddle1 = intval($nNumKeyFrames*0.1);
     			    $nMiddle2 = intval($nNumKeyFrames*0.3);			    
     			    $nMiddle3 = intval($nNumKeyFrames*0.5);
@@ -164,6 +174,11 @@ foreach($arYearList as $nYear)
                             $szKeyFrameID = $arKeyFrameList[$nMiddle];
     			            $arVideoList[$szVideoID][] = sprintf("%s#$#%s", $szShotID, $szKeyFrameID);
     			            $nTotalKeyFrames++;
+    			        }
+    			        else 
+    			        {
+    			            printf("### Warning [%d][%s]\n", $nNumKeyFrames, $nMiddle);
+    			            exit();
     			        }			         
     			    }			    
     			}
@@ -176,6 +191,7 @@ foreach($arYearList as $nYear)
     				$nTotalKeyFrames++;				
     			}
     		}
+    		printf("###[%s] - [%s]\n", $szVideoID, $nTotalKeyFrames);
     	}
     	
     	$szOutputDir = sprintf("%s/%s/test", $szRootMetaDataDir, $szTVYear);

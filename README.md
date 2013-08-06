@@ -41,7 +41,7 @@ git clone https://github.com/ledduy/kaori-ins.git
 - TV2013: 
 + 5 keyframes/sec
 + Keyframe size: 768x576
-+ 471,526 shots --> 2.5M keyframes  
++ 471,526 shots --> 2,245,924 keyframes
 + 30 topics (9069-9098)
 + BBC EastEnders, approximately 244 video files (totally 300 GB, 464 h)
 + Submission format: <item seqNum="1" shotId="shot4324_2" />
