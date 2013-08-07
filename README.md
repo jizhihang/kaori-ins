@@ -45,3 +45,14 @@ git clone https://github.com/ledduy/kaori-ins.git
 + 30 topics (9069-9098)
 + BBC EastEnders, approximately 244 video files (totally 300 GB, 464 h)
 + Submission format: <item seqNum="1" shotId="shot4324_2" />
+
+5. Steps
+5.1. Generate metadata
+- Code: php -f ksc-GenerateMetaData.php 2011|2012|2013 test|query
+
+5.2. Extract raw feature (Thanh)
+- 1 job, 2K keyrames, 2 hours. approx 3-4 sec/keyframe (size max 500x500)
+- Max image size: 500x500
+- Codebook size: 1K, 2K, 10K, 20K.
+- Keypoint detector: HesLap & Dense sampling (step size 6 pixel, 2 scales).
+- Descriptor: SIFT.
