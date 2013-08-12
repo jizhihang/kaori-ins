@@ -17,7 +17,7 @@ while(1)
 			{
 				printf("###Start submitting job for [%s] [%s]...\n", $szOwner, $szCmdLine);
 				system($szCmdLine);
-				printf("###Finish submitting job for [%s] [%s]...\n", $szOwner, $szCmdLine);
+				printf("###[%s] - Finish submitting job for [%s] [%s]...\n", date("Y-m-d H:i:s"), $szOwner, $szCmdLine);
 			}
 			deleteFile($szFPSignalFN);
 		}

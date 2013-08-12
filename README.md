@@ -56,3 +56,6 @@ git clone https://github.com/ledduy/kaori-ins.git
 - Codebook size: 1K, 2K, 10K, 20K.
 - Keypoint detector: HesLap & Dense sampling (step size 6 pixel, 2 scales).
 - Descriptor: SIFT.
+
+5.3. Running DPM model
+~ 4 sec/keyframe (tv2012)
