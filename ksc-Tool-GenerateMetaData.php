@@ -7,8 +7,23 @@
  *
  * 		Copyright (C) 2010-2013 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 04 Aug 2013.
+ * 		Last update	: 11 Aug 2013.
  */
+
+/**
+ *  // Update Aug 11
+ *  1. For each shot/clip of original partition (test, query --> linked to caizhi data)
+ *      --> generate one tar file to pack the keyframes of that shot/clip
+ *      --> and copy to the new dir test20xx-new, query20xx-new
+ *  2. Metadata is generated for test-new, query20xx-new only.
+ *  3. Special treatment for tv2013
+ *      - New file name: shotID_keyframeID
+ *      - Only pick 5KF/shot --> copy to local dir 
+ *  4. Processing time:
+ *      - tv2013: 16 hours (24 cores)
+ *      - tv2012, tv2011: 4 hours (24 cores) 
+ */
+
 
 /** ############## DATASETS ##############
 4. Datasets
@@ -45,16 +60,6 @@
  * --> videoID.lst (eg. TRECVID2011_1.lst) --> list of keyframes
  */
 
-/**
- *  // Update Aug 11
- *  1. For each shot/clip of caizhi data 
- *      --> generate one tar file to pack the keyframes of that shot/clip
- *      --> and copy to the new dir test-new
- *  2. Metadata is generated for test-new only.
- *  3. Special treatment for tv2013
- *      - New file name: shotID_keyframeID
- *      - Only pick 5KF/shot --> copy to local dir
- */
 require_once "ksc-AppConfig.php";
 
 // /net/per610a/export/das11f/ledduy/trecvid-ins-2013/keyframe-5
@@ -88,11 +93,20 @@ foreach($arYearList as $nYear)
 	$szTVYear = sprintf("tv%d", $nYear);
 	
 	// for query
-	if($szPat == "query")
+	if($szPat == "query" || $szPat == "queryext50")
 	{
+	    // tv2012/query
 	    $szVideoPath = sprintf("%s/%s", $szTVYear, $szPat);
 	    $szInputKeyFrameDir = sprintf("%s/%s", $szRootKeyFrameDir, $szVideoPath);
+
+	    // test2012-new
+	    $szNewPat = sprintf("%s%d-new", $szPat, $nYear);
 	    
+	    // tv2012/test2012-new
+	    $szNewVideoPath = sprintf("%s/%s", $szTVYear, $szNewPat);
+	    $szNewOutputKeyFrameDir = sprintf("%s/%s", $szRootKeyFrameDir, $szNewVideoPath);
+	    makeDir($szNewOutputKeyFrameDir);
+	    	     
 	    // collect dirs --> keyframes must be organized in advance
 	    $arDirList = collectDirsInOneDir($szInputKeyFrameDir);
 	    sort($arDirList);
@@ -102,6 +116,8 @@ foreach($arYearList as $nYear)
 	    foreach($arDirList as $szDirName)
 	    {
     		$szVideoID = sprintf("%d", $szDirName);
+    		
+    		// tv2012/query/9030
 	    	$szSubDirName = sprintf("%s/%s", $szInputKeyFrameDir, $szDirName);
 	    	$arKeyFrameList = collectFilesInOneDir($szSubDirName, "", ".jpg");
 	    	sort($arKeyFrameList);
@@ -114,11 +130,23 @@ foreach($arYearList as $nYear)
     			$arVideoList[$szVideoID][] = sprintf("%s", $szKeyFrameID);
     			$nTotalKeyFrames++;
     		}
+    		
+    		$szFPSrcDir = $szSubDirName;
+    		$szFPDestDir = sprintf("%s/%s", $szNewOutputKeyFrameDir, $szVideoID);
+    		makeDir($szFPDestDir);
+    		
+        	$szFPTarFN = sprintf("%s/%s.tar", $szFPDestDir, $szShotID);
+    		// Use -C and . for excluding the path
+    		$szCmdLine = sprintf("tar -cvf %s -C %s .", $szFPTarFN, $szFPSrcDir);
+    		execSysCmd($szCmdLine);
+    		
 	    }
-	    $szOutputDir = sprintf("%s/%s", $szRootMetaDataDir, $szVideoPath);
+	    
+	    $szOutputDir = sprintf("%s/%s", $szRootMetaDataDir, $szNewVideoPath);
 	    makeDir($szOutputDir);
-	    $szFPOutputFN = sprintf("%s/%s/%s.%s.lst", $szRootMetaDataDir, $szTVYear, $szTVYear, $szPat); // tv2011.lst
-	    saveDataFromMem2File(array_keys($arVideoOutputList), $szFPOutputFN);
+	    $szFPOutputFN = sprintf("%s/%s/%s.lst", $szRootMetaDataDir, $szTVYear, $szNewPat); // tv2011.lst
+	    saveDataFromMem2File($arVideoOutputList, $szFPOutputFN);
+	     
 	    foreach($arVideoList as $szVideoID => $arKeyFrameList)
 	    {
 	    	$szFPOutputFN = sprintf("%s/%s.prg", $szOutputDir, $szVideoID); // tv2011.lst
@@ -127,13 +155,18 @@ foreach($arYearList as $nYear)
 	}
 	
 	// for test database
+	// re-organize into test20xx-new, following KAORI-SECODE format
 	if($szPat == "test")
 	{
 	    $szVideoPath = sprintf("%s/%s", $szTVYear, $szPat);
+	    // tv2012/test
 	    $szInputKeyFrameDir = sprintf("%s/%s", $szRootKeyFrameDir, $szVideoPath);
 
 	    // generate metadata for xxx-new pat
+	    // test2012-new
 	    $szNewPat = sprintf("%s%d-new", $szPat, $nYear);
+	    
+	    // tv2012/test2012-new
 	    $szNewVideoPath = sprintf("%s/%s", $szTVYear, $szNewPat);
 	    $szNewOutputKeyFrameDir = sprintf("%s/%s", $szRootKeyFrameDir, $szNewVideoPath);
 	    makeDir($szNewOutputKeyFrameDir);
@@ -154,7 +187,6 @@ foreach($arYearList as $nYear)
         //$nMaxClipsPerVideo = $arMaxClipsPerVideo[$nYear];
 
         $nMaxClipsPerVideo = intval($nNumClips/$nMaxVideoPerDestPatList) + 1;
-                
     	
     	$arVideoList = array();
     	$arVideoOutputList = array();
@@ -178,8 +210,12 @@ foreach($arYearList as $nYear)
                 {
                     break;
                 }    		
+                
                 $szDirName = $arDirList[$nIndex];
+                
+                // tv2012/test/shot1_1
         		$szSubDirName = sprintf("%s/%s", $szInputKeyFrameDir, $szDirName);
+        		
         		$arKeyFrameList = collectFilesInOneDir($szSubDirName, "", ".jpg");
         		sort($arKeyFrameList);
         		$nNumKeyFrames = sizeof($arKeyFrameList);
@@ -265,6 +301,8 @@ foreach($arYearList as $nYear)
         		
         		// dest dir contains .tar files, each .tar file --> pack of keyframes of a shotID
         		// in feature extraction, all .tar files will be downloaded to tmp dir and extracted.
+        		
+        		// tv2012/test2012-new/TRECVID2012_1
         		$szFPDestDir = sprintf("%s/%s", $szNewOutputKeyFrameDir, $szVideoID);
         		makeDir($szFPDestDir);
         		$szFPTarFN = sprintf("%s/%s.tar", $szFPDestDir, $szShotID);
@@ -279,22 +317,22 @@ foreach($arYearList as $nYear)
         		    execSysCmd($szCmdLine);
         		}
         		//break; // Debug only
-        		
         	}
-        	$szOutputDir = sprintf("%s/%s", $szRootMetaDataDir, $szNewVideoPath);
-        	makeDir($szOutputDir);
-        	$szFPOutputFN = sprintf("%s/%s/%s.lst", $szRootMetaDataDir, $szTVYear, $szNewPat); // tv2011.lst
-
-        	// BE careful --> a+t mode (due to running on SGE)
-        	saveDataFromMem2File(array_keys($arVideoOutputList), $szFPOutputFN, "a+t");
-    
-        	foreach($arVideoList as $szVideoID => $arKeyFrameList)
-        	{
-        		$szFPOutputFN = sprintf("%s/%s.prg", $szOutputDir, $szVideoID); // tv2011.lst
-        		saveDataFromMem2File($arKeyFrameList, $szFPOutputFN);
-        	}
-        	printf("Total keyframes: %s\n", $nTotalKeyFrames);
     	}
+        
+    	$szOutputDir = sprintf("%s/%s", $szRootMetaDataDir, $szNewVideoPath);
+        makeDir($szOutputDir);
+        $szFPOutputFN = sprintf("%s/%s/%s.lst", $szRootMetaDataDir, $szTVYear, $szNewPat); // tv2011.lst
+
+        // BE careful --> a+t mode (due to running on SGE)
+        saveDataFromMem2File($arVideoOutputList, $szFPOutputFN, "a+t");
+    
+        foreach($arVideoList as $szVideoID => $arKeyFrameList)
+        {
+            $szFPOutputFN = sprintf("%s/%s.prg", $szOutputDir, $szVideoID); // tv2011.lst
+        	saveDataFromMem2File($arKeyFrameList, $szFPOutputFN);
+        }
+        printf("Total keyframes: %s\n", $nTotalKeyFrames);
 	}
 }
 
