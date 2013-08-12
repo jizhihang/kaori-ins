@@ -47,36 +47,37 @@ $szProjectCodeName = "kaori-ins13"; // *** CHANGED ***
 
 //--> name of list of videos, i.e, metadata/keyframe-5/<pat-name.lst> = metadata/keyframe-5/tv2012.devel.lst
 $arPat2PathList = array(
-		"devel-nistNew" => "tv2012/devel-nistNew",
-		"test.iacc.2.ANew" => "tv2013/test.iacc.2.ANew", // iacc.2.A
-		"test.iacc.2.BNew" => "tv2014/test.iacc.2.BNew", // iacc.2.A
-		"test.iacc.2.CNew" => "tv2015/test.iacc.2.CNew", // iacc.2.A
-		);  // *** CHANGED ***
+		"test2013-new" => "tv2013/test2013-new",
+		"test2012-new" => "tv2012/test2012-new", 
+		"test2011-new" => "tv2011/test2011-new", 
+		"queryext502013-new" => "tv2013/queryext502013-new", 
+		"queryext502012-new" => "tv2012/queryext502012-new", 
+		"queryext502011-new" => "tv2011/queryext502011-new", 
+);  // *** CHANGED ***
 
 $nNumPats = sizeof($arPat2PathList);
 
 // this part is for SGE - Feature Extraction
 //--> dir name + path containing keyframes, i.e, keyframe-5/<path-name> = keyframe-5/tv2012/devel
-$arVideoPathList = array(
-		"devel-nistNew",
-		"test.iacc.2.ANew", // *** CHANGED ***
-		"test.iacc.2.BNew", // *** CHANGED ***
-		"test.iacc.2.CNew", // *** CHANGED ***
-);
+$arVideoPathList = array_keys($arPat2PathList);
 
 $arMaxVideosPerPatList = array(
-		"devel-nistNew" => 200,
-		"test.iacc.2.ANew" => 300, // *** CHANGED ***
-		"test.iacc.2.BNew" => 300, // *** CHANGED ***
-		"test.iacc.2.CNew" => 300, // *** CHANGED ***
-		); // Precise: N/A
+		"test2013-new" => 1000,
+		"test2012-new" => 1000, // *** CHANGED ***
+		"test2011-new" => 1000, // *** CHANGED ***
+		"queryext502013-new" => 1000, // *** CHANGED ***
+		"queryext502012-new" => 1000, // *** CHANGED ***
+		"queryext502011-new" => 1000, // *** CHANGED ***
+); // Precise: N/A
 
 $arMaxHostsPerPatList = array(
-		"devel-nistNew" => 100,
-		"test.iacc.2.ANew" => 100, // *** CHANGED ***
-		"test.iacc.2.BNew" => 100, // *** CHANGED ***
-		"test.iacc.2.CNew" => 100, // *** CHANGED ***
-		); // Precise: N/A
+		"test2013-new" => 100,
+		"test2012-new" => 100, // *** CHANGED ***
+		"test2011-new" => 100, // *** CHANGED ***
+		"queryext502013-new" => 100, // *** CHANGED ***
+		"queryext502012-new" => 100, // *** CHANGED ***
+		"queryext502011-new" => 100, // *** CHANGED ***
+); // Precise: N/A
 
 // these params are used in extracting raw local features. 
 // normally, one keyframe --> one raw feature file
@@ -99,18 +100,13 @@ $nNumKFPerJob = $nMaxKFPerVideo; // *** CHANGED ***
 $nAveShotPerVideo = 1000; // *** CHANGED ***
 
 // set for training --> used to find cluster centers
-$arBOWDevPatList = array("devel-nistNew");
+$arBOWDevPatList = array("test2013-new");
 
-$szSysID = "hlf-tv2013"; // *** CHANGED ***
-$szSysDesc = "Experiments for TRECVID-SIN-2013"; // *** CHANGED ***
+$szSysID = "ins-tv2013"; // *** CHANGED ***
+$szSysDesc = "Experiments for TRECVID-INS-2013"; // *** CHANGED ***
 
 // used for codeword assignment
-$arBOWTargetPatList = array(
-		"devel-nistNew",
-		"test.iacc.2.ANew", // *** CHANGED ***
-		"test.iacc.2.BNew", // *** CHANGED ***
-		"test.iacc.2.CNew", // *** CHANGED ***
-		);
+$arBOWTargetPatList = array_keys($arPat2PathList);
 
 $szConfigDir = "basic";
 
@@ -286,7 +282,5 @@ function getRootDirForFeatureExtraction($szFeatureExt)
 	
 	return $szOutputDir;
 }
-
-
 
 ?>
