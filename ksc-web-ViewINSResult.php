@@ -45,7 +45,7 @@ if($nAction == 0)
 
 $nTVYear = $_REQUEST['vTVYear'];
 $szTVYear = sprintf("tv%d", $nTVYear);
-$szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
+$szRootMetaDataDir = sprintf("%s/metadata-bak/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
 
 // ins.topics.2013.xml 
@@ -218,22 +218,38 @@ else
 {
     if($szRunID == "RunDetection")
     {
-        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/tv2012/dpm");
+        if($szTVYear != "tv2013")
+        {
+            $arTmpz = explode("Q", $szQueryID);
+            $nQueryID = intval($arTmp[1]);
+            $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/%s/dpm", $szTVYear);
+            $szQueryResultDir = sprintf("%s/%d", $szResultDir, $nQueryID);
+            
+        }
+        else 
+        {
+            $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/%s/subtest/dpm", $szTVYear);
+            $szQueryResultDir = sprintf("%s/%s", $szResultDir, $szQueryID);
+        }
     }
     if($szRunID == "RunMatching")
     {
-        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/tv2012/bow");        
+        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/%s/bow", $szTVYear);        
     }
     $szFPOutputFN = sprintf("%s/%s.rank", $szResultDir, $szQueryID);
     if(!file_exists($szFPOutputFN))
     {
-        $arRawListz = loadRankedList($szQueryID, $szRunID);
+        $arRawListz = loadRankedList($szQueryID, $szQueryResultDir, $szRunID);
         $arRawList = array();
+        $nCount = 0;
         foreach($arRawListz as $szShotID => $fScore)
         {
             $arRawList[] = sprintf("%s#$#%0.4f", $szShotID, $fScore);
+            $nCount++;
+            if($nCount>1000)
+                break;
         }
-        saveDataFromMem2File($arRawList, $szFPOutputFN);
+        //saveDataFromMem2File($arRawList, $szFPOutputFN);
     }
     else
     {
@@ -299,12 +315,14 @@ for($i=0; $i<$nNumPages; $i++)
 }
 $arOutput[] = sprintf("<P>RunID: %s<BR>\n", $szRunID);
 
+//print_r($arScoreList);exit();
 for($i=$nStartID; $i<$nEndID; $i++)
 {
 	$szLine = $arRawList[$i];
 	$arTmp = explode("#$#", $szLine);
 	$szShotID = trim($arTmp[0]);
 	$fScore = floatval($arTmp[1]);
+
 
 	$szShotKFDir = sprintf("%s/test/%s", $szKeyFrameDir, $szShotID);
 	$arImgList = collectFilesInOneDir($szShotKFDir, "", ".jpg");
@@ -470,25 +488,34 @@ function parseNISTResult($szFPInputFN)
 
 
 
-function loadRankedList($szQueryID, $szRunID="RunDetection")
+function loadRankedList($szQueryID, $szResultDir, $szRunID="RunDetection")
 {
-	if($szRunID == "RunDetection")
+	global $szTVYear;
+    if($szRunID == "RunDetection")
 	{
-        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/tv2012/dpm/Q%d", $szQueryID);
-	
     	$arFileList = collectFilesInOneDir($szResultDir, "", ".res");
     	//print_r($arFileList);
     	$arRankList = array();
+    	$nCount = 0;
     	foreach($arFileList as $szInputName)
     	{
     		$szFPScoreListFN = sprintf("%s/%s.res", $szResultDir, $szInputName);
     		loadListFile($arScoreList, $szFPScoreListFN);
     		foreach($arScoreList as $szLine)
     		{
-    			// FL000044999_0017 FL000044999 355.569591 129.039019 423.513678 196.983106 2.000000 -0.990103
-    			$arTmp = explode(" ", $szLine);
-    			$szShotID = trim($arTmp[1]);
-    			$fScore = floatval($arTmp[7]);
+    			if($szTVYear != "tv2013")
+    			{
+        			// FL000044999_0017 FL000044999 355.569591 129.039019 423.513678 196.983106 2.000000 -0.990103
+        			$arTmp = explode(" ", $szLine);
+        			$szShotID = trim($arTmp[1]);
+        			$fScore = floatval($arTmp[7]);
+    			}
+    			else
+    			{
+    			    $arTmp = explode("#$#", $szLine);
+        			$szShotID = trim($arTmp[0]);
+        			$fScore = floatval($arTmp[1]);
+    			}
     			if(isset($arRankList[$szShotID]))
     			{
     				if($arRankList[$szShotID] < $fScore)
@@ -509,9 +536,7 @@ function loadRankedList($szQueryID, $szRunID="RunDetection")
 	
 	if($szRunID == "RunMatching")
 	{
-	    
-        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/tv2012/bow/Q_%d", $szQueryID);
-	
+   	
     	$arFileList = collectFilesInOneDir($szResultDir, "", ".res");
     	//print_r($arFileList);
     	$arRankList = array();
@@ -539,6 +564,7 @@ function loadRankedList($szQueryID, $szRunID="RunDetection")
     		}
     	}
     	asort($arRankList);
+
 
     	return ($arRankList);
 	}
