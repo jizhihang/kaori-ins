@@ -12,7 +12,7 @@
 
 
 require_once "ksc-AppConfig.php";
-
+require_once "ksc-Tool-EvalMAP.php";
 //ob_start("ob_gzhandler"); 
 
 
@@ -122,6 +122,8 @@ $arTmp = explode("#", $szQueryIDz);
 $szQueryID = trim($arTmp[0]);
 $szText = trim($arTmp[1]);
 
+$szRunID = $_REQUEST['vRunID'];
+
 // tv2013.test.lst 
 $szFPTestVideoListFN = sprintf("%s/%s.test.lst", $szMetaDataDir, $szTVYear);
 
@@ -147,6 +149,14 @@ $szFPNISTResultFN = sprintf("%s/ins.search.qrels.%s", $szMetaDataDir, $szTVYear)
 if(file_exists($szFPNISTResultFN))
 {
 	$arNISTList = parseNISTResult($szFPNISTResultFN);
+}
+
+// for computing MAP online
+$nTotalHits = sizeof($arNISTList[$szQueryID]);
+$arAnnList = array();
+foreach($arNISTList[$szQueryID] as $szShotID)
+{
+    $arAnnList[$szShotID] = 1;    
 }
 
 $szFPOutputFN = sprintf("%s/ins.search.qrels.%s.csv", $szMetaDataDir, $szTVYear);
@@ -175,7 +185,7 @@ foreach($arQueryImgList as  $szQueryImg)
 		$heightzz = imagesy($imgzz);
 
 		// calculate thumbnail size
-		$new_width = $thumbWidth = 200;  // to reduce loading time
+		$new_width = $thumbWidth = 100;  // to reduce loading time
 		$new_height = floor($heightzz*($thumbWidth/$widthzz));
 
 		// create a new temporary image
@@ -198,27 +208,59 @@ foreach($arQueryImgList as  $szQueryImg)
 }
 $arOutput[] = sprintf("<P><BR>\n");
 
-// View result
-$szRunID = $_REQUEST['vRunID'];
-$szTopicID = $szQueryID;
-
-$szResultDir = sprintf("%s/submission/%s", $szRootData, $szRunID);
-$szFPRankListFN = sprintf("%s/%s.rank", $szResultDir, $szTopicID);
-
-//$nNumVideos = loadListFile($arRawList, $szFPRankListFN);
-
 //// VERY SPECIAL ****
 $nShowGT = $_REQUEST['vShowGT'];
 if($nShowGT)
 {
 	$arRawList = $arNISTList[$szQueryID];
-	$nNumVideos = sizeof($arRawList);
+}
+else
+{
+    if($szRunID == "RunDetection")
+    {
+        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/tv2012/dpm");
+    }
+    if($szRunID == "RunMatching")
+    {
+        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/tv2012/bow");        
+    }
+    $szFPOutputFN = sprintf("%s/%s.rank", $szResultDir, $szQueryID);
+    if(!file_exists($szFPOutputFN))
+    {
+        $arRawListz = loadRankedList($szQueryID, $szRunID);
+        $arRawList = array();
+        foreach($arRawListz as $szShotID => $fScore)
+        {
+            $arRawList[] = sprintf("%s#$#%0.4f", $szShotID, $fScore);
+        }
+        saveDataFromMem2File($arRawList, $szFPOutputFN);
+    }
+    else
+    {
+        loadListFile($arRawList, $szFPOutputFN);
+    }
 }
 
+$nNumVideos = sizeof($arRawList);
+$arScoreList = array();
+foreach($arRawList as $szLine)
+{
+    $arTmp = explode("#$#", $szLine);
+    $szShotID = trim($arTmp[0]);
+    $fScore = floatval($arTmp[1]);
+    if(sizeof($arScoreList) < 1000)
+    {
+        $arScoreList[$szShotID] = $fScore;
+    }
+}
+
+$arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=1000);
+$fMAP = $arTmpzzz['ap'];
+$arOutput[] = sprintf("<P><H3>MAP: %0.2f<BR>\n", $fMAP);
 ////
 
 $nCount = 0;
-$nNumShownKFPerShot = 3;
+$nNumShownKFPerShot = 2;
 //foreach($arRawList as $szLine)
 
 $nMaxVideosPerPage = intval($_REQUEST['vMaxVideosPerPage']);
@@ -227,11 +269,12 @@ $nStartID = $nPageID*$nMaxVideosPerPage;
 $nEndID = min($nStartID+$nMaxVideosPerPage, $nNumVideos, 1000);
 
 $nNumPages = min(20, intval(($nNumVideos+$nMaxVideosPerPage-1)/$nMaxVideosPerPage));
-$queryURL = sprintf("vQueryID=%s&vRunID=%s&vMaxVideosPerPage=%s&vAction=1&", urlencode($szQueryIDz), urlencode($szRunID), urlencode($nMaxVideosPerPage));
+$queryURL = sprintf("vQueryID=%s&vRunID=%s&vMaxVideosPerPage=%s&vTVYear=%d&vAction=%d&", urlencode($szQueryIDz), urlencode($szRunID), urlencode($nMaxVideosPerPage), $nTVYear, $nAction);
 	//printf($queryURL);
 
 $szURLz = sprintf("ksc-web-ViewINSResult.php?%s&vShowGT=1", $queryURL);
 
+$nViewImg = 0;
 if($nShowGT)
 {
 	$arOutput[] = sprintf("<P><H1>Ranked List - [Ground Truth] - [%d] Video Clips</H1>\n", $nNumVideos);
@@ -246,7 +289,7 @@ for($i=0; $i<$nNumPages; $i++)
 {
 	if($i != $nPageID)
 	{
-		$szURL = sprintf("ksc-web-ViewINSResult.php?%s&vPageID=%d&vShowGT=%d&vTVYear=%d&vAction=%d", $queryURL, $i+1, $nShowGT, $nTVYear, $nAction);
+		$szURL = sprintf("ksc-web-ViewINSResult.php?%s&vPageID=%d&vShowGT=%d", $queryURL, $i+1, $nShowGT);
 		$arOutput[] = sprintf("<A HREF='%s'>%02d</A> ", $szURL, $i+1);
 	}
 	else
@@ -254,7 +297,7 @@ for($i=0; $i<$nNumPages; $i++)
 		$arOutput[] = sprintf("%02d ", $i+1);
 	}
 }
-$arOutput[] = sprintf("<P><BR>\n");
+$arOutput[] = sprintf("<P>RunID: %s<BR>\n", $szRunID);
 
 for($i=$nStartID; $i<$nEndID; $i++)
 {
@@ -271,6 +314,7 @@ for($i=$nStartID; $i<$nEndID; $i++)
 	$nSampling = 0;
 	$nNumKFzz = sizeof($arImgList);
 	$nSamplingRate = intval($nNumKFzz/$nNumShownKFPerShot);
+
 	foreach($arImgList as $szImg)
 	{
 		$nSampling++;
@@ -290,7 +334,7 @@ for($i=$nStartID; $i<$nEndID; $i++)
 		$heightzz = imagesy($imgzz);
 
 		// calculate thumbnail size
-		$new_width = $thumbWidth = 200;  // to reduce loading time
+		$new_width = $thumbWidth = 100;  // to reduce loading time
 		$new_height = floor($heightzz*($thumbWidth/$widthzz));
 
 		// create a new temporary image
@@ -317,6 +361,7 @@ for($i=$nStartID; $i<$nEndID; $i++)
 			break;
 		}
 	}
+	
 	if(in_array($szShotID, $arNISTList[$szQueryID]))
 	{
 		$arOutput[] = sprintf("<IMG SRC='winky-icon.png'><BR>\n");
@@ -336,14 +381,14 @@ for($i=$nStartID; $i<$nEndID; $i++)
 	}
 }
 
-$arOutput[] = sprintf("<P><H1>Num hits (top %s): %d.</H1>\n", $nMaxVideosPerPage, $nHits);
+$arOutput[] = sprintf("<P><H1>Num hits (top %s): %d/%d.</H1>\n", $nMaxVideosPerPage, $nHits, $nTotalHits);
 
 $arOutput[] = sprintf("<P><H1>Page: ");
 for($i=0; $i<$nNumPages; $i++)
 {
 	if($i != $nPageID)
 	{
-		$szURL = sprintf("ksc-web-ViewINSResult.php?%s&vPageID=%d&vShowGT=%d&vTVYear=%d&vAction=%d", $queryURL, $i+1, $nShowGT, $nTVYear, $nAction);
+		$szURL = sprintf("ksc-web-ViewINSResult.php?%s&vPageID=%d&vShowGT=%d", $queryURL, $i+1, $nShowGT);
 		$arOutput[] = sprintf("<A HREF='%s'>%02d</A> ", $szURL, $i+1);
 	}
 	else
@@ -422,4 +467,82 @@ function parseNISTResult($szFPInputFN)
 
 	return $arOutput;
 }
+
+
+
+function loadRankedList($szQueryID, $szRunID="RunDetection")
+{
+	if($szRunID == "RunDetection")
+	{
+        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/tv2012/dpm/Q%d", $szQueryID);
+	
+    	$arFileList = collectFilesInOneDir($szResultDir, "", ".res");
+    	//print_r($arFileList);
+    	$arRankList = array();
+    	foreach($arFileList as $szInputName)
+    	{
+    		$szFPScoreListFN = sprintf("%s/%s.res", $szResultDir, $szInputName);
+    		loadListFile($arScoreList, $szFPScoreListFN);
+    		foreach($arScoreList as $szLine)
+    		{
+    			// FL000044999_0017 FL000044999 355.569591 129.039019 423.513678 196.983106 2.000000 -0.990103
+    			$arTmp = explode(" ", $szLine);
+    			$szShotID = trim($arTmp[1]);
+    			$fScore = floatval($arTmp[7]);
+    			if(isset($arRankList[$szShotID]))
+    			{
+    				if($arRankList[$szShotID] < $fScore)
+    				{
+    					$arRankList[$szShotID] = $fScore;
+    				}
+    			}
+    			else
+    			{
+    				$arRankList[$szShotID] = $fScore;
+    			}
+    		}
+    	}
+    	arsort($arRankList);
+
+    	return ($arRankList);
+	}
+	
+	if($szRunID == "RunMatching")
+	{
+	    
+        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/tv2012/bow/Q_%d", $szQueryID);
+	
+    	$arFileList = collectFilesInOneDir($szResultDir, "", ".res");
+    	//print_r($arFileList);
+    	$arRankList = array();
+    	foreach($arFileList as $szInputName)
+    	{
+    		$szFPScoreListFN = sprintf("%s/%s.res", $szResultDir, $szInputName);
+    		loadListFile($arScoreList, $szFPScoreListFN);
+    		foreach($arScoreList as $szLine)
+    		{
+    			// FL000029169 5.52062
+    			$arTmp = explode(" ", $szLine);
+    			$szShotID = trim($arTmp[0]);
+    			$fScore = floatval($arTmp[1]);
+    			if(isset($arRankList[$szShotID]))
+    			{
+    				if($arRankList[$szShotID] < $fScore)
+    				{
+    					$arRankList[$szShotID] = $fScore;
+    				}
+    			}
+    			else
+    			{
+    				$arRankList[$szShotID] = $fScore;
+    			}
+    		}
+    	}
+    	asort($arRankList);
+
+    	return ($arRankList);
+	}
+
+}
+
 ?>
