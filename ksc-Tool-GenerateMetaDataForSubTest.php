@@ -50,6 +50,8 @@ $szInputKeyFrameDir = sprintf("%s/%s/%s", $szRootKeyFrameDir, $szTVYear, $szPatN
 $szOutputKeyFrameDir = sprintf("%s/%s/%s", $szRootKeyFrameDir, $szTVYear, $szSubPatName);
 makeDir($szKeyFrameDir);
 
+$szNewVideoPath = sprintf("%s/%s", $szTVYear, $szSubPatName);
+
 // first VideoID consists of relevant shots 
 $szFPNISTResultFN = sprintf("%s/ins.search.qrels.%s", $szMetaDataDir, $szTVYear);
 
@@ -131,6 +133,8 @@ if(file_exists($szFPNISTResultFN))
     
     $arDPMList = array(); // list of keyframes to run DPM
     
+    $arVideoOutputList = array();
+    
     foreach($arSubTestOutput as $szShotID => $arKeyFrameList)
     {
         $szOrigVideoID = $arVideoShotLUT[$szShotID];
@@ -141,6 +145,10 @@ if(file_exists($szFPNISTResultFN))
         	$szOutputKeyFrameDir2 = sprintf("%s/%s", $szOutputKeyFrameDir, $szVideoID);
         	makeDir($szOutputKeyFrameDir2);
         	$nVideoID++;
+        	
+        	// VideoID #$# VideoName #$# VideoPath
+        	$arVideoOutputList[$szVideoID] = sprintf("%s#$#%s#$#%s", $szVideoID, $szVideoID, $szNewVideoPath);
+        	 
         }
         $nIndex++;
         
@@ -167,7 +175,7 @@ if(file_exists($szFPNISTResultFN))
     $szOutputDir = sprintf("%s/%s/%s", $szRootMetaDataDir, $szTVYear, $szSubPatName);
     makeDir($szOutputDir);
     $szFPOutputFN = sprintf("%s/%s/%s.lst", $szRootMetaDataDir, $szTVYear, $szSubPatName); 
-    saveDataFromMem2File(array_keys($arVideoList), $szFPOutputFN);
+    saveDataFromMem2File($arVideoOutputList, $szFPOutputFN);
     foreach($arVideoList as $szVideoID => $arKeyFrameList)
     {
     	$szFPOutputFN = sprintf("%s/%s.prg", $szOutputDir, $szVideoID); // tv2011.lst
