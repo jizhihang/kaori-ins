@@ -73,9 +73,9 @@ $arMaxVideosPerPatList = array(
 		"queryext502012-new" => 1000, // *** CHANGED ***
 		"queryext502011-new" => 1000, // *** CHANGED ***
 
-		"subtest2013-new" => 1000,
-		"subtest2012-new" => 1000, 
-		"subtest2011-new" => 1000, 
+		"subtest2013-new" => 100,
+		"subtest2012-new" => 100, 
+		"subtest2011-new" => 100, 
 ); // Precise: N/A
 
 $arMaxHostsPerPatList = array(

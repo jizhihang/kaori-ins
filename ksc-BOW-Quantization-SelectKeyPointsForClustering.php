@@ -12,41 +12,33 @@
 
 //*** Update Aug 14, 2013
 // --> just copied from kaori-sin13
-// --> changed: $arPatList = array("subtest2012-new"); 
+// --> changed: $arPatList = array("subtest2012-new");
 
-//*** Update Jul 08, 2012
-//--> Check FeatureOutputDir for load balancing
-//--> Print stats on selection of keyframes in each video
-//--> Decided to use non-TV method that was used in imageclef12
+//////////////// HOW TO CUSTOMIZE ////////////////
 
-// We need VideoID to find Path. For TRECVID, is is encoded in KeyFrameID
-// TRECVID2005_101.shot101_1.RKF_0.Frame_4 --> TRECVID2005_101
-// We need to modify this part for applying other set such as imageCLEF
+// Fixed param:
+//$nMaxKeyPoints = intval(1500000.0);  // 1.5 M - max keypoints for clustering
+//$nAveKeyPointsPerKF = 1000; // average number of keypoints per key frame
+//$fKeyPointSamplingRate = 0.70; // percentage of keypoints of one image will be selected
+//$fVideoSamplingRate = 1.0; // to ensure all videos are used for selection
+//$fKeyFrameSamplingRate = 0.000001; // to ensure only 1 KF/shot
+
+//--> Only ONE param: $fShotSamplingRate
+// Input: Number of videos, Number of shots per video - If no shot case, it is the Number of KFs
+// Estimation
+// Max KeyFrames = 1.5M / (1000 * 0.7) = 2K KF
+// Number of videos = 200 --> Number of KF per video ($fVideoSamplingRate = 1.0) = 2K / 200 = 10 (QUOTA)
+// Number of shots per video (by parsing .RKF) ~ 400K (of devel set 2012) /200 (videos - new organization) = 2K
+// Number of KF per shot ~ 1KF
+// --> if ($fShotSamplingRate = 0.01) --> 2K * 0.01 = 20 (10 (QUOTA))
+
+//////////////////////////////////////////////////
+
+/////////////// IMPORTANT PARAMS ////////////////////
+
+// FIX Max Keypoints Per Frame is 1,000
+
 /*
- // TRECVID2005_101.shot101_1.RKF_0.Frame_4
-$arTmp = explode(".", $szKeyFrameID);
-$szVideoID = trim($arTmp[0]);
-$szVideoPath = $arVideoList[$szVideoID];
-
-$szInputDir = sprintf("%s/%s/%s/%s",
-		$szRootFeatureDir, $szFeatureExt, $szVideoPath, $szVideoID);
-$szCoreName = sprintf("%s.%s", $szKeyFrameID, $szFeatureExt);
-$szFPTarKeyPointFN = sprintf("%s/%s.tar.gz",
-		$szInputDir, $szCoreName);
-*/
-
-
-/************* STEPS FOR BOW MODEL ***************
- * 	===> STEP 1: nsc-BOW-SelectKeyPointsForClustering-TV10.php --> select keypoints from devel pat
-* 	STEP 2: nsc-BOW-DoClusteringKeyPoints-VLFEAT-TV10.php --> do clustering using VLFEAT vl_kmeans, L2 distance
-* 	STEP 3: nsc-ComputeSashForCentroids-TV10.php --> compute sash for fast keypoint assignment, make sure sashTool using L2 distance
-* 	STEP 4: nsc-ComputeAssignmentSash-TV10/-SGE.php --> compute sash assignment, using exact search (scale factor - 4)
-* 	STEP 5: nsc-ComputeSoftBOW-Grid-TV10/-SGE.php --> compute soft assignment for grid image
-*/
-
-
-/*  --> IMPORTANT PARAMS
-
 $nMaxKeyPoints = intval(1500000.0);  // 1.5 M - max keypoints for clustering
 
 $nAveKeyPointsPerKF = 1000; // average number of keypoints per key frame
@@ -60,97 +52,23 @@ $fKeyFrameSamplingRate = 0.0001; // i.e. 1KF/shot - $nNumSelKFs = intval(max(1, 
 $nMaxBlocksPerChunk=1; // only one chunk
 $nMaxSamplesPerBlock=2000000; // larger than maxKP to ensure all keypoints in 1 chunk-block
 */
-
-// Update Jul 08
-// Customize for tvsin2012
+///////////////////////////////////////////////////////
 
 
-// Update Jun 27
-// Customize for imageclef2012
+/************* STEPS FOR BOW MODEL ***************
+ * 	===> STEP 1: nsc-BOW-SelectKeyPointsForClustering-TV10.php --> select keypoints from devel pat
+* 	STEP 2: nsc-BOW-DoClusteringKeyPoints-VLFEAT-TV10.php --> do clustering using VLFEAT vl_kmeans, L2 distance
+* 	STEP 3: nsc-ComputeSashForCentroids-TV10.php --> compute sash for fast keypoint assignment, make sure sashTool using L2 distance
+* 	STEP 4: nsc-ComputeAssignmentSash-TV10/-SGE.php --> compute sash assignment, using exact search (scale factor - 4)
+* 	STEP 5: nsc-ComputeSoftBOW-Grid-TV10/-SGE.php --> compute soft assignment for grid image
+*/
 
-////////////////////////////////////////////////////
-// Update Jun 17
-// We need VideoID to find Path. For TRECVID, is is encoded in KeyFrameID
-// TRECVID2005_101.shot101_1.RKF_0.Frame_4 --> TRECVID2005_101
-// We need to modify this part for applying other set such as imageCLEF
-/*
- // TRECVID2005_101.shot101_1.RKF_0.Frame_4
- $arTmp = explode(".", $szKeyFrameID);
- $szVideoID = trim($arTmp[0]);
- $szVideoPath = $arVideoList[$szVideoID];
+/////////////////////////////////////////////////////////////////////////
 
- $szInputDir = sprintf("%s/%s/%s/%s",
- $szRootFeatureDir, $szFeatureExt, $szVideoPath, $szVideoID);
- $szCoreName = sprintf("%s.%s", $szKeyFrameID, $szFeatureExt);
- $szFPTarKeyPointFN = sprintf("%s/%s.tar.gz",
- $szInputDir, $szCoreName);
- */
-
-// Update May 20
-// Adding dense & phow
-
-// ************* Update May 10 *************
-// Adding phowhsv8, phow6 and dense3 --> luu y la giu nguyen so luong point/frame la 1000, trong thuc te thi phow6 so luong la 9344
-
-// ************* Update Feb 21 *************
-// Be careful with empty keypoints (appearing when using PHOW and DENSESIFT)  --> already checked in matlab code
-// --> loose checking
-// OLD: if($nNumKeyPoints+2 != sizeof($arRawList))
-	// NEW:	if($nNumKeyPoints+2 < sizeof($arRawList))
-
-
-		// ************* Update Feb 13 *************
-		// Adding params to control the loop
-		// Adding dog, dense6 and phow10
-
-		// ************* Update Feb 13 *************
-		// Select keypoints for clustering using VLFEAT
-		// szTrialName = Soft-500-VL2  --> V: VLFEAT, L2: L2 distance for clustering and word assignment
-		// NumKPS = 1.5M
-
-		//  ************* Update Jan 31 *************
-		// New configuration for max 500 codewords since 1000 codewords --> computational heavy
-		// Changes in config
-		// Max 1M keypoints --> ~1,500 keyframes
-		// $fVideoSamplingRate = 0.50; // percentage of videos of the set will be selected
-		// Adding shuffle function after selecting videos and shots by array_rand
-		// Limit max keypoints per keyframe = 1000;
-
-		//  ************* Update Jan 22 *************
-		// Adding features harlap, heslap, haraff
-
-		//  ************* Update Jan 06 *************
-		// Prepare data for new experiments using soft assignment as described in VIREO374
-		// Run for tv2005, tv2007, and tv2010; and for harhes and hesaff.
-
-		// ************* Update Dec 22 *************
-		// Modify the path of clus dir
-
-		//  ************* Update Nov 30 *************
-		// Change $szFPInputListFN = sprintf("%s/BoW.SelKeyFrame.%s.%s.%s.lst", $szOutputDir, $szTrialName, $szPatName, $szFeatureExt);
-		// Adjust params for reducinig the number of chunks: 5 blocks/chunk, each block 500K points --> each chunk -> 2.5M points
-		// Running time: ~ 100K/min --> 20M --> 200 mins ~ 3.5 hours
-
-		//  ************* Update Nov 25 *************
-		// Make changes for scalability, output data is converted to dvf format that is ready for clustering
-		// Previous version saves all data in one file, which is not scalable when the number of samples reaches several tens of mils
-		// Estimation:
-		// 	+ Number of chunks --> 1/4 of available main memory, if using per900b --> max 128 GB
-		//	+ Number of blocks/chunk --> 1/10 chunk size.
-		// This version
-		//	+ --> 1 chunk ~ 1 millions of points.
-		//	+ --> 1 block ~ 100,000 points.
-		// 	+ --> 10 blocks/chunk
-
-		// ************* Update 03 Oct *************
-		// Rename to nsc-BOW-SelectKeyPointsForClustering
-		//
-
-		/////////////////////////////////////////////////////////////////////////
 require_once "ksc-AppConfig.php";
 
 ///////////////////////////// THIS PART FOR CUSTOMIZATION /////////////////
-//$szRootDir = "/net/sfv215/export/raid4/ledduy/trecvid-sin-2011";
+
 $szRootDir = $gszRootBenchmarkDir; // defined in ksc-AppConfig
 
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $szRootDir);
@@ -178,8 +96,6 @@ $arFeatureList = array("nsc.raw.harhes.sift",
 		"nsc.raw.dense6mul.rgbsift",
 		"nsc.raw.dense6mul.csift",
 
-		"nsc.raw.harlap6mul.rgbsift",
-		
 		"nsc.raw.dense4mul.oppsift",
 		"nsc.raw.dense4mul.sift",
 		"nsc.raw.dense4mul.rgsift",
@@ -187,8 +103,8 @@ $arFeatureList = array("nsc.raw.harhes.sift",
 		"nsc.raw.dense4mul.csift",
 );
 
-$szTargetPatName = "subtest2012-new";
-$szTargetFeatureExt = "nsc.raw.dense6mul.rgbsift";
+$szDevPatName = "subtest2012-new";  // must be a member of $arPatList
+$szTargetFeatureExt = "nsc.raw.dense4.sift";
 
 /// !!! IMPORTANT
 $nMaxKeyPoints = intval(1500000.0);  // 1.5 M - max keypoints for clustering
@@ -202,21 +118,15 @@ $fKeyPointSamplingRate = 0.70; // percentage of keypoints of one image will be s
 // some keyframes --> no keypoints (ie. blank/black frames)
 $nMaxKeyFrames = intval(1.5 * $nMaxKeyPoints/($nAveKeyPointsPerKF*$fKeyPointSamplingRate))+1; 
 
-// for trecvid2012 --> the number of videos is REDUCED to 200
 // shot information can not be inferred from keyframeID --> one shot = one keyframes
 $fVideoSamplingRate = 1.0; // percentage of videos of the set will be selected
-$fShotSamplingRate = 0.01; // lower this value if we want more videos, percentage of shots of one video will be selected
-$fKeyFrameSamplingRate = 0.0001; // i.e. 1KF/shot - $nNumSelKFs = intval(max(1, $fKeyFrameSamplingRate*$nNumKFsPerShot));
+$fKeyFrameSamplingRate = 0.00001; // i.e. 1KF/shot - $nNumSelKFs = intval(max(1, $fKeyFrameSamplingRate*$nNumKFsPerShot));
 
-// Estimation
-// Max KeyFrames = 1.5M / (1000 * 0.7) = 2K KF
-// Number of videos = 200 --> Number of KF per video ($fVideoSamplingRate = 1.0) = 2K / 200 = 10 (QUOTA)
-// Number of shots per video (by parsing .RKF) ~ 400K (of devel set 2012) /200 (videos - new organization) = 2K
-// Number of KF per shot ~ 1KF
-// --> if ($fShotSamplingRate = 0.01) --> 2K * 0.01 = 20 (10 (QUOTA))
+// *** CHANGED ***
+$fShotSamplingRate = 1.0; // lower this value if we want more videos, percentage of shots of one video will be selected
 
 $nMaxBlocksPerChunk=1; // only one chunk
-$nMaxSamplesPerBlock=2000000; // larger than maxKP to ensure all keypoints in 1 chunk-block
+$nMaxSamplesPerBlock= $nMaxKeyPoints*2; // larger than maxKP to ensure all keypoints in 1 chunk-block
 
 //////////////////// END FOR CUSTOMIZATION ////////////////////
 
@@ -225,13 +135,31 @@ $nMaxSamplesPerBlock=2000000; // larger than maxKP to ensure all keypoints in 1 
 if($argc != 3)
 {
 	printf("Usage: %s <DevPatName> <RawFeatureExt>\n", $argv[0]);
-	printf("Usage: %s %s %s\n", $argv[0], $szTargetPatName, $szTargetFeatureExt);
+	printf("Usage: %s %s %s\n", $argv[0], $szDevPatName, $szTargetFeatureExt);
 	exit();
 }
 
-$szTargetPatName = $argv[1];
+$szDevPatName = $argv[1];
 $szTargetFeatureExt = $argv[2];
 
+// Re-calculate $fShotSamplingRate
+$nMaxVideos = $arMaxVideosPerPatList[$szDevPatName];
+$nMaxKFPerVideo = intval($nMaxKeyFrames/$nMaxVideos)+1;
+// if we set 1KF/shot --> $nMaxKFPerVideo = $nMaxShotPerVideo
+$fShotSamplingRate = $nMaxKFPerVideo/$nAveShotPerVideo; 
+printf("### Shot sampling rate: %f\n", $fShotSamplingRate);
+
+$szFPLogFN = sprintf("ksc-BOW-Quantization-SelectKeypointsForClustering-%s.log", $szTargetFeatureExt); // *** CHANGED ***
+
+$arLog = array();
+$szStartTime = date("m.d.Y - H:i:s");
+$arLog[] = sprintf("###Start [%s --> $$$]: [%s]-[%s]",
+		$szStartTime,
+		$argv[1], $argv[2]);
+
+$arLog[] = sprintf("###Max KeyFrames to Select: [%s] - Max Videos: [%s]- Max KF Per Video: [%s] - Shot Sampling Rate: [%s]",
+		$nMaxKeyFrames , $nMaxVideos, $nMaxKFPerVideo, $fShotSamplingRate);
+saveDataFromMem2File($arLog, $szFPLogFN, "a+t");
 
 /// !!! IMPORTANT
 //$szRootFeatureDir = sprintf("%s/feature/keyframe-5", $szRootDir);
@@ -242,12 +170,12 @@ makeDir($szRootFeatureDir);
 
 // Update Nov 25, 2011
 $szLocalTmpDir = $gszTmpDir;  // defined in ksc-AppConfig
-$szTmpDir = sprintf("%s/SelectKeyPointForClustering", $szLocalTmpDir);
+$szTmpDir = sprintf("%s/SelectKeyPointForClustering/%s", $szLocalTmpDir, $szTargetFeatureExt);
 makeDir($szTmpDir);
 
 foreach($arPatList as $szPatName)
 {
-	if($szTargetPatName != $szPatName)
+	if($szDevPatName != $szPatName)
 	{
 		printf("Skipping [%s] ...\n", $szPatName);
 		continue;
@@ -277,9 +205,9 @@ foreach($arPatList as $szPatName)
 		$szFPInputListFN = sprintf("%s/BoW.SelKeyFrame.%s.%s.%s.lst", $szOutputDir, $szTrialName, $szPatName, $szFeatureExt);
 //		saveDataFromMem2File(array_keys($arAllKeyFrameList), $szFPInputListFN);
 
-		//*** Changed for IMAGENET
+		// if not use shuffle_assoc, keyframes in the bottom list might not be selected due to limit of max keypoints
+		shuffle_assoc($arAllKeyFrameList);
 		saveDataFromMem2File($arAllKeyFrameList, $szFPInputListFN);
-		//*** Changed for IMAGENET
 
 		// print stats
 		global $arStatVideoList;
@@ -302,6 +230,14 @@ foreach($arPatList as $szPatName)
 	}
 }
 
+$arLog = array();
+$szFinishTime = date("m.d.Y - H:i:s");
+$arLog[] = sprintf("###Finish [%s --> %s]: [%s]-[%s]",
+		$szStartTime, $szFinishTime,
+		$argv[1], $argv[2]);
+saveDataFromMem2File($arLog, $szFPLogFN, "a+t");
+
+
 ////////////////////////////////////// FUNCTIONS //////////////////////////
 /**
  * 	Select keypoints from a set of images for clustering (to form codebook).
@@ -310,7 +246,10 @@ foreach($arPatList as $szPatName)
  * 		+ nMaxKeyFrames (default 2,000):
  * 		+ fVideoSamplingRate (default 1.0): percentage of videos of the set will be selected
  * 		+ fShotSamplingRate (default 1.0): percentage of shots of one video will be selected
+ * 			==> if no shot (such as imageclef, imagenet) --> one shot = one keyframe
+ * 			==> if KeyFrameID does not have .RKF --> consider as no shot.
  * 		+ $fKeyFrameSamplingRate (default 1/50): percentage of keyframes per shot
+ * 			==> if no shot --> only 1 KF/shot is picked no matter what $fKeyFrameSamplingRate
  * 		+ fKeyPointSamplingRate (default: 0.75): percentage of keypoints of one image will be selected
  */
 
@@ -318,11 +257,10 @@ foreach($arPatList as $szPatName)
 // RootMetaData + videoPath + /videoID.prg
 // RootFeatureDir + FeatureExt + videoPath + /videoID.featureExt (.tar.gz)
 function selectKeyFrames($nMaxKeyFrames,
-		$fVideoSamplingRate, $fShotSamplingRate,
+		$fVideoSamplingRate=1.0, $fShotSamplingRate=1.0,
 		$fKeyFrameSamplingRate,
 		$szFPVideoListFN, $szRootMetaDataDir, $szFeatureExt)
 {
-	
 	global $arStatVideoList;
 	$arStatVideoList = array(); // for statistics 
 	
@@ -371,20 +309,13 @@ function selectKeyFrames($nMaxKeyFrames,
 
 		loadListFile($arKFRawList, $szFPKeyFrameListFN);
 
-		// TV case: TRECVID2005_101.shot101_1.RKF_0.Frame_4
-		// Non-TV case: xxxxImagexxxx
 		$arShotList = array();
 		foreach($arKFRawList as $szKeyFrameID)
 		{
 			$arTmp = explode(".RKF", $szKeyFrameID);
 			$szShotID = trim($arTmp[0]);
 
-			// *** Changed for IMAGENET
-			if(!strstr($szShotID, "shot"))
-			{
-				$szShotID = sprintf("shotNA"); // --> all keyframes in ONE shot
-			}
-			// *** Changed for IMAGENET
+			// If there is no .RKF --> $szShotID = $szKeyFrameID
 			$arShotList[$szShotID][$szKeyFrameID] = 1;
 		}
 		$nNumShots = sizeof($arShotList);
@@ -526,5 +457,157 @@ function loadOneRawSIFTFile($szFPSIFTDataFN, $fKPSamplingRate=0.5, $szAnnPrefix 
 
 	return $arOutput;
 }
+
+
+// NEW VERSION --> split samples into chunks and blocks in dvf format
+// New params: DataExt (dvf), DataPrefix and OutputDir
+function selectKeyPointsFromKeyFrameList($szOutputDir, $szDataPrefix, $szDataExt,
+		$szFPInputListFN, $szFPVideoListFN,
+		$szFeatureExt, $szRootFeatureDir, $szLocalDir, $fKPSamplingRate=0.7, $nMaxKeyPoints=1500000,
+		$nMaxBlocksPerChunk=1, $nMaxSamplesPerBlock=2000000)
+{
+	// load video list
+	loadListFile($arRawList, $szFPVideoListFN);
+	$arVideoList = array();
+	foreach($arRawList as $szLine)
+	{
+		// TRECVID2005_141 #$# 20041030_133100_MSNBC_MSNBCNEWS13_ENG #$# tv2005/devel
+		$arTmp = explode("#$#", $szLine);
+		$szVideoID = trim($arTmp[0]);
+		$szVideoPath = trim($arTmp[2]);
+		$arVideoList[$szVideoID] = $szVideoPath;
+	}
+	//print_r($arVideoList); exit();
+	
+	loadListFile($arKeyFrameList, $szFPInputListFN);
+
+	$nBlockID = 0;
+	$nChunkID = 0;
+
+	$szFPDataOutputFN = sprintf("%s/%s-c%d-b%d.%s", $szOutputDir, $szDataPrefix, $nChunkID, $nBlockID, $szDataExt);
+	$szFPAnnOutputFN = sprintf("%s/%s-c%d-b%d.ann", $szOutputDir, $szDataPrefix, $nChunkID, $nBlockID);
+
+	$arKeyPointFeatureList = array();
+	$arKeyPointFeatureList[0] = sprintf("%% Feature: %s - Max Keypoints: %s - List: %s", $szFeatureExt, $nMaxKeyPoints, $szFPInputListFN);
+	$arKeyPointFeatureList[1] = sprintf("%s", $nMaxSamplesPerBlock); //  estimated number of samples
+
+	$arAnnList = array();
+	$arAnnList[0] = sprintf("%% Feature: %s - Max Keypoints: %s - List: %s", $szFeatureExt, $nMaxKeyPoints, $szFPInputListFN);
+	$arAnnList[1] = sprintf("%s", $nMaxSamplesPerBlock); //  estimated number of samples
+
+	$nNumKPs = 0;
+	//foreach($arKeyFrameList as $szKeyFrameID)
+
+	//*** Changed for IMAGENET
+	foreach($arKeyFrameList as $szLine)
+	//*** Changed for IMAGENET
+	{
+		//*** Changed for IMAGENET
+		$arTmp = explode("#$#", $szLine);
+		$szKeyFrameID = trim($arTmp[0]);
+		$szVideoID = trim($arTmp[1]);
+		$szVideoPath = $arVideoList[$szVideoID];
+		//*** Changed for IMAGENET
+		$szInputDir = sprintf("%s/%s/%s/%s",
+				$szRootFeatureDir, $szFeatureExt, $szVideoPath, $szVideoID);
+		$szCoreName = sprintf("%s.%s", $szKeyFrameID, $szFeatureExt);
+		$szFPTarKeyPointFN = sprintf("%s/%s.tar.gz",
+				$szInputDir, $szCoreName);
+		if(file_exists($szFPTarKeyPointFN))
+		{
+			//printf("[%s]. OK\n", $szFPTarKeyPointFN);
+
+			$szCmdLine = sprintf("tar -xvf %s -C %s", $szFPTarKeyPointFN, $szLocalDir);
+			execSysCmd($szCmdLine);
+
+			$szFPSIFTDataFN = sprintf("%s/%s", $szLocalDir, $szCoreName);
+
+			$szAnnPrefix = sprintf("NA %s %s", $szKeyFrameID, $szKeyFrameID);
+			$arOutput = loadOneRawSIFTFile($szFPSIFTDataFN, $fKPSamplingRate, $szAnnPrefix);
+
+			//		print_r($arOutput);
+			//		break;
+
+			//$arKeyPointFeatureList = array_merge($arKeyPointFeatureList, $arOutput);
+				
+			// split to feature and ann
+			foreach($arOutput as $szLine)
+			{
+				$arTmpzzz = explode("%", $szLine);
+
+				$arKeyPointFeatureList[] = trim($arTmpzzz[0]);
+				$arAnnList[] = trim($arTmpzzz[1]);
+			}
+
+			$nNumSelKPs = sizeof($arOutput);
+			$nNumKPs += $nNumSelKPs;
+			printf("### Total keypoints [%s] collected after adding [%s] keypoints\n", $nNumKPs, sizeof($arOutput));
+				
+			// log
+			global $szFPLogFN;
+			$arLog = array();
+			$arLog[] = sprintf("###[%s] - NumKF: %s. Total: %s", $szKeyFrameID, $nNumSelKPs, $nNumKPs);
+			
+			saveDataFromMem2File($arLog, $szFPLogFN, "a+t");
+				
+			$arOutput = array();
+			deleteFile($szFPSIFTDataFN);
+				
+			if($nNumKPs >= $nMaxKeyPoints)
+			{
+				printf("### Reach the limit [%s]. Break\n", $nMaxKeyPoints);
+				break;
+			}
+
+			// -2 because 2 rows are for comment line and number of samples
+			$nNumSamplesInBlock = sizeof($arKeyPointFeatureList)-2;
+			if($nNumSamplesInBlock >= $nMaxSamplesPerBlock)
+			{
+				printf("@@@Writing output ...\n");
+				$arKeyPointFeatureList[1] = sprintf("%s", $nNumSamplesInBlock); // update the number of samples of the block
+				saveDataFromMem2File($arKeyPointFeatureList, $szFPDataOutputFN, "wt");
+
+				$arAnnList[1] = sprintf("%s", $nNumSamplesInBlock);
+				saveDataFromMem2File($arAnnList, $szFPAnnOutputFN, "wt");
+
+				// prepare for the new chunk-block
+				$nBlockID++;
+				if($nBlockID >= $nMaxBlocksPerChunk)
+				{
+					// new chunk
+					$nBlockID = 0;
+					$nChunkID++;
+				}
+
+				$szFPDataOutputFN = sprintf("%s/%s-c%d-b%d.%s", $szOutputDir, $szDataPrefix, $nChunkID, $nBlockID, $szDataExt);
+				$szFPAnnOutputFN = sprintf("%s/%s-c%d-b%d.ann", $szOutputDir, $szDataPrefix, $nChunkID, $nBlockID);
+
+				$arKeyPointFeatureList = array();
+				$arKeyPointFeatureList[0] = sprintf("%% Feature: %s - Max Keypoints: %s - List: %s", $szFeatureExt, $nMaxKeyPoints, $szFPInputListFN);
+				$arKeyPointFeatureList[1] = sprintf("%s", $nMaxSamplesPerBlock); // estimated number of samples
+
+				$arAnnList = array();
+				$arAnnList[0] = sprintf("%% Feature: %s - Max Keypoints: %s - List: %s", $szFeatureExt, $nMaxKeyPoints, $szFPInputListFN);
+				$arAnnList[1] = sprintf("%s", $nMaxSamplesPerBlock); //  estimated number of samples
+
+			}
+		}
+		else
+		{
+			printf("[%s]. NO OK\n", $szFPTarKeyPointFN);
+		}
+	}
+
+	$nNumSamplesInBlock = sizeof($arKeyPointFeatureList)-2;
+	if($nNumSamplesInBlock)
+	{
+		$arKeyPointFeatureList[1] = sprintf("%s", $nNumSamplesInBlock); // update the number of samples of the block
+		saveDataFromMem2File($arKeyPointFeatureList, $szFPDataOutputFN, "wt");
+
+		$arAnnList[1] = sprintf("%s", $nNumSamplesInBlock);
+		saveDataFromMem2File($arAnnList, $szFPAnnOutputFN, "wt");
+	}
+}
+
 
 ?>
