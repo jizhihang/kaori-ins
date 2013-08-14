@@ -53,6 +53,10 @@ $arPat2PathList = array(
 		"queryext502013-new" => "tv2013/queryext502013-new", 
 		"queryext502012-new" => "tv2012/queryext502012-new", 
 		"queryext502011-new" => "tv2011/queryext502011-new", 
+
+		"subtest2013-new" => "tv2013/subtest2013-new",
+		"subtest2012-new" => "tv2012/subtest2012-new", 
+		"subtest2011-new" => "tv2011/subtest2011-new", 
 );  // *** CHANGED ***
 
 $nNumPats = sizeof($arPat2PathList);
@@ -68,6 +72,10 @@ $arMaxVideosPerPatList = array(
 		"queryext502013-new" => 1000, // *** CHANGED ***
 		"queryext502012-new" => 1000, // *** CHANGED ***
 		"queryext502011-new" => 1000, // *** CHANGED ***
+
+		"subtest2013-new" => 1000,
+		"subtest2012-new" => 1000, 
+		"subtest2011-new" => 1000, 
 ); // Precise: N/A
 
 $arMaxHostsPerPatList = array(
@@ -77,7 +85,12 @@ $arMaxHostsPerPatList = array(
 		"queryext502013-new" => 100, // *** CHANGED ***
 		"queryext502012-new" => 100, // *** CHANGED ***
 		"queryext502011-new" => 100, // *** CHANGED ***
+
+		"subtest2013-new" => 100,
+		"subtest2012-new" => 100, 
+		"subtest2011-new" => 100, 
 ); // Precise: N/A
+
 
 // these params are used in extracting raw local features. 
 // normally, one keyframe --> one raw feature file

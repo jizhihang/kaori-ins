@@ -17,7 +17,11 @@
 require_once "ksc-AppConfig.php";
 
 $nSamplingRate = 5; // 1/5 -20% of total shots
+// distribute into VideoID
+$nMaxShotsPerVideoID = 50;
 
+$arOrigPatList = array(2011 => "test2011-new", 2012 => "test2012-new", 2013 => "test2013-new");
+$arSamplingRateList = array(2011 => 10, 2012 => 20, 2013 => 20);
 if($argc !=2)
 {
 	printf("Usage: %s <Year>\n", $arg[0]);
@@ -26,10 +30,25 @@ if($argc !=2)
 }
 $nTVYear = $argv[1];
 $szTVYear = sprintf("tv%d", $nTVYear);
-$szRootMetaDataDir = sprintf("%s/metadata-bak/keyframe-5", $gszRootBenchmarkDir);
-$szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
+$szPatName = $arOrigPatList[$nTVYear];
+$szSubPatName = sprintf("sub%s", $szPatName);
 
-$szSubTestMetaDataDir = sprintf("%s/%s/subtest", $szRootMetaDataDir, $szTVYear);
+$nSamplingRate = $arSamplingRateList[$nTVYear];
+
+if($nTVYear == 2013) // still keep the old one for Duc's experiments
+{
+    $szRootMetaDataDir = sprintf("%s/metadata-bak/keyframe-5", $gszRootBenchmarkDir);
+}
+else
+{
+    $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
+}
+
+$szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
+$szRootKeyFrameDir = sprintf("%s/keyframe-5", $gszRootBenchmarkDir);
+$szInputKeyFrameDir = sprintf("%s/%s/%s", $szRootKeyFrameDir, $szTVYear, $szPatName);
+$szOutputKeyFrameDir = sprintf("%s/%s/%s", $szRootKeyFrameDir, $szTVYear, $szSubPatName);
+makeDir($szKeyFrameDir);
 
 // first VideoID consists of relevant shots 
 $szFPNISTResultFN = sprintf("%s/ins.search.qrels.%s", $szMetaDataDir, $szTVYear);
@@ -49,25 +68,38 @@ if(file_exists($szFPNISTResultFN))
         }
     }
     
-    // other VideoID consists of distracting shots
-    $szFPInputFN = sprintf("%s/%s.test.lst", $szMetaDataDir, $szTVYear);
+    $szFPInputFN = sprintf("%s/%s.lst", $szMetaDataDir, $szPatName);
+
     $nNumVideos = loadListFile($arVideoList, $szFPInputFN);
     shuffle($arVideoList);
     
     $nCount = 0;
     $arFinalOutput = array();
     // aggregate all shots of test partition
-    foreach($arVideoList as $szVideoID)
+    $arVideoShotLUT = array(); 
+    foreach($arVideoList as $szLine)
     {
-        $szFPInputFN = sprintf("%s/test/%s.prg", $szMetaDataDir, $szVideoID);
+        $arTmpzz = explode("#$#", $szLine);
+        $szVideoID = trim($arTmpzz[0]);
+        $szFPInputFN = sprintf("%s/%s/%s.prg", $szMetaDataDir, $szPatName, $szVideoID);
+        
         loadListFile($arShotList, $szFPInputFN);
         foreach($arShotList as $szLine)
         {
-            $arTmp = explode("#$#", $szLine);
-            $szShotID = trim($arTmp[0]);
-            $szKeyFrameID = trim($arTmp[1]);
-            
+            if($nTVYear == 2012 || $nTVYear == 2011)
+            {
+                //FL000076643_0001
+                $arTmpzz = explode("_", $szLine);
+                $szShotID = trim($arTmpzz[0]);
+                $szKeyFrameID = trim($szLine);
+            }
+            else 
+            {
+                exit("parser does not support");    
+            }            
+
             $arFinalOutput[$szShotID][] = $szKeyFrameID;
+            $arVideoShotLUT[$szShotID] = $szVideoID;
         }
     }
     
@@ -89,10 +121,9 @@ if(file_exists($szFPNISTResultFN))
             $nCount++;
         }
     }
-    
-    // distribute into VideoID
-    $nMaxShotsPerVideoID = 50;
-    
+     
+    printf("Num selected shots: %d\n", sizeof($arSubTestOutput));
+    //exit();
     $nIndex = 0;
     $nVideoID = 0;
     $arVideoList = array();
@@ -102,19 +133,27 @@ if(file_exists($szFPNISTResultFN))
     
     foreach($arSubTestOutput as $szShotID => $arKeyFrameList)
     {
+        $szOrigVideoID = $arVideoShotLUT[$szShotID];
+        $szInputKeyFrameDir2 = sprintf("%s/%s", $szInputKeyFrameDir, $szOrigVideoID);
         if(($nIndex % $nMaxShotsPerVideoID) == 0)
         {
         	$szVideoID = sprintf("%s_%d", $szPrefix, $nVideoID);
+        	$szOutputKeyFrameDir2 = sprintf("%s/%s", $szOutputKeyFrameDir, $szVideoID);
+        	makeDir($szOutputKeyFrameDir2);
         	$nVideoID++;
         }
         $nIndex++;
+        
+        // make soft link
+        $szCmdLine = sprintf("cp %s/%s.tar %s", $szInputKeyFrameDir2, $szShotID, $szOutputKeyFrameDir2);
+        execSysCmd($szCmdLine);
         
         $nDPMCount = 0;
         $nNumKeyFrames = sizeof($arKeyFrameList);
         $nMiddle = intval(0.5*$nNumKeyFrames); // only pick ONE keyframe per shot
         foreach($arKeyFrameList as $szKeyFrameID)
         {
-        	$arVideoList[$szVideoID][] = sprintf("%s#$#%s", $szShotID, $szKeyFrameID);
+        	$arVideoList[$szVideoID][] = sprintf("%s", $szKeyFrameID);
         	
         	if($nDPMCount == $nMiddle)
         	{
@@ -125,9 +164,9 @@ if(file_exists($szFPNISTResultFN))
     }
     
     // new partition called subtest --> a subset of test partition
-    $szOutputDir = sprintf("%s/%s/subtest", $szRootMetaDataDir, $szTVYear);
+    $szOutputDir = sprintf("%s/%s/%s", $szRootMetaDataDir, $szTVYear, $szSubPatName);
     makeDir($szOutputDir);
-    $szFPOutputFN = sprintf("%s/%s/%s.subtest.lst", $szRootMetaDataDir, $szTVYear, $szTVYear); // tv2011.lst
+    $szFPOutputFN = sprintf("%s/%s/%s.lst", $szRootMetaDataDir, $szTVYear, $szSubPatName); 
     saveDataFromMem2File(array_keys($arVideoList), $szFPOutputFN);
     foreach($arVideoList as $szVideoID => $arKeyFrameList)
     {
@@ -135,15 +174,19 @@ if(file_exists($szFPNISTResultFN))
     	saveDataFromMem2File($arKeyFrameList, $szFPOutputFN);
     }
     
-    $szFPOutputFN = sprintf("%s/%s/%s.subtest.dpm.lst", $szRootMetaDataDir, $szTVYear, $szTVYear); // tv2011.lst
+    $szFPOutputFN = sprintf("%s/%s/%s.dpm.lst", $szRootMetaDataDir, $szTVYear, $szSubPatName); 
     saveDataFromMem2File($arDPMList, $szFPOutputFN);
     
-    printf("%d - %d - %d", sizeof($arSubTestOutput), sizeof($arFinalOutput), $nSamplingRate);exit();
+    printf("Num shots of subtest: %d - Num all shots: %d - Sampling rate: %d", sizeof($arSubTestOutput), sizeof($arFinalOutput), $nSamplingRate);
+        
+    exit();
 }
 
+///////////////// INS 2013 //////////////////
 
 // other VideoID consists of distracting shots
-$szFPInputFN = sprintf("%s/%s.test.lst", $szMetaDataDir, $szTVYear);
+$szPatName = "test";
+$szFPInputFN = sprintf("%s/%s.%s.lst", $szMetaDataDir, $szTVYear, $szPatName);
 $nNumVideos = loadListFile($arVideoList, $szFPInputFN);
 shuffle($arVideoList);
 
@@ -152,7 +195,7 @@ $arFinalOutput = array();
 // aggregate all shots of test partition
 foreach($arVideoList as $szVideoID)
 {
-	$szFPInputFN = sprintf("%s/test/%s.prg", $szMetaDataDir, $szVideoID);
+	$szFPInputFN = sprintf("%s/%s/%s.prg", $szMetaDataDir, $szPatName, $szVideoID);
 	loadListFile($arShotList, $szFPInputFN);
 	foreach($arShotList as $szLine)
 	{
@@ -164,11 +207,10 @@ foreach($arVideoList as $szVideoID)
 	}
 }
 
-/** For INS 2013 */
 // select a subset of shots
 $arSubTestOutput = array();
 $nCount = 0;
-$nSamplingRate = 1; // pick all shots
+$nSamplingRate = 10; // pick all shots
 foreach($arFinalOutput as $szShotID => $arKeyFrameList)
 {
 	if(($nCount % $nSamplingRate) == 0)
@@ -214,9 +256,9 @@ foreach($arSubTestOutput as $szShotID => $arKeyFrameList)
 }
 
 // new partition called subtest --> a subset of test partition
-$szOutputDir = sprintf("%s/%s/subtest", $szRootMetaDataDir, $szTVYear);
+$szOutputDir = sprintf("%s/%s/subtest10", $szRootMetaDataDir, $szTVYear);
 makeDir($szOutputDir);
-$szFPOutputFN = sprintf("%s/%s/%s.subtest.lst", $szRootMetaDataDir, $szTVYear, $szTVYear); // tv2011.lst
+$szFPOutputFN = sprintf("%s/%s/%s.subtest10.lst", $szRootMetaDataDir, $szTVYear, $szTVYear); // tv2011.lst
 saveDataFromMem2File(array_keys($arVideoList), $szFPOutputFN);
 foreach($arVideoList as $szVideoID => $arKeyFrameList)
 {
@@ -224,11 +266,11 @@ foreach($arVideoList as $szVideoID => $arKeyFrameList)
 	saveDataFromMem2File($arKeyFrameList, $szFPOutputFN);
 }
 
-$szFPOutputFN = sprintf("%s/%s/%s.subtest.dpm.lst", $szRootMetaDataDir, $szTVYear, $szTVYear); // tv2011.lst
+$szFPOutputFN = sprintf("%s/%s/%s.subtest10.dpm.lst", $szRootMetaDataDir, $szTVYear, $szTVYear); // tv2011.lst
 saveDataFromMem2File($arDPMList, $szFPOutputFN);
 
-printf("%d - %d - %d", sizeof($arSubTestOutput), sizeof($arFinalOutput), $nSamplingRate);exit();
-
+printf("Num shots of subtest: %d - Num all shots: %d - Sampling rate: %d", sizeof($arSubTestOutput), sizeof($arFinalOutput), $nSamplingRate);
+exit();
 ///////////////////////////// FUNCTIONS /////////////////////////
 
 function parseNISTResult($szFPInputFN)

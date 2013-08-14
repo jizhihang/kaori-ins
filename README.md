@@ -47,15 +47,36 @@ git clone https://github.com/ledduy/kaori-ins.git
 + Submission format: <item seqNum="1" shotId="shot4324_2" />
 
 5. Steps
-5.1. Generate metadata
-- Code: php -f ksc-GenerateMetaData.php 2011|2012|2013 test|query
+5.1. Generate metadata (DONE Aug 12)
+- Code: php -f ksc-Tool-GenerateMetaData.php 2011|2012|2013 test|query|queryext50 
+- Generate metadata for new corresponding pats, e.g. test2013-new
+- For tv2011, tv2012 --> copy data to keyframe-5/tv2012/test2012-new/TRECVID2012_1/*.tar
+- For tv2013 --> only 5KF/shot are copied and packed in .tar file.
+- Running time on SGE (24 cores) for tv2013 is 16 hours, tv2012 & tv2011 is 4 hours.
 
-5.2. Extract raw feature (Thanh)
-- 1 job, 2K keyrames, 2 hours. approx 3-4 sec/keyframe (size max 500x500)
-- Max image size: 500x500
-- Codebook size: 1K, 2K, 10K, 20K.
-- Keypoint detector: HesLap & Dense sampling (step size 6 pixel, 2 scales).
-- Descriptor: SIFT.
+5.2. Generate metadata for subtest
+- Code: ksc-Tool-Tool-GenerateMetaDataForSubTest.php 2012
+- Note: Copy *.tar files of selected shots to new dir (it is better to use softlink, but here cp is used).
+- Shot sampling rate: $arSamplingRateList = array(2011 => 10, 2012 => 20, 2013 => 20);
+- subtest2012-new: 
++ #keyframes: 146,966 (full:  2,256,930)
++ #shots: ~98x50
++ note: shots of groundtruth are also added. 
+
+5.2. Extract raw local features using colorsift
+- Code: ksc-Feature-ExtractRawAffCovSIFTFeature-COLORSIFT*.*
+- Max image size: 500x500 (specified in ksc-AppConfig.php)
+- Keypoint detector: HarLap & Dense sampling (step size 6 pixel, 2 scales).
+- Descriptor: SIFT and rgbSIFT.
+
+***colordescriptor ver 3.0 - Processing time: 
+- harlap x rgbsift: 12 sec/KF
+- harlap x sift: 7 sec/KF
+- dense6 x rgbsift: 10 sec/KF
+- dense6 x sift: 6 sec/KF
+- note: colordescriptor auto resize large KF into max 500x500
+
 
 5.3. Running DPM model
-~ 4 sec/keyframe (tv2012)
+- tv2012 ~ 4 sec/keyframe 
+- tv2013: 16 sec/keyframe for 2x scale factor on test keyframes, 6 sec/keyframe for normal KF.
