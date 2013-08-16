@@ -65,6 +65,11 @@ if(file_exists($szFPInputFN))
         $arQueryListCount[$szQueryIDx] = $nCount;
     }
 }
+
+
+$szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/%s", $szTVYear);
+$arDirList = collectDirsInOneDir($szResultDir);
+
 //print_r($arQueryListCount);
 // show form
 if($nAction == 1)
@@ -97,9 +102,12 @@ if($nAction == 1)
 	printf("<P>RunID<BR>\n");
 	// load xml file
 	printf("<SELECT NAME='vRunID'>\n");
-	printf("<OPTION VALUE='RunMatching'>Matching Using BoW</OPTION>\n");
-	printf("<OPTION VALUE='RunDetection'>Detecting Using DPM</OPTION>\n");
-	printf("<OPTION VALUE='RunFusion'>Fusion of Matching and Detection Scores</OPTION>\n");
+	foreach($arDirList as $szDirName)
+	{
+	   printf("<OPTION VALUE='%s'>%s</OPTION>\n", $szDirName, $szDirName);
+	}
+//	printf("<OPTION VALUE='RunDetection'>Detecting Using DPM</OPTION>\n");
+//	printf("<OPTION VALUE='RunFusion'>Fusion of Matching and Detection Scores</OPTION>\n");
 	printf("</SELECT>\n");
 
 	printf("<P>PageID<BR>\n");
@@ -175,6 +183,7 @@ if(!file_exists($szFPOutputFN))
 $szRootKeyFrameDir = sprintf("%s/keyframe-5", $gszRootBenchmarkDir);
 $szKeyFrameDir = sprintf("%s/%s", $szRootKeyFrameDir, $szTVYear);
 $arOutput = array();
+$arOutput[] = sprintf("<P><H1>RunID: %s<BR>\n", $szRunID);
 $arOutput[] = sprintf("<P><H1>Query - %s</H1><BR>\n", $szText);
 foreach($arQueryImgList as  $szQueryImg)
 {
@@ -216,14 +225,14 @@ if($nShowGT)
 }
 else
 {
-    if($szRunID == "RunDetection")
+    if(strstr($szRunID, "dpm"))
     {
         if($szTVYear != "tv2013")
         {
             $arTmpz = explode("Q", $szQueryID);
             $nQueryID = intval($arTmp[1]);
             $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/%s/dpm", $szTVYear);
-            $szQueryResultDir = sprintf("%s/%d", $szResultDir, $nQueryID);
+            $szQueryResultDir = sprintf("%s/Q%d", $szResultDir, $nQueryID);
             
         }
         else 
@@ -232,9 +241,10 @@ else
             $szQueryResultDir = sprintf("%s/%s", $szResultDir, $szQueryID);
         }
     }
-    if($szRunID == "RunMatching")
+    if(strstr($szRunID, "bow"))
     {
-        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/%s/bow", $szTVYear);        
+        $szResultDir = sprintf("/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/trial1/%s/%s", $szTVYear, $szRunID);        
+        $szQueryResultDir = sprintf("%s/%s", $szResultDir, $szQueryID);
     }
     $szFPOutputFN = sprintf("%s/%s.rank", $szResultDir, $szQueryID);
     if(!file_exists($szFPOutputFN))
@@ -246,7 +256,7 @@ else
         {
             $arRawList[] = sprintf("%s#$#%0.4f", $szShotID, $fScore);
             $nCount++;
-            if($nCount>1000)
+            if($nCount>10000)
                 break;
         }
         //saveDataFromMem2File($arRawList, $szFPOutputFN);
@@ -264,7 +274,7 @@ foreach($arRawList as $szLine)
     $arTmp = explode("#$#", $szLine);
     $szShotID = trim($arTmp[0]);
     $fScore = floatval($arTmp[1]);
-    if(sizeof($arScoreList) < 1000)
+    if(sizeof($arScoreList) < 10000)
     {
         $arScoreList[$szShotID] = $fScore;
     }
@@ -272,7 +282,10 @@ foreach($arRawList as $szLine)
 
 $arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=1000);
 $fMAP = $arTmpzzz['ap'];
-$arOutput[] = sprintf("<P><H3>MAP: %0.2f<BR>\n", $fMAP);
+$nHits = $arTmpzzz['total_hits'];
+$arOutput[] = sprintf("<P><H3>MAP: %0.2f. Num hits (@1000): %d<BR>\n", $fMAP, $nHits);
+$arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=10000);
+print_r($arTmpzzz);
 ////
 
 $nCount = 0;
@@ -313,8 +326,8 @@ for($i=0; $i<$nNumPages; $i++)
 		$arOutput[] = sprintf("%02d ", $i+1);
 	}
 }
-$arOutput[] = sprintf("<P>RunID: %s<BR>\n", $szRunID);
 
+printf("<BR>\n");
 //print_r($arScoreList);exit();
 for($i=$nStartID; $i<$nEndID; $i++)
 {
@@ -491,7 +504,7 @@ function parseNISTResult($szFPInputFN)
 function loadRankedList($szQueryID, $szResultDir, $szRunID="RunDetection")
 {
 	global $szTVYear;
-    if($szRunID == "RunDetection")
+    if(strstr($szRunID, "dpm"))
 	{
     	$arFileList = collectFilesInOneDir($szResultDir, "", ".res");
     	//print_r($arFileList);
@@ -534,7 +547,7 @@ function loadRankedList($szQueryID, $szResultDir, $szRunID="RunDetection")
     	return ($arRankList);
 	}
 	
-	if($szRunID == "RunMatching")
+    if(strstr($szRunID, "bow"))
 	{
    	
     	$arFileList = collectFilesInOneDir($szResultDir, "", ".res");
@@ -563,7 +576,7 @@ function loadRankedList($szQueryID, $szResultDir, $szRunID="RunDetection")
     			}
     		}
     	}
-    	asort($arRankList);
+    	arsort($arRankList);
 
 
     	return ($arRankList);

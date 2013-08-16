@@ -247,6 +247,7 @@ function computeTVAveragePrecision(&$arAnnList, &$arScoreList, $nMaxDocs=2000)
 	
 	$arRecList = array();
 	$arPrecList = array();
+	$arHitList = array();
 	for($i=0; $i<$nNumCounts; $i++)
 	{
 		$szDocID = $arDocList[$i];
@@ -268,6 +269,7 @@ function computeTVAveragePrecision(&$arAnnList, &$arScoreList, $nMaxDocs=2000)
 			$fPrecision = 100.0*$nHits/($i+1);
 			$arRecList[] = $fRecall;
 			$arPrecList[] = $fPrecision;
+			$arHitList[] = $i;
 		}
 	}
 
@@ -303,9 +305,10 @@ function computeTVAveragePrecision(&$arAnnList, &$arScoreList, $nMaxDocs=2000)
 	
 	$arOutput = array();
 	
-	$arOutput['total_hits'] = $nTotalHits;
+	$arOutput['total_hits'] = $nHits;
 	$arOutput['prec_list'] = $arPrecList;
 	$arOutput['rec_list'] = $arRecList;
+	$arOutput['hit_list'] = $arHitList;
 	$arOutput['ap'] = $fAveragePrecision;
 
 	return $arOutput;
