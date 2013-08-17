@@ -808,8 +808,6 @@ function computeAssignmentSash($szLocalDir,
 		$time_end = microtime(true);
 		printf("Processing time: %0.2f\n", $time_end - $time_start);
 
-		if($i>5)
-		    break; // debug only
 	}
 
 }

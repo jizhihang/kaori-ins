@@ -82,43 +82,45 @@ $arDestPatList = array(
 );
 
 
-$arFeatureList = array("nsc.raw.harhes.sift",
-		"nsc.raw.harlap.sift",
-		"nsc.raw.heslap.sift",
+$arFeatureList = array(
+//        "nsc.raw.harhes.sift",
+//		"nsc.raw.harlap.sift",
+//		"nsc.raw.heslap.sift",
 		//						"nsc.raw.hesaff.sift",
-		"nsc.raw.haraff.sift",
-		"nsc.raw.dense4.sift",
-		"nsc.raw.dense6.sift",
-		"nsc.raw.dense8.sift",
+//		"nsc.raw.haraff.sift",
+//		"nsc.raw.dense4.sift",
+//		"nsc.raw.dense6.sift",
+//		"nsc.raw.dense8.sift",
 		//						"nsc.raw.dense10.sift",
-		"nsc.raw.phow6.sift",
-		"nsc.raw.phow8.sift",
-		"nsc.raw.phow10.sift",
-		"nsc.raw.phow12.sift",
+//		"nsc.raw.phow6.sift",
+//		"nsc.raw.phow8.sift",
+//		"nsc.raw.phow10.sift",
+//		"nsc.raw.phow12.sift",
 		//						"nsc.raw.phow14.sift",
-		"nsc.raw.dense4mul.oppsift",
-		"nsc.raw.dense4mul.sift",
-		"nsc.raw.dense4mul.rgsift",
-		"nsc.raw.dense4mul.rgbsift",
-		"nsc.raw.dense4mul.csift",
+//		"nsc.raw.dense4mul.oppsift",
+//		"nsc.raw.dense4mul.sift",
+//		"nsc.raw.dense4mul.rgsift",
+//		"nsc.raw.dense4mul.rgbsift",
+//		"nsc.raw.dense4mul.csift",
 
-		"nsc.raw.dense6mul.oppsift",
+//		"nsc.raw.dense6mul.oppsift",
 		"nsc.raw.dense6mul.sift",
-		"nsc.raw.dense6mul.rgsift",
+//		"nsc.raw.dense6mul.rgsift",
 		"nsc.raw.dense6mul.rgbsift",
-		"nsc.raw.dense6mul.csift",
+//		"nsc.raw.dense6mul.csift",
 
 		"nsc.raw.harlap6mul.rgbsift",
         "nsc.raw.harlap6mul.sift",
     
-		"nsc.raw.dense4mul.oppsift",
-		"nsc.raw.dense4mul.sift",
-		"nsc.raw.dense4mul.rgsift",
-		"nsc.raw.dense4mul.rgbsift",
-		"nsc.raw.dense4mul.csift",);
+//		"nsc.raw.dense4mul.oppsift",
+//		"nsc.raw.dense4mul.sift",
+//		"nsc.raw.dense4mul.rgsift",
+//		"nsc.raw.dense4mul.rgbsift",
+//		"nsc.raw.dense4mul.csift",
+);
 
-$szInputSourcePatName = "subtest2012-new";
-$szInputDestPatName = "subtest2012-new";
+$szSourcePatName = "subtest2012-new";
+$szDestPatName = "subtest2012-new";
 
 //////////////////// END FOR CUSTOMIZATION ////////////////////
 
@@ -126,38 +128,19 @@ $szInputDestPatName = "subtest2012-new";
 
 if($argc != 3)
 {
-	printf("Usage: %s <SourcePatName> <DestPath>\n", $argv[0]);
-	printf("Usage: %s %s %s\n", $argv[0], $szInputSourcePatName, $szInputDestPatName);
+	printf("Usage: %s <SourcePatName> <DestPatName>\n", $argv[0]);
+	printf("Usage: %s %s %s\n", $argv[0], $szSourcePatName, $szDestPatName);
 	exit();
 }
 
-$szInputSourcePatName = $argv[1];
-$szInputDestPatName = $argv[2];
+$szSourcePatName = $argv[1];
+$szDestPatName = $argv[2];
 
-foreach($arSourcePatList as $szSourcePatName)
-{
-	if($szSourcePatName != $szInputSourcePatName)
-	{
-		printf("### Skipping [%s] ...\n", $szSourcePatName);
-		continue;
-	}
-
-	foreach($arDestPatList as $szDestPatName)
-	{
-		if($szDestPatName != $szInputDestPatName)
-		{
-			printf("### Skipping [%s] ...\n", $szDestPatName);
-			continue;
-		}
-
-		$szFPPatName = $szDestPatName;
 
 		$arCmdLineList =  array();
 
-		$nMaxVideosPerPat = $arMaxVideosPerPatList[$szFPPatName];
+		$nMaxVideosPerPat = $arMaxVideosPerPatList[$szDestPatName];
 		$nNumVideosPerHost = max(1, intval($nMaxVideosPerPat/$nMaxHostsPerPat)); // Oct 19
-
-		printf("### Found pair (%s, %s)! [%s-%s]\n", $szSourcePatName, $szDestPatName, $nMaxVideosPerPat, $nNumVideosPerHost);
 
 		foreach($arFeatureList as $szFeatureExt)
 		{
@@ -190,14 +173,12 @@ foreach($arSourcePatList as $szSourcePatName)
 				
 			}
 			$szFPOutputFN = sprintf("%s/runme.qsub.%s.%s.%s.sh",
-					$szScriptOutputDir, $szCoreScriptName, $szFPPatName, $szFeatureExt); // specific for one set of data
+					$szScriptOutputDir, $szCoreScriptName, $szDestPatName, $szFeatureExt); // specific for one set of data
 			if(sizeof($arCmdLineList) > 0 )
 			{
 				saveDataFromMem2File($arCmdLineList, $szFPOutputFN, "wt");
 				$arRunFileList[] = $szFPOutputFN;
 			}
 		}
-	}
-}
 
 ?>

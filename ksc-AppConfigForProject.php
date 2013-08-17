@@ -69,24 +69,35 @@ $arMaxVideosPerPatList = array(
 		"test2013-new" => 1000,
 		"test2012-new" => 1000, // *** CHANGED ***
 		"test2011-new" => 1000, // *** CHANGED ***
-		"queryext502013-new" => 1000, // *** CHANGED ***
+
+        "queryext502013-new" => 1000, // *** CHANGED ***
 		"queryext502012-new" => 1000, // *** CHANGED ***
 		"queryext502011-new" => 1000, // *** CHANGED ***
 
+        "query2013-new" => 100, // *** CHANGED ***
+        "query2012-new" => 100, // *** CHANGED ***
+        "query2011-new" => 100, // *** CHANGED ***
+    
 		"subtest2013-new" => 100,
 		"subtest2012-new" => 100, 
 		"subtest2011-new" => 100, 
+
 ); // Precise: N/A
 
 $arMaxHostsPerPatList = array(
 		"test2013-new" => 100,
 		"test2012-new" => 100, // *** CHANGED ***
 		"test2011-new" => 100, // *** CHANGED ***
-		"queryext502013-new" => 100, // *** CHANGED ***
+
+        "queryext502013-new" => 100, // *** CHANGED ***
 		"queryext502012-new" => 100, // *** CHANGED ***
 		"queryext502011-new" => 100, // *** CHANGED ***
 
-		"subtest2013-new" => 100,
+        "query2013-new" => 100, // *** CHANGED ***
+        "query2012-new" => 100, // *** CHANGED ***
+        "query2011-new" => 100, // *** CHANGED ***
+    
+        "subtest2013-new" => 100,
 		"subtest2012-new" => 100, 
 		"subtest2011-new" => 100, 
 ); // Precise: N/A

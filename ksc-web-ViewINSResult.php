@@ -327,7 +327,7 @@ for($i=0; $i<$nNumPages; $i++)
 	}
 }
 
-printf("<BR>\n");
+$arOutput[] = sprintf("<BR>\n");
 //print_r($arScoreList);exit();
 for($i=$nStartID; $i<$nEndID; $i++)
 {
