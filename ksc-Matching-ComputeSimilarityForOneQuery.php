@@ -23,7 +23,6 @@ $szRootResultDir =  sprintf("%s/result", $szRootDir); //TO DO
 //////////////////// END FOR CUSTOMIZATION ////////////////////
 
 ///////////////////////////// MAIN ////////////////////////////////
-$szRunID = "run_bl";
 $szQueryID =  "9048";
 $szQueryPatName = "queryext2012-new";
 $szTestPatName = "subtest2012-new";
@@ -31,20 +30,21 @@ $szFeatureExt = "nsc.bow.dense6mul.sift.Soft-1000.subtest2012-new.norm1x1";
 $nStartVideoID = 0;
 $nEndVideoID = 1;
 
-if($argc != 8)
+if($argc != 7)
 {
-    printf("Usage: %s <RunID> <QueryID> <QueryPatName> <TestPatName> <FeatureExt> <StartVideoID> <EndVideoID>\n", $argv[0]);
-    printf("Usage: %s %s %s %s %s %s %d %d\n", $argv[0], $szRunID, $szQueryID, $szQueryPatName, $szTestPatName, $szFeatureExt, $nStartVideoID, $nEndVideoID);
+    printf("Usage: %s <QueryID> <QueryPatName> <TestPatName> <FeatureExt> <StartVideoID> <EndVideoID>\n", $argv[0]);
+    printf("Usage: %s %s %s %s %s %d %d\n", $argv[0], $szQueryID, $szQueryPatName, $szTestPatName, $szFeatureExt, $nStartVideoID, $nEndVideoID);
     exit();
 }
 
-$szRunID = $argv[1];
-$szQueryID = $argv[2];
-$szQueryPatName = $argv[3];
-$szTestPatName = $argv[4];
-$szFeatureExt = $argv[5];
-$nStartVideoID = intval($argv[6]);
-$nEndVideoID = intval($argv[7]);
+$szQueryID = $argv[1];
+$szQueryPatName = $argv[2];
+$szTestPatName = $argv[3];
+$szFeatureExt = $argv[4];
+$nStartVideoID = intval($argv[5]);
+$nEndVideoID = intval($argv[6]);
+
+$szRunID = sprintf("run_%s_%s_%s", $szQueryPatName, $szTestPatName, $szFeatureExt);
 
 //*** CHANGED *** !!! Modified Jul 06, 2012
 $szRootOutputDir = getRootDirForFeatureExtraction($szFeatureExt); //*** CHANGED *** !!! New Jul 06, 2012
@@ -115,7 +115,7 @@ function computeSimilarityForOneQueryOnePat($szLocalDir,
 		$szLocalDir2 = sprintf("%s/%s", $szLocalDir, $szVideoID);
 		makeDir($szLocalDir2);
 		
-		$szResultDir = sprintf("%s/%s/%s", $szRootResultDir, $szRunID, $szVideoPath);
+		$szResultDir = sprintf("%s/%s/%s/%s", $szRootResultDir, $szRunID, $szVideoPath, $szQueryID);
 		makeDir($szResultDir);
 		$szFPOutputFN = sprintf("%s/%s.res", $szResultDir, $szVideoID);
 		
