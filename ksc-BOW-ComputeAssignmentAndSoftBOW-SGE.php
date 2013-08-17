@@ -109,7 +109,8 @@ $arFeatureList = array("nsc.raw.harhes.sift",
 		"nsc.raw.dense6mul.csift",
 
 		"nsc.raw.harlap6mul.rgbsift",
-		
+        "nsc.raw.harlap6mul.sift",
+    
 		"nsc.raw.dense4mul.oppsift",
 		"nsc.raw.dense4mul.sift",
 		"nsc.raw.dense4mul.rgsift",

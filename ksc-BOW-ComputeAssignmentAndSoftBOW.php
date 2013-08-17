@@ -333,7 +333,11 @@ function parseOneRawSIFTFile2Grid($szFPSIFTDataFN, $nNumRows=2, $nNumCols=2, $nF
 
 		$arTmp = explode(" ", $szLine);
 		// 5 first values - x y a b c
-		if(sizeof($arTmp) != $nNumDims + 5)
+		// if(sizeof($arTmp) != $nNumDims + 5)
+        // Changed for IMAGENET --> only use .loc file
+		
+		if(sizeof($arTmp) != 5)
+		    
 		{
 			printf("Error in SIFT data file\n");
 			exit();
@@ -803,7 +807,9 @@ function computeAssignmentSash($szLocalDir,
 		
 		$time_end = microtime(true);
 		printf("Processing time: %0.2f\n", $time_end - $time_start);
-		
+
+		if($i>5)
+		    break; // debug only
 	}
 
 }

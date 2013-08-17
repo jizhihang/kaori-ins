@@ -7,7 +7,7 @@
 #$ -S /bin/sh
 
 # Force to limit hosts running jobs
-#$ -q all.q@@bc2hosts,all.q@@bc5hosts,all.q@@bc3hosts,
+#$ -q all.q@@bc2hosts,all.q@@bc4hosts,all.q@@bc3hosts,all.q@@bc1hosts,
 
 # Run in currect dir
 #$ -cwd
