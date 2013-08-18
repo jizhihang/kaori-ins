@@ -163,7 +163,7 @@ $szScriptBaseName = basename($_SERVER['SCRIPT_NAME'], ".php");
 
 $szLocalTmpDir = $gszTmpDir;  // defined in ksc-AppConfig
 
-$szTmpDir = sprintf("%s/%s.bow.computeSoftAssignmentHistWithGridAll/%s/%s-%s-%d-%d", $szLocalTmpDir,  $szScriptBaseName,
+$szTmpDir = sprintf("%s/%s/%s/%s-%s-%d-%d", $szLocalTmpDir,  $szScriptBaseName,
 		$szPatName, $szTargetPatName, $szInputRawFeatureExt, $nStartID, $nEndID);
 makeDir($szTmpDir);
 
@@ -219,6 +219,10 @@ $szFPVideoListFN,
 $szInputRawFeatureExt, $szBOWFeatureExt, 
 $nMaxCodeBookSize,
 $nStartID, $nEndID);
+
+//clean up
+$szCmdLine = sprintf("rm -rf %s", $szSashCentroidDir);
+execSysCmd($szCmdLine);
 
 $arLog = array();
 $szFinishTime = date("m.d.Y - H:i:s");
@@ -417,6 +421,7 @@ function computeSoftWeightingHistogramWithGrid(
 
 	for($i=$nNumCommentLines; $i<$nNumLines; $i++)
 	{
+	    
 		// svf format: NumDims Pos0 Val0 Pos1 Val
 		$szLine = &$arRawList[$i];
 
@@ -543,6 +548,7 @@ function computeSoftWeightingHistogramWithGrid(
 		// printf("%s\n", $szOutput);
 
 		$arOutput[] = $szOutput;
+				
 	}
 	saveDataFromMem2File($arOutput, $szFPOutputFN);
 }

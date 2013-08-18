@@ -71,6 +71,7 @@ $szVideoPath = $arVideoPathLUT[$nTVYear];
 
 $szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
 $arDirList = collectDirsInOneDir($szResultDir);
+sort($arDirList);
 
 //print_r($arQueryListCount);
 // show form
@@ -97,8 +98,8 @@ if($nAction == 1)
 
 	printf("<P>View GroundTruth<BR>\n");
 	printf("<SELECT NAME='vShowGT'>\n");
-	printf("<OPTION VALUE='1'>Yes</OPTION>\n");
 	printf("<OPTION VALUE='0'>No</OPTION>\n");
+	printf("<OPTION VALUE='1'>Yes</OPTION>\n");
 	printf("</SELECT>\n");
 	
 	printf("<P>RunID<BR>\n");
@@ -216,9 +217,10 @@ if($nShowGT)
 else
 {
     printf("Path:$szVideoPath <BR>\n");
+    $szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szRunID, $szVideoPath);
     $szQueryResultDir = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID, $szVideoPath, $szQueryID);
 
-    $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir, $szQueryID);
+    $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szQueryID);
     if(!file_exists($szFPOutputFN))
     {
         $arRawListz = loadRankedList($szQueryResultDir, $nTVYear);
@@ -392,7 +394,7 @@ for($i=0; $i<$nNumPages; $i++)
 {
 	if($i != $nPageID)
 	{
-		$szURL = sprintf("ksc-web-ViewINSResult.php?%s&vPageID=%d&vShowGT=%d", $queryURL, $i+1, $nShowGT);
+		$szURL = sprintf("ksc-web-ViewResult.php?%s&vPageID=%d&vShowGT=%d", $queryURL, $i+1, $nShowGT);
 		$arOutput[] = sprintf("<A HREF='%s'>%02d</A> ", $szURL, $i+1);
 	}
 	else

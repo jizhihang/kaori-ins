@@ -70,9 +70,9 @@ $arMaxVideosPerPatList = array(
 		"test2012-new" => 1000, // *** CHANGED ***
 		"test2011-new" => 1000, // *** CHANGED ***
 
-        "queryext502013-new" => 1000, // *** CHANGED ***
-		"queryext502012-new" => 1000, // *** CHANGED ***
-		"queryext502011-new" => 1000, // *** CHANGED ***
+        "queryext502013-new" => 100, // *** CHANGED ***
+		"queryext502012-new" => 100, // *** CHANGED ***
+		"queryext502011-new" => 100, // *** CHANGED ***
 
         "query2013-new" => 100, // *** CHANGED ***
         "query2012-new" => 100, // *** CHANGED ***
