@@ -43,9 +43,7 @@ if($nAction == 0)
 	exit();
 }
 
-$arMap = array();
 $arVideoPathLUT[2012] = "tv2012/subtest2012-new";
-
 $nTVYear = $_REQUEST['vTVYear'];
 $szTVYear = sprintf("tv%d", $nTVYear);
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
@@ -217,6 +215,7 @@ if($nShowGT)
 }
 else
 {
+    printf("Path:$szVideoPath <BR>\n");
     $szQueryResultDir = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID, $szVideoPath, $szQueryID);
 
     $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir, $szQueryID);
@@ -253,16 +252,17 @@ foreach($arRawList as $szLine)
     }
 }
 
-$arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=1000);
-$fMAP = $arTmpzzz['ap'];
-$nHits = $arTmpzzz['total_hits'];
-$arOutput[] = sprintf("<P><H3>MAP: %0.2f. Num hits (@1000): %d<BR>\n", $fMAP, $nHits);
 $arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=10000);
 print_r($arTmpzzz);
+
+$arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=1000);
+$fMAP = $arTmpzzz['ap'];
+$nTotalHitsz = $arTmpzzz['total_hits'];
+$arOutput[] = sprintf("<P><H3>MAP: %0.2f. Num hits (@1000): %d<BR>\n", $fMAP, $nTotalHitsz);
 ////
 
 $nCount = 0;
-$nNumShownKFPerShot = 2;
+$nNumShownKFPerShot = 5;
 //foreach($arRawList as $szLine)
 
 $nMaxVideosPerPage = intval($_REQUEST['vMaxVideosPerPage']);
@@ -274,7 +274,7 @@ $nNumPages = min(20, intval(($nNumVideos+$nMaxVideosPerPage-1)/$nMaxVideosPerPag
 $queryURL = sprintf("vQueryID=%s&vRunID=%s&vMaxVideosPerPage=%s&vTVYear=%d&vAction=%d&", urlencode($szQueryIDz), urlencode($szRunID), urlencode($nMaxVideosPerPage), $nTVYear, $nAction);
 	//printf($queryURL);
 
-$szURLz = sprintf("ksc-web-ViewINSResult.php?%s&vShowGT=1", $queryURL);
+$szURLz = sprintf("ksc-web-ViewResult.php?%s&vShowGT=1", $queryURL);
 
 $nViewImg = 0;
 if($nShowGT)
@@ -291,7 +291,7 @@ for($i=0; $i<$nNumPages; $i++)
 {
 	if($i != $nPageID)
 	{
-		$szURL = sprintf("ksc-web-ViewINSResult.php?%s&vPageID=%d&vShowGT=%d", $queryURL, $i+1, $nShowGT);
+		$szURL = sprintf("ksc-web-ViewResult.php?%s&vPageID=%d&vShowGT=%d", $queryURL, $i+1, $nShowGT);
 		$arOutput[] = sprintf("<A HREF='%s'>%02d</A> ", $szURL, $i+1);
 	}
 	else

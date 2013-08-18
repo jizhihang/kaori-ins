@@ -168,8 +168,8 @@ $szDestPatName = $argv[2];
 
 				$arCmdLineList[] = $szCmdLine;
 				
-				$szCmdLine = "sleep 2s;";
-				$arCmdLineList[] = $szCmdLine;
+//				$szCmdLine = "sleep 2s;";
+//				$arCmdLineList[] = $szCmdLine;
 				
 			}
 			$szFPOutputFN = sprintf("%s/runme.qsub.%s.%s.%s.sh",

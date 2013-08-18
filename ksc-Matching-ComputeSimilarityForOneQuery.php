@@ -49,7 +49,6 @@ $szRunID = sprintf("run_%s_%s_%s", $szQueryPatName, $szTestPatName, $szFeatureEx
 //*** CHANGED *** !!! Modified Jul 06, 2012
 $szRootOutputDir = getRootDirForFeatureExtraction($szFeatureExt); //*** CHANGED *** !!! New Jul 06, 2012
 $szRootFeatureDir = sprintf("%s/feature/keyframe-5", $szRootOutputDir);
-makeDir($szRootFeatureDir);
 $szRootFeatureInputDir = $szRootFeatureDir;
 
 $szScriptBaseName = basename($_SERVER['SCRIPT_NAME'], ".php");
@@ -107,6 +106,10 @@ function computeSimilarityForOneQueryOnePat($szLocalDir,
 		printf("###%d. Processing video [%s] ...\n", $i, $szVideoID);
 
 		$szVideoPath = $arVideoPathList[$szVideoID];
+		if($szVideoPath == "")
+		{
+		    exit("EMPTY video path\n");
+		}
 
 		// !!! IMPORTANT !!!
 		$szFPKeyFrameListFN = sprintf("%s/%s/%s.prg", $szRootMetaDataDir, $szVideoPath, $szVideoID);
