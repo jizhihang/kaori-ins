@@ -1,8 +1,8 @@
 <?php
 
 /**
- * 		@file 	ksc-ProcessOneRun-Rank.php
- * 		@brief 	Ranking and Evaluation
+ * 		@file 	ksc-ProcessOneRun-Filter4DPM.php
+ * 		@brief 	Ranking and Filtering for DPM
  *		@author Duy-Dinh Le (ledduy@gmail.com, ledduy@ieee.org).
  *
  * 		Copyright (C) 2010-2013 Duy-Dinh Le.
@@ -14,21 +14,30 @@
 require_once "ksc-AppConfig.php";
 require_once "ksc-Tool-EvalMAP.php";
 
+// based on ksc-ProcessOneRun-Rank.php
 
 ////////////////// START //////////////////
 
 
-$nTVYear = 2012;
+$nTVYear = 2013;
 $arVideoPathLUT[2012] = "tv2012/subtest2012-new";
 $arVideoPathLUT[2013] = "tv2013/test2013-new";
+$arMaxShotsLUT = array(2012 => 10000, 2013 => 50000);
+$arQueryIDStartLUT= array(2012=>9048, 2013=>9068);
 
-if($argc!=2)
+$nQueryIDStart = 9069;
+$nQueryIDEnd = 9098;
+if($argc!=4)
 {
-    printf("Usage: %s <Year>\n", $argv[0]);
-    printf("Usage: %s %s\n", $argv[0], $nTVYear);
+    printf("Usage: %s <Year> <QueryIDStart> <QueryIDEnd>\n", $argv[0]);
+    printf("Usage: %s %s %s %s\n", $argv[0], $nTVYear, $nQueryIDStart, $nQueryIDEnd);
     exit();
 }
+
 $nTVYear = intval($argv[1]);
+$nQueryIDStart = intval($argv[2]);
+$nQueryIDEnd = intval($argv[3]);
+
 $szTVYear = sprintf("tv%d", $nTVYear);
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
@@ -38,11 +47,13 @@ $szFPInputFN = sprintf("%s/ins.topics.%d.xml", $szMetaDataDir, $nTVYear);
 $arQueryList = loadQueryDesc($szFPInputFN);
 
 $szVideoPath = $arVideoPathLUT[$nTVYear];
+$nMaxShots = $arMaxShotsLUT[$nTVYear];
 
 $szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
 
 $arDirList = collectDirsInOneDir($szResultDir);
 sort($arDirList);
+print_r($arDirList);
 
 $szFPNISTResultFN = sprintf("%s/ins.search.qrels.%s", $szMetaDataDir, $szTVYear);
 
@@ -55,97 +66,36 @@ $nMaxDocs = 1000;
 $nTVYearz = sprintf("%s", $nTVYear);
 foreach($arDirList as $szRunID)
 {
-    if((!strstr($szRunID, "run_")) || (!strstr($szRunID, $nTVYearz)))
+    if((!strstr($szRunID, "run_")) || (!strstr($szRunID, $nTVYearz)) || (strstr($szRunID, "dpm")))
     {
         printf("### Skipping [%s] ...\n", $szRunID);
         continue;        
     }
 
-    $szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szRunID, $szVideoPath);
-    $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szRunID);
-    if(file_exists($szFPOutputFN))
+     printf("### Processing [%s] ...\n", $szRunID);
+    $nNumQueries = sizeof($arQueryList) + $arQueryIDStartLUT[$nTVYear];
+    if($nQueryIDEnd > $nNumQueries)
     {
-        //continue; // skip existing file
+        $nQueryIDEnd = $nNumQueries;
     }
     
-    $arTVQRELOutput = array(); // for using trec_eval
-    $arKSCMap = array();
-    $fMeanAP = 0;
-    $nCountAP = 0;
-    foreach($arQueryList as $szQueryID => $szTmp)
-    {
-    	printf("Path:$szVideoPath <BR>\n");
-    	$szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szRunID, $szVideoPath);
+    $arQueryKeys = array_keys($arQueryList);
+    //print_r($arQueryKeys);
+    //printf("%d - %d\n", $nQueryIDStart, $nQueryIDEnd);exit();
+    for($nQueryID=$nQueryIDStart; $nQueryID<$nQueryIDEnd; $nQueryID++){
+        
+        $nIndex = $nQueryID - $arQueryIDStartLUT[$nTVYear];
+        $szQueryID = $arQueryKeys[$nIndex];
+        printf("Processing query [%s]\n", $szQueryID);
+
+        $szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szRunID, $szVideoPath);
     	$szQueryResultDir = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID, $szVideoPath, $szQueryID);
     
-        $arRawListz = loadRankedList($szQueryResultDir, $nTVYear);
-        $arRawList = array();
-        $nCount = 0;
-        $nRank = 1;
-        $arScoreList = array();
-        foreach($arRawListz as $szShotID => $fScore)
-        {
-            if(($nTVYear == 2013) &&(strstr($szShotID, "shot0_")))
-            {
-                continue; // skip shot0_
-            }
-            
-            $arRawList[] = sprintf("%s#$#%0.10f", $szShotID, $fScore);
-            if($nRank <= $nMaxDocs)
-        	{        		
-                $arScoreList[$szShotID] = $fScore;
-                
-                $arTVQRELOutput[] = sprintf("%s 0 %s %s %s %s", 
-                    $szQueryID, $szShotID, $nRank, $fScore, $szRunID);
-        	}
-            $nRank++;
-        }
-        
-        $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szQueryID);
-        saveDataFromMem2File($arRawList, $szFPOutputFN);
-        
-        $arAnnList = array();
-        foreach($arNISTList[$szQueryID] as $szShotID)
-        {
-        	$arAnnList[$szShotID] = 1;
-        }
-        
-        $arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs);
-        $fMAP = $arTmpzzz['ap'];
-        
-        //print_r($arTmpzzz); print_r($arAnnList); print_r($arScoreList); exit();
-        
-        $arKSCMap[$szQueryID] = sprintf("%s %0.2f", $szQueryID, $fMAP);
-        $fMeanAP += $fMAP;
-        $nCountAP++;
-    }
+        $arDPMList = loadRankedList($szQueryResultDir, $nTVYear, $nMaxShots);
 
-    $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szRunID);
-    $szFPEvalFN = sprintf("%s/%s.eval", $szQueryResultDir1, $szRunID);
-    saveDataFromMem2File($arTVQRELOutput, $szFPOutputFN);
-    $szTRECEvalApp = "/net/per900b/raid0/ledduy/bin/trec_eval_video.8.1/trec_eval";
-    $szCmdLine = sprintf("%s -q -a -c %s %s %s > %s", $szTRECEvalApp,
-    		$szFPNISTResultFN, $szFPOutputFN, $nMaxDocs, $szFPEvalFN);
-    execSysCmd($szCmdLine);
-
-    loadListFile($arRawList, $szFPEvalFN);
-    $arOutput = array();
-    foreach($arRawList as $szLine)
-    {
-    	if(strstr($szLine, "infAP") && !in_array($szLine, $arOutput))
-    	{
-    		$arOutput[] = $szLine;
-    	}
+        $szFPOutputFN = sprintf("%s/%s.dpm.lst", $szQueryResultDir1, $szQueryID);
+        saveDataFromMem2File($arDPMList, $szFPOutputFN);
     }
-    $szFPEval2FN = sprintf("%s.csv", $szFPEvalFN);
-    saveDataFromMem2File($arOutput, $szFPEval2FN);
-    print_r($arOutput);
-    
-    $szFPEval2FN = sprintf("%s.ksc.csv", $szFPEvalFN);
-    $arKSCMap[MeanAP] = $fMeanAP/$nCountAP;
-    saveDataFromMem2File($arKSCMap, $szFPEval2FN);
-    
-  //  break; // debug
 }
 
 //////////////////////////////// FUNCTIONS ///////////////////////////////////
@@ -212,11 +162,13 @@ function parseNISTResult($szFPInputFN)
 
 
 
-function loadRankedList($szResultDir, $nTVYear)
+function loadRankedList($szResultDir, $nTVYear, $nMaxShots=50000)
 {
     $arFileList = collectFilesInOneDir($szResultDir, "", ".res");
     //print_r($arFileList);
     $arRankList = array();
+    
+    $arShotKeyFrameList = array();
     $nCount = 0;
     foreach($arFileList as $szInputName)
     {
@@ -238,6 +190,25 @@ function loadRankedList($szResultDir, $nTVYear)
         	{
                 $szShotID = sprintf("%s_%s", trim($arTmp1[0]), trim($arTmp1[1]));
         	}
+
+        	if(($nTVYear == 2013) &&(strstr($szShotID, "shot0_")))
+        	{
+        	    continue; // skip shot0_
+        	}
+        	 
+        	// ShotID-KeyFrameID-QueryID.n --> unique
+        	if(isset($arShotKeyFrameList[$szShotID][$szTestKeyFrameID]))
+        	{
+        	    if($arShotKeyFrameList[$szShotID][$szTestKeyFrameID] < $fScore)
+        	    {
+        	        $arShotKeyFrameList[$szShotID][$szTestKeyFrameID]= $fScore;
+        	    }
+        	}
+        	else 
+        	{
+                $arShotKeyFrameList[$szShotID][$szTestKeyFrameID]= $fScore;
+        	}
+
             if(isset($arRankList[$szShotID]))
             {
                 if($arRankList[$szShotID] < $fScore)
@@ -251,9 +222,43 @@ function loadRankedList($szResultDir, $nTVYear)
     		}
     	}
     }
+    
     arsort($arRankList);
+    
+    $arDPMList = array();
+    $nShotCount = 0;
+    foreach($arRankList as $szShotID=>$fScore){
+        
+        $arLocalShotKFList = $arShotKeyFrameList[$szShotID];
+        
+        arsort($arLocalShotKFList);
+        
+        $nKFCount = 0;
+        foreach($arLocalShotKFList as $szKeyFrameID => $fLocalScore)
+        {
+            if(($nKFCount == 0) && ($fLocalScore != $fScore))
+            {
+                printf("Serious error!\n"); 
+                print_r($arRankList);
+                print_r($arLocalShotKFList);
+                exit();
+            }
+            $arDPMList[] = sprintf("%s #$# %s #$# %f", $szKeyFrameID, $szShotID, $fLocalScore);
+            $nKFCount++;
+            if($nKFCount >= 2) // max 2KF/shot
+            {
+                break;
+            }
+        }
+        $nShotCount++;
+        
+        if($nShotCount>=$nMaxShots)
+        {
+            break;
+        }
+    }
 
-    return ($arRankList);
+    return ($arDPMList);
 }
 
 
