@@ -49,6 +49,7 @@ $szRunID = sprintf("run_%s_%s_%s", $szQueryPatName, $szTestPatName, $szFeatureEx
 //*** CHANGED *** !!! Modified Jul 06, 2012
 $szRootOutputDir = getRootDirForFeatureExtraction($szFeatureExt); //*** CHANGED *** !!! New Jul 06, 2012
 $szRootFeatureDir = sprintf("%s/feature/keyframe-5", $szRootOutputDir);
+makeDir($szRootFeatureDir);
 $szRootFeatureInputDir = $szRootFeatureDir;
 
 $szScriptBaseName = basename($_SERVER['SCRIPT_NAME'], ".php");
@@ -93,7 +94,7 @@ function computeSimilarityForOneQueryOnePat($szLocalDir,
 		$nStartVideoID = 0;
 	}
 
-	if($nEndVideoID <0 || $nEndID>$nNumVideos)
+	if($nEndVideoID <0 || $nEndVideoID>$nNumVideos)
 	{
 		$nEndVideoID = $nNumVideos;
 	}
@@ -105,11 +106,12 @@ function computeSimilarityForOneQueryOnePat($szLocalDir,
 		$szVideoID = $arVideoList[$i];
 		printf("###%d. Processing video [%s] ...\n", $i, $szVideoID);
 
-		$szVideoPath = $arVideoPathList[$szVideoID];
-		if($szVideoPath == "")
+		if(!isset($arVideoPathList[$szVideoID]))
 		{
-		    exit("EMPTY video path\n");
+			continue;
 		}
+		$szVideoPath = $arVideoPathList[$szVideoID];
+		
 
 		// !!! IMPORTANT !!!
 		$szFPKeyFrameListFN = sprintf("%s/%s/%s.prg", $szRootMetaDataDir, $szVideoPath, $szVideoID);
@@ -122,6 +124,11 @@ function computeSimilarityForOneQueryOnePat($szLocalDir,
 		makeDir($szResultDir);
 		$szFPOutputFN = sprintf("%s/%s.res", $szResultDir, $szVideoID);
 		
+		if(file_exists($szFPOutputFN))
+		{
+		    printf("### Skipping since the file exists ...\n");
+		    continue;
+		}
 		computeSimilarityForOneQueryOneVideoProgram($szLocalDir2, 
 		$szRootMetaDataDir, $szRootFeatureInputDir,
 		$szVideoPath, $szVideoID, $szQueryID, $szFeatureExt,  
@@ -140,6 +147,8 @@ function computeSimilarityForOneQueryOneVideoProgram($szLocalDir,
     $szFPKeyFrameListFN, $szFPQueryVideoListFN, $szFPOutputFN
 )
 {
+    $time_start = microtime(true);
+    
     loadListFile($arRawList, $szFPQueryVideoListFN);
     $szQueryVideoPath = "";
     foreach($arRawList as $szLine)
@@ -173,12 +182,12 @@ function computeSimilarityForOneQueryOneVideoProgram($szLocalDir,
     $szTestFeatureCoreName = sprintf("%s.%s", $szVideoID, $szFeatureExt);
     $szFPTestFeatureFN = sprintf("%s/%s/%s/%s.tar.gz", $szRootFeatureInputDir, $szFeatureExt, 
                 $szVideoPath, $szTestFeatureCoreName);
-    
+        
     $szCmdLine = sprintf("tar -xvf %s -C %s", $szFPQueryFeatureFN, $szLocalDir);
-    system($szCmdLine);
-    
+    execSysCmd($szCmdLine);
+        
     $szCmdLine = sprintf("tar -xvf %s -C %s", $szFPTestFeatureFN, $szLocalDir);
-    system($szCmdLine);
+    execSysCmd($szCmdLine);
 
     $szFPLocalQueryFeatureFN = sprintf("%s/%s", $szLocalDir, $szQueryFeatureCoreName);
     $szFPLocalTestFeatureFN = sprintf("%s/%s", $szLocalDir, $szTestFeatureCoreName);
@@ -189,8 +198,10 @@ function computeSimilarityForOneQueryOneVideoProgram($szLocalDir,
     deleteFile($szFPLocalQueryFeatureFN);
     deleteFile($szFPLocalTestFeatureFN);
     
+    $nCount = 0;
+    $nNumKeyFrames = sizeof($arTestKFList);
+    printf("Performing matching for [%d] KF...[", $nNumKeyFrames);
     $arFinalOutput = array();
-    $time_start = microtime(true);
     foreach($arTestKFList as $szTestKeyFrameID)
     {
         foreach($arQueryKFList as $szQueryKeyFrameID)
@@ -203,7 +214,14 @@ function computeSimilarityForOneQueryOneVideoProgram($szLocalDir,
             
             
         }
+        if(($nCount % 100) == 0)
+        {
+            printf(".");
+        }
+        $nCount++;
+        
     }
+    printf("]. Finish!\n");
     $time_end = microtime(true);
     
     printf("###Processing time [%s]: %0.2f. \n", $szVideoID, $time_end-$time_start);

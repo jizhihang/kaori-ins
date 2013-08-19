@@ -39,7 +39,7 @@ $arTestPatList = array(
 
 
 $arFeatureList = array();
-$nMaxHostsPerPat = 100;
+$nMaxHostsPerPat = 10;
 //////////////////// END FOR CUSTOMIZATION ////////////////////
 
 ///////////////////////////// MAIN ////////////////////////////////
