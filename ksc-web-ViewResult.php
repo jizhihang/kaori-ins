@@ -44,6 +44,8 @@ if($nAction == 0)
 }
 
 $arVideoPathLUT[2012] = "tv2012/subtest2012-new";
+$arVideoPathLUT[2013] = "tv2013/test2013-new";
+
 $nTVYear = $_REQUEST['vTVYear'];
 $szTVYear = sprintf("tv%d", $nTVYear);
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);

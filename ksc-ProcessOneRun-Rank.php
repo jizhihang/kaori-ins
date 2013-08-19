@@ -17,8 +17,17 @@ require_once "ksc-Tool-EvalMAP.php";
 
 ////////////////// START //////////////////
 
-$arVideoPathLUT[2012] = "tv2012/subtest2012-new";
+
 $nTVYear = 2012;
+$arVideoPathLUT[2012] = "tv2012/subtest2012-new";
+
+if($argc!=2)
+{
+    printf("Usage: %s <Year>\n", $argv[0]);
+    printf("Usage: %s %s\n", $argv[0], $nTVYear);
+    exit();
+}
+
 $szTVYear = sprintf("tv%d", $nTVYear);
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
@@ -32,6 +41,7 @@ $szVideoPath = $arVideoPathLUT[$nTVYear];
 $szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
 
 $arDirList = collectDirsInOneDir($szResultDir);
+sort($arDirList);
 
 $szFPNISTResultFN = sprintf("%s/ins.search.qrels.%s", $szMetaDataDir, $szTVYear);
 
@@ -41,11 +51,20 @@ if(file_exists($szFPNISTResultFN))
 }
 
 $nMaxDocs = 1000; 
+$nTVYearz = sprintf("%s", $nTVYear);
 foreach($arDirList as $szRunID)
 {
-    if(!strstr($szRunID, "run_"))
+    if((!strstr($szRunID, "run_")) || (!strstr($szRunID, $nTVYearz)))
     {
+        printf("### Skipping [%s] ...\n", $szRunID);
         continue;        
+    }
+
+    $szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szRunID, $szVideoPath);
+    $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szRunID);
+    if(file_exists($szFPOutputFN))
+    {
+        //continue; // skip existing file
     }
     
     $arTVQRELOutput = array(); // for using trec_eval

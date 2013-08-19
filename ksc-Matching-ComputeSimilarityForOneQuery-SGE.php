@@ -10,17 +10,16 @@
  * 		Last update	: 16 Aug 2013.
  */
 
-////////////////////////////////////////////////////////////////////////////
-
+// //////////////////////////////////////////////////////////////////////////
 require_once "ksc-AppConfig.php";
 
-//////////////////// THIS PART FOR CUSTOMIZATION ////////////////////
+// ////////////////// THIS PART FOR CUSTOMIZATION ////////////////////
 
 $szProjectCodeName = "kaori-secode-ins13"; // *** CHANGED ***
 $szCoreScriptName = "ksc-Matching-ComputeSimilarityForOneQuery"; // *** CHANGED ***
-
-//$szSGEScriptDir = "/net/per900b/raid0/ledduy/kaori-secode/php-TVSIN11";
-$szSGEScriptDir = $gszSGEScriptDir;  // defined in ksc-AppConfig
+                                                                 
+// $szSGEScriptDir = "/net/per900b/raid0/ledduy/kaori-secode/php-TVSIN11";
+$szSGEScriptDir = $gszSGEScriptDir; // defined in ksc-AppConfig
 
 $szSGEScriptName = sprintf("%s.sgejob.sh", $szCoreScriptName);
 $szFPSGEScriptName = sprintf("%s/%s", $szSGEScriptDir, $szSGEScriptName);
@@ -31,65 +30,69 @@ makeDir($szRootScriptOutputDir);
 
 $arQueryPatList = array(
     "query2012-new",
-    "queryext502012-new");
-
-$arTestPatList = array(
-		"subtest2012-new",
+    "queryext502012-new",
+    "query2013-new",
+    "queryext502013-new"
 );
 
+$arTestPatList = array(
+    "subtest2012-new",
+    "test2013-new"
+);
 
 $arFeatureList = array();
-$nMaxHostsPerPat = 10;
-//////////////////// END FOR CUSTOMIZATION ////////////////////
+$nMaxHostsPerPat = 100;
+// ////////////////// END FOR CUSTOMIZATION ////////////////////
 
-///////////////////////////// MAIN ////////////////////////////////
+// /////////////////////////// MAIN ////////////////////////////////
 $szRootDir = $gszRootBenchmarkDir; // defined in ksc-AppConfig
 $szRootFeatureDir = sprintf("%s/feature/keyframe-5", $szRootDir);
 
 $arFeatureList = collectDirsInOneDir($szRootFeatureDir, "norm");
-foreach($arQueryPatList as $szQueryPatName)
-{
-    foreach($arTestPatList as $szTestPatName)
-    {
-
-        foreach($arFeatureList as $szFeatureExt)
-        {
-    		$nMaxVideosPerPat = $arMaxVideosPerPatList[$szTestPatName];
-    		$nNumVideosPerHost = max(1, intval($nMaxVideosPerPat/$nMaxHostsPerPat)); // Oct 19
-
-			$szScriptOutputDir = sprintf("%s/%s/%s",
-					$szRootScriptOutputDir, $szQueryPatName, $szTestPatName);
-			makeDir($szScriptOutputDir);
-
-			$arCmdLineList =  array();
-
-			for($j=0; $j<$nMaxVideosPerPat; $j+=$nNumVideosPerHost)
-			{
-				$nStart = $j;
-				$nEnd = $nStart+$nNumVideosPerHost;
-
-				// override if no use log file
-				$szFPLogFN = "/dev/null";
-
-				for($nQueryID=9048; $nQueryID<=9068; $nQueryID++)
-				{
-    				$szParam = sprintf("%s %s %s %s %s %s",
-    						$nQueryID, $szQueryPatName, $szTestPatName, $szFeatureExt, $nStart, $nEnd);
-    
-    				$szCmdLine = sprintf("qsub -e %s -o %s %s %s", $szFPLogFN, $szFPLogFN, $szFPSGEScriptName, $szParam);
-    
-    				$arCmdLineList[] = $szCmdLine;
-				}				
-				
-			}
-			$szFPOutputFN = sprintf("%s/runme.qsub.%s.%s.%s.%s.sh",
-					$szScriptOutputDir, $szCoreScriptName, $szQueryPatName, $szTestPatName, $szFeatureExt); // specific for one set of data
-			if(sizeof($arCmdLineList) > 0 )
-			{
-				saveDataFromMem2File($arCmdLineList, $szFPOutputFN, "wt");
-				$arRunFileList[] = $szFPOutputFN;
-			}
-		}
+foreach ($arQueryPatList as $szQueryPatName) {
+    foreach ($arTestPatList as $szTestPatName) {
+        foreach ($arFeatureList as $szFeatureExt) {
+            $nMaxVideosPerPat = $arMaxVideosPerPatList[$szTestPatName];
+            $nNumVideosPerHost = max(1, intval($nMaxVideosPerPat / $nMaxHostsPerPat)); // Oct 19
+            
+            $szScriptOutputDir = sprintf("%s/%s/%s", $szRootScriptOutputDir, $szQueryPatName, $szTestPatName);
+            makeDir($szScriptOutputDir);
+            
+            $arCmdLineList = array();
+            
+            for ($j = 0; $j < $nMaxVideosPerPat; $j += $nNumVideosPerHost) {
+                $nStart = $j;
+                $nEnd = $nStart + $nNumVideosPerHost;
+                
+                // override if no use log file
+                $szFPLogFN = "/dev/null";
+                
+                if (strstr($szTestPatName, "2012")) {
+                    for ($nQueryID = 9048; $nQueryID <= 9068; $nQueryID ++) {
+                        $szParam = sprintf("%s %s %s %s %s %s", $nQueryID, $szQueryPatName, $szTestPatName, $szFeatureExt, $nStart, $nEnd);
+                        
+                        $szCmdLine = sprintf("qsub -e %s -o %s %s %s", $szFPLogFN, $szFPLogFN, $szFPSGEScriptName, $szParam);
+                        
+                        $arCmdLineList[] = $szCmdLine;
+                    }
+                }
+                
+                if (strstr($szTestPatName, "2013")) {
+                    for ($nQueryID = 9069; $nQueryID <= 9098; $nQueryID ++) {
+                        $szParam = sprintf("%s %s %s %s %s %s", $nQueryID, $szQueryPatName, $szTestPatName, $szFeatureExt, $nStart, $nEnd);
+                        
+                        $szCmdLine = sprintf("qsub -e %s -o %s %s %s", $szFPLogFN, $szFPLogFN, $szFPSGEScriptName, $szParam);
+                        
+                        $arCmdLineList[] = $szCmdLine;
+                    }
+                }
+            }
+            $szFPOutputFN = sprintf("%s/runme.qsub.%s.%s.%s.%s.sh", $szScriptOutputDir, $szCoreScriptName, $szQueryPatName, $szTestPatName, $szFeatureExt); // specific for one set of data
+            if (sizeof($arCmdLineList) > 0) {
+                saveDataFromMem2File($arCmdLineList, $szFPOutputFN, "wt");
+                $arRunFileList[] = $szFPOutputFN;
+            }
+        }
     }
 }
 ?>
