@@ -187,7 +187,7 @@ foreach($arQueryImgList as  $szQueryImg)
 		$heightzz = imagesy($imgzz);
 
 		// calculate thumbnail size
-		$new_width = $thumbWidth = 100;  // to reduce loading time
+		$new_width = $thumbWidth = 150;  // to reduce loading time
 		$new_height = floor($heightzz*($thumbWidth/$widthzz));
 
 		// create a new temporary image
@@ -266,7 +266,7 @@ $arOutput[] = sprintf("<P><H3>MAP: %0.2f. Num hits (@1000): %d<BR>\n", $fMAP, $n
 ////
 
 $nCount = 0;
-$nNumShownKFPerShot = 5;
+$nNumShownKFPerShot = 3;
 //foreach($arRawList as $szLine)
 
 $nMaxVideosPerPage = intval($_REQUEST['vMaxVideosPerPage']);
@@ -342,7 +342,7 @@ for($i=$nStartID; $i<$nEndID; $i++)
 		$heightzz = imagesy($imgzz);
 
 		// calculate thumbnail size
-		$new_width = $thumbWidth = 100;  // to reduce loading time
+		$new_width = $thumbWidth = 150;  // to reduce loading time
 		$new_height = floor($heightzz*($thumbWidth/$widthzz));
 
 		// create a new temporary image
