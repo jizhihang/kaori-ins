@@ -116,6 +116,12 @@ if ($nAction == 1) {
     
     printf("<P>RunID2-Weight<BR>\n");
     printf("<INPUT TYPE='TEXT' NAME='vWeightR2' VALUE='1'>\n");
+
+    printf("<P>From<BR>\n");
+    printf("<INPUT TYPE='TEXT' NAME='vFrom' VALUE='9068'>\n");
+
+    printf("<P>To<BR>\n");
+    printf("<INPUT TYPE='TEXT' NAME='vTo' VALUE='9098'>\n");
     
     printf("<P>Output Run<BR>\n");
     printf("<INPUT TYPE='TEXT' NAME='vOutRunID' VALUE='run_fusion%s'>\n", $nTVYear);
@@ -144,6 +150,8 @@ $szRunID1 = $_REQUEST['vRunID1'];
 $szRunID2 = $_REQUEST['vRunID2'];
 $fWeight1 = floatval($_REQUEST['vWeightR1']);
 $fWeight2 = floatval($_REQUEST['vWeightR2']);
+$nQueryIDStart = intval($_REQUEST['vFrom']);
+$nQueryIDEnd = intval($_REQUEST['vTo']);
 
 $szOutRunID = $_REQUEST['vOutRunID'];
 
@@ -356,7 +364,15 @@ if ($nShowGT) {
         2013 => 9098
     );
     
-    for ($nQueryID = $arQueryIDStart[$nTVYear]; $nQueryID <= $arQueryIDEnd[$nTVYear]; $nQueryID ++) {
+    if($nQueryIDStart<$arQueryIDStart[$nTVYear])
+    {
+        $nQueryIDStart = $arQueryIDStart[$nTVYear]; 
+    }
+    if($nQueryIDEnd > $arQueryIDEnd[$nTVYear])
+    {
+        $nQueryIDEnd = $arQueryIDEnd[$nTVYear];
+    }
+    for ($nQueryID = $nQueryIDStart; $nQueryID <= $nQueryIDEnd; $nQueryID ++) {
         $szQueryIDz = sprintf("%s", $nQueryID);
         $szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szOutRunID, $szVideoPath);
         $szQueryResultDir = sprintf("%s/%s/%s/%s", $szResultDir, $szOutRunID, $szVideoPath, $szQueryIDz);
