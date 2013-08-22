@@ -92,27 +92,33 @@ if ($nAction == 1) {
     printf("</SELECT>\n");
     
     printf("<P>RunID1<BR>\n");
-    // load xml file
     printf("<SELECT NAME='vRunID1'>\n");
-    foreach ($arDirList as $szDirName) {
-        printf("<OPTION VALUE='%s'>%s</OPTION>\n", $szDirName, $szDirName);
+    foreach ($arDirList as $szRunID) {
+        if (! strstr($szRunID, $nTVYear)) {
+            continue;
+        }
+        printf("<OPTION VALUE='%s'>%s</OPTION>\n", $szRunID, $szRunID);
     }
-    // printf("<OPTION VALUE='RunDetection'>Detecting Using DPM</OPTION>\n");
-    // printf("<OPTION VALUE='RunFusion'>Fusion of Matching and Detection Scores</OPTION>\n");
     printf("</SELECT>\n");
+    
+    printf("<P>RunID1-Weight<BR>\n");
+    printf("<INPUT TYPE='TEXT' NAME='vWeightR1' VALUE='1'>\n");
     
     printf("<P>RunID2<BR>\n");
-    // load xml file
     printf("<SELECT NAME='vRunID2'>\n");
-    foreach ($arDirList as $szDirName) {
-        printf("<OPTION VALUE='%s'>%s</OPTION>\n", $szDirName, $szDirName);
+    foreach ($arDirList as $szRunID) {
+        if (! strstr($szRunID, $nTVYear)) {
+            continue;
+        }
+        printf("<OPTION VALUE='%s'>%s</OPTION>\n", $szRunID, $szRunID);
     }
-    // printf("<OPTION VALUE='RunDetection'>Detecting Using DPM</OPTION>\n");
-    // printf("<OPTION VALUE='RunFusion'>Fusion of Matching and Detection Scores</OPTION>\n");
     printf("</SELECT>\n");
     
+    printf("<P>RunID2-Weight<BR>\n");
+    printf("<INPUT TYPE='TEXT' NAME='vWeightR2' VALUE='1'>\n");
+    
     printf("<P>Output Run<BR>\n");
-    printf("<INPUT TYPE='TEXT' NAME='vOutRunID' VALUE=''>\n");
+    printf("<INPUT TYPE='TEXT' NAME='vOutRunID' VALUE='run_fusion%s'>\n", $nTVYear);
     
     printf("<P>PageID<BR>\n");
     printf("<INPUT TYPE='TEXT' NAME='vPageID' VALUE='1' SIZE=10>\n");
@@ -136,6 +142,8 @@ $szText = trim($arTmp[1]);
 
 $szRunID1 = $_REQUEST['vRunID1'];
 $szRunID2 = $_REQUEST['vRunID2'];
+$fWeight1 = floatval($_REQUEST['vWeightR1']);
+$fWeight2 = floatval($_REQUEST['vWeightR2']);
 
 $szOutRunID = $_REQUEST['vOutRunID'];
 
@@ -199,210 +207,200 @@ foreach ($arQueryImgList as $szQueryImg) {
 $arOutput[] = sprintf("<P><BR>\n");
 
 // // VERY SPECIAL ****
+
+/*
+ * $arWeightList = array( "9048" => 10, // small ROI "9049" => 2, // large ROI "9050" => 2, // large ROI "9051" => 2, // large ROI --> ??? not sure "9052" => 10, // small ROI "9053" => 10, // small ROI "9054" => 2, // large ROI "9055" => 10, // too small ROI "9056" => 2, // large ROI "9057" => 2, // large ROI "9058" => 2, // large ROI "9059" => 2, // large ROI "9060" => 2, // large ROI "9061" => 10, // small ROI "9062" => 2, // large ROI "9063" => 2, // large ROI "9064" => 10, // small ROI "9065" => 2, // large ROI "9066" => 2, // large ROI, Mask/Rect > 0.5 "9067" => 2, // large ROI, Mask/Rect > 0.5 "9068" => 10, // small ROI, Mask/Rect > 0.5 );
+ */
+/*
+ $arWeightList = array(
+     "9048" => 10, // small ROI
+     "9049" => .1, // large ROI
+     "9050" => .1, // large ROI
+     "9051" => .1, // large ROI --> ??? not sure
+     "9052" => 10, // small ROI
+     "9053" => 10, // small ROI
+     "9054" => .1, // large ROI
+     "9055" => 10, // too small ROI
+     "9056" => .1, // large ROI
+     "9057" => .1, // large ROI
+     "9058" => .1, // large ROI
+     "9059" => .1, // large ROI
+     "9060" => .1, // large ROI
+     "9061" => 10, // small ROI
+     "9062" => .1, // large ROI
+     "9063" => .1, // large ROI
+     "9064" => 10, // small ROI
+     "9065" => .1, // large ROI
+     "9066" => .1, // large ROI, Mask/Rect > 0.5
+     "9067" => .1, // large ROI, Mask/Rect > 0.5
+     "9068" => 10, // small ROI, Mask/Rect > 0.5
+
+ );
+*/
+/*
+ $arWeightList = array(
+     "9048" => 10, // small ROI
+     "9049" => .5, // large ROI
+     "9050" => .5, // large ROI
+     "9051" => .5, // large ROI --> ??? not sure
+     "9052" => 10, // small ROI
+     "9053" => 10, // small ROI
+     "9054" => .5, // large ROI
+     "9055" => 10, // too small ROI
+     "9056" => .5, // large ROI
+     "9057" => .5, // large ROI
+     "9058" => .5, // large ROI
+     "9059" => .5, // large ROI
+     "9060" => .5, // large ROI
+     "9061" => 10, // small ROI
+     "9062" => .5, // large ROI
+     "9063" => .5, // large ROI
+     "9064" => 10, // small ROI
+     "9065" => .5, // large ROI
+     "9066" => .5, // large ROI, Mask/Rect > 0.5
+     "9067" => .5, // large ROI, Mask/Rect > 0.5
+     "9068" => 10, // small ROI, Mask/Rect > 0.5
+
+ );
+*/
+/*
+ $arWeightList = array(
+     "9048" => 10, // small ROI
+     "9049" => 1, // large ROI
+     "9050" => 1, // large ROI
+     "9051" => 1, // large ROI --> ??? not sure
+     "9052" => 10, // small ROI
+     "9053" => 10, // small ROI
+     "9054" => 1, // large ROI
+     "9055" => 10, // too small ROI
+     "9056" => 1, // large ROI
+     "9057" => 1, // large ROI
+     "9058" => 1, // large ROI
+     "9059" => 1, // large ROI
+     "9060" => 1, // large ROI
+     "9061" => 10, // small ROI
+     "9062" => 1, // large ROI
+     "9063" => 1, // large ROI
+     "9064" => 10, // small ROI
+     "9065" => 1, // large ROI
+     "9066" => 1, // large ROI, Mask/Rect > 0.5
+     "9067" => 1, // large ROI, Mask/Rect > 0.5
+     "9068" => 10, // small ROI, Mask/Rect > 0.5
+
+ );
+*/
+/*
+ $arWeightList = array(
+     "9048" => 10, // small ROI
+     "9049" => 5, // large ROI
+     "9050" => 5, // large ROI
+     "9051" => 5, // large ROI --> ??? not sure
+     "9052" => 10, // small ROI
+     "9053" => 10, // small ROI
+     "9054" => 5, // large ROI
+     "9055" => 10, // too small ROI
+     "9056" => 5, // large ROI
+     "9057" => 5, // large ROI
+     "9058" => 5, // large ROI
+     "9059" => 5, // large ROI
+     "9060" => 5, // large ROI
+     "9061" => 10, // small ROI
+     "9062" => 5, // large ROI
+     "9063" => 5, // large ROI
+     "9064" => 10, // small ROI
+     "9065" => 5, // large ROI
+     "9066" => 5, // large ROI, Mask/Rect > 0.5
+     "9067" => 5, // large ROI, Mask/Rect > 0.5
+     "9068" => 10, // small ROI, Mask/Rect > 0.5
+
+ );
+*/
+
+$arWeightList = array(
+    "9048" => 10, // small ROI
+    "9049" => 10, // large ROI
+    "9050" => 10, // large ROI
+    "9051" => 10, // large ROI --> ??? not sure
+    "9052" => 10, // small ROI
+    "9053" => 10, // small ROI
+    "9054" => 10, // large ROI
+    "9055" => 10, // too small ROI
+    "9056" => 10, // large ROI
+    "9057" => 10, // large ROI
+    "9058" => 10, // large ROI
+    "9059" => 10, // large ROI
+    "9060" => 10, // large ROI
+    "9061" => 10, // small ROI
+    "9062" => 10, // large ROI
+    "9063" => 10, // large ROI
+    "9064" => 10, // small ROI
+    "9065" => 10, // large ROI
+    "9066" => 10, // large ROI, Mask/Rect > 0.5
+    "9067" => 10, // large ROI, Mask/Rect > 0.5
+    "9068" => 10 // small ROI, Mask/Rect > 0.5
+)
+
+;
+
 $nShowGT = $_REQUEST['vShowGT'];
 if ($nShowGT) {
     $arRawList = $arNISTList[$szQueryID];
 } else {
-    printf("Path:$szVideoPath <BR>\n");
+    // printf("Path:$szVideoPath <BR>\n");
+    $arQueryIDStart = array(
+        2012 => 9048,
+        2013 => 9069
+    );
+    $arQueryIDEnd = array(
+        2012 => 9068,
+        2013 => 9098
+    );
+    
+    for ($nQueryID = $arQueryIDStart[$nTVYear]; $nQueryID <= $arQueryIDEnd[$nTVYear]; $nQueryID ++) {
+        $szQueryIDz = sprintf("%s", $nQueryID);
+        $szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szOutRunID, $szVideoPath);
+        $szQueryResultDir = sprintf("%s/%s/%s/%s", $szResultDir, $szOutRunID, $szVideoPath, $szQueryIDz);
+        
+        makeDir($szQueryResultDir1);
+        $szCmdLine = sprintf("chmod 777 %s", $szQueryResultDir1);
+        execSysCmd($szCmdLine);
+        makeDir($szQueryResultDir);
+        $szCmdLine = sprintf("chmod 777 %s", $szQueryResultDir);
+        execSysCmd($szCmdLine);
+        
+        $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szQueryIDz);
+        if (!file_exists($szFPOutputFN)) {
+            $szResultDir1 = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID1, $szVideoPath, $szQueryIDz);
+            $szResultDir2 = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID2, $szVideoPath, $szQueryIDz);
+            
+            $arRawListz = fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTVYear);
+            $arRawList = array();
+            $nCount = 0;
+            
+            $arScoreOutput = array();
+            foreach ($arRawListz as $szShotID => $fScore) {
+                $arRawList[] = sprintf("%s #$# %f", $szShotID, $fScore);
+                $arScoreOutput[] = sprintf("%s #$# %s #$# %f", $szShotID, $szQueryIDz, $fScore);
+                $nCount ++;
+
+                //if ($nCount > 10000)
+                //    break;
+            }
+            saveDataFromMem2File($arRawList, $szFPOutputFN);
+            $szCmdLine = sprintf("chmod 777 %s", $szFPOutputFN);
+            execSysCmd($szCmdLine);
+            
+            $szFPScoreOutputFN = sprintf("%s/%s.res", $szQueryResultDir, $szQueryIDz);
+            saveDataFromMem2File($arScoreOutput, $szFPScoreOutputFN);
+            $szCmdLine = sprintf("chmod 777 %s", $szFPScoreOutputFN);
+            execSysCmd($szCmdLine);
+        }
+    } 
+
     $szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szOutRunID, $szVideoPath);
     $szQueryResultDir = sprintf("%s/%s/%s/%s", $szResultDir, $szOutRunID, $szVideoPath, $szQueryID);
-    
-    makeDir($szQueryResultDir1);
-    $szCmdLine = sprintf("chmod 777 %s", $szQueryResultDir1);
-    execSysCmd($szCmdLine);
-    makeDir($szQueryResultDir);
-    $szCmdLine = sprintf("chmod 777 %s", $szQueryResultDir);
-    execSysCmd($szCmdLine);
-    
-/*    
-    $arWeightList = array(
-        "9048" => 10, // small ROI
-        "9049" => 2, // large ROI
-        "9050" => 2, // large ROI
-        "9051" => 2, // large ROI --> ??? not sure
-        "9052" => 10, // small ROI  
-        "9053" => 10, // small ROI
-        "9054" => 2, // large ROI
-        "9055" => 10, // too small ROI
-        "9056" => 2, // large ROI
-        "9057" => 2, // large ROI
-        "9058" => 2, // large ROI
-        "9059" => 2, // large ROI
-        "9060" => 2, // large ROI
-        "9061" => 10, // small ROI
-        "9062" => 2, // large ROI
-        "9063" => 2, // large ROI
-        "9064" => 10, // small ROI
-        "9065" => 2, // large ROI
-        "9066" => 2, // large ROI, Mask/Rect > 0.5
-        "9067" => 2, // large ROI, Mask/Rect > 0.5
-        "9068" => 10, // small ROI, Mask/Rect > 0.5
-        
-    );
-*/    
-/*
-    $arWeightList = array(
-        "9048" => 10, // small ROI
-        "9049" => .1, // large ROI
-        "9050" => .1, // large ROI
-        "9051" => .1, // large ROI --> ??? not sure
-        "9052" => 10, // small ROI
-        "9053" => 10, // small ROI
-        "9054" => .1, // large ROI
-        "9055" => 10, // too small ROI
-        "9056" => .1, // large ROI
-        "9057" => .1, // large ROI
-        "9058" => .1, // large ROI
-        "9059" => .1, // large ROI
-        "9060" => .1, // large ROI
-        "9061" => 10, // small ROI
-        "9062" => .1, // large ROI
-        "9063" => .1, // large ROI
-        "9064" => 10, // small ROI
-        "9065" => .1, // large ROI
-        "9066" => .1, // large ROI, Mask/Rect > 0.5
-        "9067" => .1, // large ROI, Mask/Rect > 0.5
-        "9068" => 10, // small ROI, Mask/Rect > 0.5
-    
-    );
-*/    
-/*
-    $arWeightList = array(
-        "9048" => 10, // small ROI
-        "9049" => .5, // large ROI
-        "9050" => .5, // large ROI
-        "9051" => .5, // large ROI --> ??? not sure
-        "9052" => 10, // small ROI
-        "9053" => 10, // small ROI
-        "9054" => .5, // large ROI
-        "9055" => 10, // too small ROI
-        "9056" => .5, // large ROI
-        "9057" => .5, // large ROI
-        "9058" => .5, // large ROI
-        "9059" => .5, // large ROI
-        "9060" => .5, // large ROI
-        "9061" => 10, // small ROI
-        "9062" => .5, // large ROI
-        "9063" => .5, // large ROI
-        "9064" => 10, // small ROI
-        "9065" => .5, // large ROI
-        "9066" => .5, // large ROI, Mask/Rect > 0.5
-        "9067" => .5, // large ROI, Mask/Rect > 0.5
-        "9068" => 10, // small ROI, Mask/Rect > 0.5
-    
-    );
-*/    
-/*
-    $arWeightList = array(
-        "9048" => 10, // small ROI
-        "9049" => 1, // large ROI
-        "9050" => 1, // large ROI
-        "9051" => 1, // large ROI --> ??? not sure
-        "9052" => 10, // small ROI
-        "9053" => 10, // small ROI
-        "9054" => 1, // large ROI
-        "9055" => 10, // too small ROI
-        "9056" => 1, // large ROI
-        "9057" => 1, // large ROI
-        "9058" => 1, // large ROI
-        "9059" => 1, // large ROI
-        "9060" => 1, // large ROI
-        "9061" => 10, // small ROI
-        "9062" => 1, // large ROI
-        "9063" => 1, // large ROI
-        "9064" => 10, // small ROI
-        "9065" => 1, // large ROI
-        "9066" => 1, // large ROI, Mask/Rect > 0.5
-        "9067" => 1, // large ROI, Mask/Rect > 0.5
-        "9068" => 10, // small ROI, Mask/Rect > 0.5
-    
-    );
-*/    
-/*
-    $arWeightList = array(
-        "9048" => 10, // small ROI
-        "9049" => 5, // large ROI
-        "9050" => 5, // large ROI
-        "9051" => 5, // large ROI --> ??? not sure
-        "9052" => 10, // small ROI
-        "9053" => 10, // small ROI
-        "9054" => 5, // large ROI
-        "9055" => 10, // too small ROI
-        "9056" => 5, // large ROI
-        "9057" => 5, // large ROI
-        "9058" => 5, // large ROI
-        "9059" => 5, // large ROI
-        "9060" => 5, // large ROI
-        "9061" => 10, // small ROI
-        "9062" => 5, // large ROI
-        "9063" => 5, // large ROI
-        "9064" => 10, // small ROI
-        "9065" => 5, // large ROI
-        "9066" => 5, // large ROI, Mask/Rect > 0.5
-        "9067" => 5, // large ROI, Mask/Rect > 0.5
-        "9068" => 10, // small ROI, Mask/Rect > 0.5
-    
-    );
-*/    
-
-    $arWeightList = array(
-        "9048" => 10, // small ROI
-        "9049" => 10, // large ROI
-        "9050" => 10, // large ROI
-        "9051" => 10, // large ROI --> ??? not sure
-        "9052" => 10, // small ROI
-        "9053" => 10, // small ROI
-        "9054" => 10, // large ROI
-        "9055" => 10, // too small ROI
-        "9056" => 10, // large ROI
-        "9057" => 10, // large ROI
-        "9058" => 10, // large ROI
-        "9059" => 10, // large ROI
-        "9060" => 10, // large ROI
-        "9061" => 10, // small ROI
-        "9062" => 10, // large ROI
-        "9063" => 10, // large ROI
-        "9064" => 10, // small ROI
-        "9065" => 10, // large ROI
-        "9066" => 10, // large ROI, Mask/Rect > 0.5
-        "9067" => 10, // large ROI, Mask/Rect > 0.5
-        "9068" => 10, // small ROI, Mask/Rect > 0.5
-    
-    );
-    
     $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szQueryID);
-    if (! file_exists($szFPOutputFN)) {
-        $szResultDir1 = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID1, $szVideoPath, $szQueryID);
-        $szResultDir2 = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID2, $szVideoPath, $szQueryID);
-        
-        $fWeight1 = 1.0;
-        $fWeight2 = $arWeightList[$szQueryID];        
-        $arRawListz = fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTVYear);
-        $arRawList = array();
-        $nCount = 0;
-        
-        $arScoreOutput = array();
-        foreach ($arRawListz as $szShotID => $fScore) {
-            $arRawList[] = sprintf("%s #$# %0.4f", $szShotID, $fScore);
-            $arScoreOutput[] = sprintf("%s #$# %s #$# %f", $szShotID, $szQueryID, $fScore);
-            $nCount ++;
-            if ($nCount > 10000)
-                break;
-        }
-        saveDataFromMem2File($arRawList, $szFPOutputFN);
-        $szCmdLine = sprintf("chmod 777 %s", $szFPOutputFN);
-        execSysCmd($szCmdLine);
-        
-
-        $szFPScoreOutputFN = sprintf("%s/%s.res", $szQueryResultDir, $szQueryID);
-        saveDataFromMem2File($arScoreOutput, $szFPScoreOutputFN);
-        $szCmdLine = sprintf("chmod 777 %s", $szFPScoreOutputFN);
-        execSysCmd($szCmdLine);
-        
-        
-    } else {
-        loadListFile($arRawList, $szFPOutputFN);
-    }
+    loadListFile($arRawList, $szFPOutputFN);
 }
 
 $nNumVideos = sizeof($arRawList);
@@ -417,7 +415,7 @@ foreach ($arRawList as $szLine) {
 }
 
 $arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs = 10000);
-print_r($arTmpzzz);
+// print_r($arTmpzzz);
 
 $arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs = 1000);
 $fMAP = $arTmpzzz['ap'];
@@ -647,13 +645,11 @@ function fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTV
             }
         }
         
-        foreach($arRankList as $szShotID => $fScore){
-            if(isset($arResultRankList[$szShotID]))
-            {
-                $arResultRankList[$szShotID] += $fWeight2*normScore($fScore);
-            }
-            else {
-                $arResultRankList[$szShotID] = $fWeight1*normScore($fScore);
+        foreach ($arRankList as $szShotID => $fScore) {
+            if (isset($arResultRankList[$szShotID])) {
+                $arResultRankList[$szShotID] += $fWeight2 * normScore($fScore);
+            } else {
+                $arResultRankList[$szShotID] = $fWeight1 * normScore($fScore);
             }
         }
     }
@@ -665,7 +661,7 @@ function fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTV
 
 function normScore($fScore)
 {
-    $fReturn = 1/(1+exp(-$fScore));
+    $fReturn = 1 / (1 + exp(- $fScore));
     
     return $fReturn;
 }
