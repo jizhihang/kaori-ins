@@ -65,7 +65,7 @@ foreach($arDirList as $szRunID)
     $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szRunID);
     if(file_exists($szFPOutputFN))
     {
-        //continue; // skip existing file
+        continue; // skip existing file
     }
     
     $arTVQRELOutput = array(); // for using trec_eval
