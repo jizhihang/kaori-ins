@@ -32,13 +32,19 @@ if($nAction == 0)
 	printf("<P><H1>Select TVYear</H1>\n");
 	printf("<FORM TARGET='_blank'>\n");
 	printf("<P>TVYear<BR>\n");
-	// load xml file
 	printf("<SELECT NAME='vTVYear'>\n");
 	printf("<OPTION VALUE='2013'>2013</OPTION>\n");
 	printf("<OPTION VALUE='2012'>2012</OPTION>\n");
 	printf("<OPTION VALUE='2011'>2011</OPTION>\n");
 	printf("</SELECT>\n");
 
+	printf("<P>Partition<BR>\n");
+	printf("<SELECT NAME='vPatName'>\n");
+	printf("<OPTION VALUE='test2013-new'>test2013-new</OPTION>\n");
+	printf("<OPTION VALUE='subtest2012-new'>subtest2012-new</OPTION>\n");
+	printf("<OPTION VALUE='test2012-new'>test2012-new</OPTION>\n");
+	printf("</SELECT>\n");
+	
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='1'>\n");
 	printf("<INPUT TYPE='SUBMIT' VALUE='Submit'>\n");
 	printf("&nbsp;&nbsp; <INPUT TYPE='RESET' VALUE='Reset'>\n");
@@ -46,13 +52,14 @@ if($nAction == 0)
 	exit();
 }
 
-$arVideoPathLUT[2012] = "tv2012/subtest2012-new";
-$arVideoPathLUT[2013] = "tv2013/test2013-new";
+//$arVideoPathLUT[2012] = "tv2012/subtest2012-new";
+//$arVideoPathLUT[2013] = "tv2013/test2013-new";
 
 $nTVYear = $_REQUEST['vTVYear'];
 $szTVYear = sprintf("tv%d", $nTVYear);
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
+$szPatName = $_REQUEST['vPatName'];
 
 // ins.topics.2013.xml 
 $szFPInputFN = sprintf("%s/ins.topics.%d.xml", $szMetaDataDir, $nTVYear);
@@ -72,7 +79,8 @@ if(file_exists($szFPInputFN))
     }
 }
 
-$szVideoPath = $arVideoPathLUT[$nTVYear];
+//$szVideoPath = $arVideoPathLUT[$nTVYear];
+$szVideoPath = sprintf("%s/%s", $szTVYear, $szPatName);
 
 $szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
 $arDirList = collectDirsInOneDir($szResultDir);
@@ -131,6 +139,7 @@ if($nAction == 1)
 
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='2'>\n");
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vTVYear' VALUE='%s'>\n", $nTVYear);
+	printf("<P><INPUT TYPE='HIDDEN' NAME='vPatName' VALUE='%s'>\n", $szPatName);
 	printf("<INPUT TYPE='SUBMIT' VALUE='Submit'>\n");
 	printf("&nbsp;&nbsp; <INPUT TYPE='RESET' VALUE='Reset'>\n");
 	printf("</FORM>\n");
@@ -167,7 +176,7 @@ foreach($arNISTList[$szQueryID] as $szShotID)
 }
 
 $szFPModelConfigFN = sprintf("%s/%s.cfg", $szMetaDataDir, $szQueryID);
-if(!file_exists($szModelConfig))
+if(file_exists($szModelConfig))
 {
     loadListFile($arRawListz, $szFPModelConfigFN);
     // Scale : 2.000000
@@ -297,7 +306,8 @@ $nStartID = $nPageID*$nMaxVideosPerPage;
 $nEndID = min($nStartID+$nMaxVideosPerPage, $nNumVideos, 1000);
 
 $nNumPages = min(20, intval(($nNumVideos+$nMaxVideosPerPage-1)/$nMaxVideosPerPage));
-$queryURL = sprintf("vQueryID=%s&vRunID=%s&vMaxVideosPerPage=%s&vTVYear=%d&vAction=%d&", urlencode($szQueryIDz), urlencode($szRunID), urlencode($nMaxVideosPerPage), $nTVYear, $nAction);
+$queryURL = sprintf("vPatName=%s&vQueryID=%s&vRunID=%s&vMaxVideosPerPage=%s&vTVYear=%d&vAction=%d&", 
+    $szPatName, urlencode($szQueryIDz), urlencode($szRunID), urlencode($nMaxVideosPerPage), $nTVYear, $nAction);
 	//printf($queryURL);
 
 $szURLz = sprintf("ksc-web-ViewResult.php?%s&vShowGT=1", $queryURL);
