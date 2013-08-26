@@ -223,6 +223,10 @@ function computeSimilarityForOneQueryOneVideoProgram($szLocalDir,
     {
         foreach($arQueryKFList as $szQueryKeyFrameID)
         {
+            if(!isset($arTestFeature[$szTestKeyFrameID]) || !isset($arQueryFeature[$szQueryKeyFrameID]))
+            {
+                continue; // IMPORTANT --> some cases, feature vector is not available
+            }
             if($nL1NormL1Dist)
             {
                 $fScore = computeL1NormL1Dist($arQueryFeature[$szQueryKeyFrameID], $arTestFeature[$szTestKeyFrameID]);
