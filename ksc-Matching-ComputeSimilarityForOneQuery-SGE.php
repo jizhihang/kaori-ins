@@ -29,6 +29,8 @@ $szRootScriptOutputDir = sprintf("%s/%s/%s", $szScriptBinDir, $szProjectCodeName
 makeDir($szRootScriptOutputDir);
 
 $arQueryPatList = array(
+    "query2011-new",
+    "queryext502011-new",
     "query2012-new",
     "queryext502012-new",
     "query2013-new",
@@ -37,6 +39,8 @@ $arQueryPatList = array(
 
 $arTestPatList = array(
     "subtest2012-new",
+    "test2011-new",
+    "test2012-new",
     "test2013-new"
 );
 
@@ -66,6 +70,16 @@ foreach ($arQueryPatList as $szQueryPatName) {
                 
                 // override if no use log file
                 $szFPLogFN = "/dev/null";
+                
+                if (strstr($szTestPatName, "2011")) {
+                    for ($nQueryID = 9023; $nQueryID <= 9047; $nQueryID ++) {
+                        $szParam = sprintf("%s %s %s %s %s %s", $nQueryID, $szQueryPatName, $szTestPatName, $szFeatureExt, $nStart, $nEnd);
+                        
+                        $szCmdLine = sprintf("qsub -e %s -o %s %s %s", $szFPLogFN, $szFPLogFN, $szFPSGEScriptName, $szParam);
+                        
+                        $arCmdLineList[] = $szCmdLine;
+                    }
+                }
                 
                 if (strstr($szTestPatName, "2012")) {
                     for ($nQueryID = 9048; $nQueryID <= 9068; $nQueryID ++) {

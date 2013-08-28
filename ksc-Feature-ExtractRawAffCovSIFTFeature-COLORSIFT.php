@@ -220,7 +220,19 @@ $szFPInputImgFN, $szFPFeatureOutputFN, $szTmpDir="/tmp")
 		}
 	}
 
-
+	//printf("File [%s]\n", $szFPInputImgFN);
+	if(filesize($szFPInputImgFN) <=0)
+	{
+	    printf("File not found [%s]\n", $szFPInputImgFN);
+	    return;
+	 }
+	     
+    if(!file_exists($szFPInputImgFN))
+	{
+	    printf("File not found [%s]\n", $szFPInputImgFN);
+	    return;
+	}
+	 
 	global $gszResizeOption;
 	global $gnHavingResized;
 

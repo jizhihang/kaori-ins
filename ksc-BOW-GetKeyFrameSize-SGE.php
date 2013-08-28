@@ -43,12 +43,16 @@ makeDir($szRootScriptOutputDir);
 ///////////////////////////// MAIN ////////////////////////////////
 $arPatList = array(
 		"subtest2012-new" => 100,
-		"test2013-new" => 1000,
+        "test2012-new" => 1000,
+        "test2013-new" => 1000,
+        "test2011-new" => 1000,    
 );
 
 $arVideoPathList = array(
 	"subtest2012-new" => "tv2012/subtest2012-new", 
-	"test2013-new" => "tv2013/test2013-new", 
+	"test2012-new" => "tv2012/test2012-new", 
+    "test2013-new" => "tv2013/test2013-new", 
+    "test2011-new" => "tv2011/test2011-new", 
 );
 
 $nMaxHostsPerPat = 20;
@@ -76,7 +80,6 @@ foreach($arPatList as $szPatName => $nMaxVideosPerPat)
 		$szCmdLine = sprintf("qsub -e %s -o %s %s %s", $szFPLogFN, $szFPLogFN, $szFPSGEScriptName, $szParam);
 		//execSysCmd($szCmdLine);
 		$arCmdLine[] = $szCmdLine; 
-		sleep(1);
 	}
 	$szFPOutputFN = sprintf("%s/runme.qsub.%s.%s.sh",
 			$szScriptOutputDir, $szCoreScriptName, $szPatName); // specific for one set of data

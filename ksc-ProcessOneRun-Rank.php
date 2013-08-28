@@ -19,12 +19,14 @@ require_once "ksc-Tool-EvalMAP.php";
 
 
 $nTVYear = 2012;
-$arVideoPathLUT[2012] = "tv2012/subtest2012-new";
+//$arVideoPathLUT[2012] = "tv2012/subtest2012-new";
+$arVideoPathLUT[2011] = "tv2011/test2011-new";
+$arVideoPathLUT[2012] = "tv2012/test2012-new";
 $arVideoPathLUT[2013] = "tv2013/test2013-new";
 
-if($argc!=2)
+if($argv<2)
 {
-    printf("Usage: %s <Year>\n", $argv[0]);
+    printf("Usage: %s <Year> <RunID>\n", $argv[0]);
     printf("Usage: %s %s\n", $argv[0], $nTVYear);
     exit();
 }
@@ -32,6 +34,12 @@ $nTVYear = intval($argv[1]);
 $szTVYear = sprintf("tv%d", $nTVYear);
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
+
+$szTargetRunID = "";
+if(isset($argv[2]))
+{
+    $szTargetRunID = $argv[2];
+}
 
 // ins.topics.2013.xml 
 $szFPInputFN = sprintf("%s/ins.topics.%d.xml", $szMetaDataDir, $nTVYear);
@@ -60,8 +68,15 @@ foreach($arDirList as $szRunID)
         printf("### Skipping [%s] ...\n", $szRunID);
         continue;        
     }
+    
+    if($szTargetRunID != "")
+    {
+        if($szTargetRunID != $szRunID)
+            continue;
+    }
 
     $szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szRunID, $szVideoPath);
+    makeDir($szQueryResultDir1);
     $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szRunID);
     if(file_exists($szFPOutputFN))
     {

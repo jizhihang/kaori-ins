@@ -54,7 +54,7 @@ git clone https://github.com/ledduy/kaori-ins.git
 - For tv2013 --> only 5KF/shot are copied and packed in .tar file.
 - Running time on SGE (24 cores) for tv2013 is 16 hours, tv2012 & tv2011 is 4 hours.
 
-5.2. Generate metadata for subtest
+5.2. Generate metadata for subtest --> only subtest2012-new
 - Code: ksc-Tool-Tool-GenerateMetaDataForSubTest.php 2012
 - Note: Copy *.tar files of selected shots to new dir (it is better to use softlink, but here cp is used).
 - Shot sampling rate: $arSamplingRateList = array(2011 => 10, 2012 => 20, 2013 => 20);
@@ -74,9 +74,42 @@ git clone https://github.com/ledduy/kaori-ins.git
 - harlap x sift: 7 sec/KF
 - dense6 x rgbsift: 10 sec/KF
 - dense6 x sift: 6 sec/KF
-- note: colordescriptor auto resize large KF into max 500x500
-
+- note: colordescriptor auto resize large KF into max 500x500, and CPU is usually 2x
 
 5.3. Running DPM model
 - tv2012 ~ 4 sec/keyframe 
 - tv2013: 16 sec/keyframe for 2x scale factor on test keyframes, 6 sec/keyframe for normal KF.
+
+
+*************************** RE-TEST THE FRAMEWORK **********************
+
+6.1. Raw feature extraction
+- Only dense6mul.sift is used for test2012-new
+- Pat are defined in ksc-AppConfigForProject.php
+- Total time: 6*2.25M/3600 = 3,750 hours (Aug23-23:30 --> [Aug25-->10:00 - Last jobs!])
+- 56 cores until Aug25-03:00AM, 550 cores after that (INS deadline)
+
+- test2011-new
+- Aug26-->23:55 ==> Aug27-->9:55 - 1,000jobs*90mins/job = 1,500 hours 
+(max 280 cores --> 150 cores because colordescriptor requires 1.5-2.0 CPUs 
+*** Clustering
+- Aug27-->10:10 ==> Aug27-->12:00
+
+6.2. Quantization
+- 1K codebook of subtest2012-new
+- Total time: 6.5*2.25/3600 = 4,100 hours --> 20 hours (max 200 cores) 
+--> [Aug25-->23:15 - Aug25-->16:27 - Last jobs! 280 cores]
+
+- test2011-new
+Aug27-->16:45 ==> Aug28-->05:00
+
+6.3. Matching
+- Total time: 2,100 jobs (21 queries) x 30 mins/job --> 1,050 hours
+--> [Aug26--> 16:45 --> Aug26-->20:45 280 cores]
+
+6.4. Ranking and Selecting for DPM
+
+6.5. Running DPM
+
+6.6. Fusion and Evaluation
+

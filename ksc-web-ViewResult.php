@@ -43,6 +43,7 @@ if($nAction == 0)
 	printf("<OPTION VALUE='test2013-new'>test2013-new</OPTION>\n");
 	printf("<OPTION VALUE='subtest2012-new'>subtest2012-new</OPTION>\n");
 	printf("<OPTION VALUE='test2012-new'>test2012-new</OPTION>\n");
+	printf("<OPTION VALUE='test2011-new'>test2011-new</OPTION>\n");
 	printf("</SELECT>\n");
 	
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='1'>\n");
@@ -176,7 +177,7 @@ foreach($arNISTList[$szQueryID] as $szShotID)
 }
 
 $szFPModelConfigFN = sprintf("%s/%s.cfg", $szMetaDataDir, $szQueryID);
-if(file_exists($szModelConfig))
+if(file_exists($szFPModelConfigFN))
 {
     loadListFile($arRawListz, $szFPModelConfigFN);
     // Scale : 2.000000
@@ -264,7 +265,7 @@ else
         {
             $arRawList[] = sprintf("%s#$#%0.4f", $szShotID, $fScore);
             $nCount++;
-            if($nCount>10000)
+            if($nCount>20000)
                 break;
         }
         //saveDataFromMem2File($arRawList, $szFPOutputFN);

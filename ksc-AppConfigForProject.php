@@ -50,10 +50,15 @@ $arPat2PathList = array(
 		"test2013-new" => "tv2013/test2013-new",
 		"test2012-new" => "tv2012/test2012-new", 
 		"test2011-new" => "tv2011/test2011-new", 
-		"queryext502013-new" => "tv2013/queryext502013-new", 
+
+        "queryext502013-new" => "tv2013/queryext502013-new", 
 		"queryext502012-new" => "tv2012/queryext502012-new", 
 		"queryext502011-new" => "tv2011/queryext502011-new", 
 
+        "query2013-new" => "tv2013/query2013-new",
+        "query2012-new" => "tv2012/query2012-new",
+        "query2011-new" => "tv2011/query2011-new",
+    
 		"subtest2013-new" => "tv2013/subtest2013-new",
 		"subtest2012-new" => "tv2012/subtest2012-new", 
 		"subtest2011-new" => "tv2011/subtest2011-new", 
