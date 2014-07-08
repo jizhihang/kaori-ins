@@ -631,6 +631,9 @@ function fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTV
     $arResultDirList[] = $szResultDir2;
     
     $arResultRankList = array();
+	$nRound = 1;
+	
+	$arTmpList = array();
     foreach ($arResultDirList as $szResultDir) {
         $arFileList = collectFilesInOneDir($szResultDir, "", ".res");
         // print_r($arFileList);
@@ -662,17 +665,45 @@ function fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTV
         }
         
         foreach ($arRankList as $szShotID => $fScore) {
-            if (isset($arResultRankList[$szShotID])) {
-                $arResultRankList[$szShotID] += $fWeight2 * normScore($fScore);
-            } else {
-                $arResultRankList[$szShotID] = $fWeight1 * normScore($fScore);
-            }
+            
+			if($nRound == 1)
+			{
+				if (isset($arResultRankList[$szShotID]["score"])) {
+					exit("Serious ERROR - BUGGY!\n");
+				} else {
+					$arResultRankList[$szShotID]["score"] = $fWeight1 * normScore($fScore);
+					$arResultRankList[$szShotID]["weight"] = $fWeight1;
+				}
+			}
+			else
+			{
+				if (isset($arResultRankList[$szShotID]["score"])) {
+					$arResultRankList[$szShotID]["score"] += $fWeight2 * normScore($fScore);
+					$arResultRankList[$szShotID]["weight"] += $fWeight2;
+				}
+				else
+				{
+					// just ignore with assumption that set2 is a subset of set1
+					//$arResultRankList[$szShotID]["score"] = $fWeight2 * normScore($fScore);
+					//$arResultRankList[$szShotID]["weight"] = $fWeight2;
+					
+					$arTmpList[$szShotID] = 1;
+				}
+			}
         }
+		$nRound++;
     }
+	
+	//printf((sizeof($arTmpList)));exit();
+
+    $arResultRankList2 = array();
+	foreach($arResultRankList as $szShotID => $arTmp)
+	{
+		$arResultRankList2[$szShotID] = $arTmp["score"]/$arTmp["weight"];
+	}
+    arsort($arResultRankList2);
     
-    arsort($arResultRankList);
-    
-    return ($arResultRankList);
+    return ($arResultRankList2);
 }
 
 function normScore($fScore)
