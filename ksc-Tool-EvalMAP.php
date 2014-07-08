@@ -244,6 +244,7 @@ function computeTVAveragePrecision(&$arAnnList, &$arScoreList, $nMaxDocs=2000)
 	
 	$nHits = 0;
 	$nNumCounts = min($nMaxDocs, $nNumDocs);
+	printf($nMaxDocs, $nNumDocs);
 	
 	$arRecList = array();
 	$arPrecList = array();
@@ -276,6 +277,10 @@ function computeTVAveragePrecision(&$arAnnList, &$arScoreList, $nMaxDocs=2000)
 	$nIndex = 0;
 	$nNumRecPoints = sizeof($arRecList);
 	$fSum = 0;
+//	printf($nHits);
+//	print_r($arRecList);
+//	print_r($arPrecList);
+//	print_r($arHitList);
 	for($i=0; $i<=100; $i+=10)
 	{
 		// compute interpolated precision at recall = 0%, 10%, 20%, ...
@@ -301,7 +306,7 @@ function computeTVAveragePrecision(&$arAnnList, &$arScoreList, $nMaxDocs=2000)
 	}
 //	print_r($arInterpolatedPrec);
 	$fAveragePrecision = $fSum/11.0;
-	//exit("MAP: $fAveragePrecision");
+//	exit("MAP: $fAveragePrecision");
 	
 	$arOutput = array();
 	
