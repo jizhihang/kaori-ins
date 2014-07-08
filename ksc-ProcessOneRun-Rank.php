@@ -24,7 +24,7 @@ $arVideoPathLUT[2011] = "tv2011/test2011-new";
 $arVideoPathLUT[2012] = "tv2012/test2012-new";
 $arVideoPathLUT[2013] = "tv2013/test2013-new";
 
-if($argv<2)
+if($argc<2)
 {
     printf("Usage: %s <Year> <RunID>\n", $argv[0]);
     printf("Usage: %s %s\n", $argv[0], $nTVYear);
