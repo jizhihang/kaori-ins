@@ -7,9 +7,11 @@
  *
  * 		Copyright (C) 2010-2013 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 04 Aug 2013.
+ * 		Last update	: 09 Jul 2014.
  */
 
+//  09 Jul 2014
+// Caizhi deleted keyframes in jpg format and replace by png format
 
 require_once "ksc-AppConfig.php";
 require_once "ksc-Tool-EvalMAP.php";
@@ -19,6 +21,16 @@ $arBoundingBoxList = array(); // used for displaying bounding box of DPM result
 $thumbWidth = 200;
 $nNumShownKFPerShot = 5;
 $fConfigScale = 1; // scale factor of DPM model
+
+// added on Jul 09, 2014
+$arImgFormatLUT  = array(
+2013 => "png",
+2012 => "jpg",
+2011 => "jpg"
+);
+
+$szImgFormat = "jpg";
+
 ////////////////// START //////////////////
 
 $nAction = 0;
@@ -86,6 +98,8 @@ $szVideoPath = sprintf("%s/%s", $szTVYear, $szPatName);
 $szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
 $arDirList = collectDirsInOneDir($szResultDir);
 sort($arDirList);
+
+$szImgFormat = $arImgFormatLUT[$nTVYear];
 
 //print_r($arQueryListCount);
 // show form
@@ -212,7 +226,7 @@ $arOutput[] = sprintf("<P><H1>Query - %s</H1>\n", $szText);
 $arOutput[] = sprintf("<P><H1>Scale factor (to scale up the test image using DPM model) - %0.4f</H1><BR>\n", $fConfigScale);
 foreach($arQueryImgList as  $szQueryImg)
 {
-		$szURLImg = sprintf("%s/%s/%s/%s.jpg", $szKeyFrameDir, $szQueryPatName, $szQueryID, $szQueryImg);
+		$szURLImg = sprintf("%s/%s/%s/%s.%s", $szKeyFrameDir, $szQueryPatName, $szQueryID, $szQueryImg, "jpg");
 		//exit($szURLImg);
 		$szRetURL = $szURLImg;
 		$imgzz = imagecreatefromjpeg($szRetURL);
@@ -289,8 +303,8 @@ foreach($arRawList as $szLine)
     }
 }
 
-$arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=10000);
-print_r($arTmpzzz);
+//$arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=10000);
+//print_r($arTmpzzz);
 
 $arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=1000);
 $fMAP = $arTmpzzz['ap'];
@@ -347,7 +361,9 @@ for($i=$nStartID; $i<$nEndID; $i++)
 	$fScore = floatval($arTmp[1]);
 
 	$szShotKFDir = sprintf("%s/test/%s", $szKeyFrameDir, $szShotID);
-	$arImgList = collectFilesInOneDir($szShotKFDir, "", ".jpg");
+	
+	//$arImgList = collectFilesInOneDir($szShotKFDir, "", ".jpg");
+	$arImgList = collectFilesInOneDir($szShotKFDir, "", "." . $szImgFormat);
 	
 	$arOutput[] = sprintf("%d. ", $nCount+1);
 	$nCountz = 0;
@@ -365,13 +381,28 @@ for($i=$nStartID; $i<$nEndID; $i++)
 			continue;
 		}
 
-		$szURLImg = sprintf("%s/test/%s/%s.jpg",
-				$szKeyFrameDir, $szShotID, $szImg);
-
+		$szURLImg = sprintf("%s/test/%s/%s.%s",
+				$szKeyFrameDir, $szShotID, $szImg, $szImgFormat);			
 		///
 		// generate thumbnail image
 		$szRetURL = $szURLImg;
-		$imgzz = imagecreatefromjpeg($szRetURL);
+		
+		if($szImgFormat == "png")
+		{
+			$imgzz = imagecreatefrompng($szRetURL);
+		}
+		else
+		{
+			$imgzz = imagecreatefromjpeg($szRetURL);
+		}
+		
+		if(!$imgzz)
+		{
+			printf("<P>Error in loading image [%s]<br>\n", $szRetURL);
+			exit();
+		}
+
+
 		$widthzz = imagesx($imgzz);
 		$heightzz = imagesy($imgzz);
 
