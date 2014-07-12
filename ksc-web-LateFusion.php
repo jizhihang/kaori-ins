@@ -7,12 +7,26 @@
  *
  * 		Copyright (C) 2010-2013 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 04 Aug 2013.
+ * 		Last update	: 11 Jul 2014.
  */
+ 
+// Update Jul 11, 2014
+/**
+1. Adding more normalization method - sigmoid function (default) and z-score
+2. Auto adding fusion config to runID
+3. Fusion method: first, compute shot score (= max score of keyframes), then normalize score, and fuse
+4. OutputRunID - suffix will be added (R1, R2, weights, normalization method)
+5. OutputRun config file is saved.
+*/ 
+ 
 require_once "ksc-AppConfig.php";
 require_once "ksc-Tool-EvalMAP.php";
 
 // //////////////// START //////////////////
+
+$arNormMethodDesc = array(
+0 => "Simple Sigmoid Function (1/(1+exp(-t)))",
+1 => "Z-Score by Using Mean and Std");  // shown better perf compared to sigmoid
 
 $nAction = 0;
 if (isset($_REQUEST['vAction'])) {
@@ -20,6 +34,7 @@ if (isset($_REQUEST['vAction'])) {
 }
 
 if ($nAction == 0) {
+    printf("<P><H1>Late Fusion</H1>\n");
     printf("<P><H1>Select TVYear</H1>\n");
     printf("<FORM TARGET='_blank'>\n");
     printf("<P>TVYear<BR>\n");
@@ -70,7 +85,7 @@ sort($arDirList);
 // print_r($arQueryListCount);
 // show form
 if ($nAction == 1) {
-    printf("<P><H1>View Results</H1>\n");
+    printf("<P><H1>Late Fusion</H1>\n");
     printf("<FORM TARGET='_blank'>\n");
     printf("<P>Query<BR>\n");
     // load xml file
@@ -122,8 +137,15 @@ if ($nAction == 1) {
 
     printf("<P>To<BR>\n");
     printf("<INPUT TYPE='TEXT' NAME='vTo' VALUE='9098'>\n");
+
+    printf("<P>Normalization Method for Scores<BR>\n");
+    printf("<SELECT NAME='vNormMethod'>\n");
+	printf("<OPTION VALUE='0'>%s</OPTION>\n", $arNormMethodDesc[0]);
+    printf("<OPTION VALUE='1'>%s</OPTION>\n", $arNormMethodDesc[1]);
+    printf("</SELECT>\n");
+
     
-    printf("<P>Output Run<BR>\n");
+    printf("<P>Output Run - Suffix will be added, e.g XXX[R1=R2.1xw1=1.0-R2=R2.2xw2=1.0-Norm=0]<BR>\n");
     printf("<INPUT TYPE='TEXT' NAME='vOutRunID' VALUE='run_fusion%s'>\n", $nTVYear);
     
     printf("<P>PageID<BR>\n");
@@ -153,7 +175,25 @@ $fWeight2 = floatval($_REQUEST['vWeightR2']);
 $nQueryIDStart = intval($_REQUEST['vFrom']);
 $nQueryIDEnd = intval($_REQUEST['vTo']);
 
-$szOutRunID = $_REQUEST['vOutRunID'];
+$szCoreOutRunID = $_REQUEST['vOutRunID'];
+
+// adding Jul 11, 2014
+$nNormMethod = $_REQUEST['vNormMethod'];
+
+// pick first 3 char of RunID as Code - usually 1.1, 1.2 are used to rank by priority
+$szR1 = substr($szRunID1, 0, 3) ;
+$szR2 = substr($szRunID2, 0, 3);
+$szOutputRunSuffix = sprintf("R1=R%sxw1=%0.1f-R2=R%sxw2=%0.1f-Norm=%d", $szR1, $fWeight1, $szR2, $fWeight2, $nNormMethod);
+
+$szOutRunID = sprintf("%s[%s]", $szCoreOutRunID, $szOutputRunSuffix);
+
+$arLog = array();
+$arLog [] = sprintf("Fusion run config");
+$arLog [] = sprintf("Output Name: %s", $szOutRunID);
+$arLog [] = sprintf("R1: %s - Weight: %0.1f", $szRunID1, $fWeight1);
+$arLog [] = sprintf("R2: %s - Weight: %0.1f", $szRunID2, $fWeight2);
+$arLog [] = sprintf("NormScoreMethod: %s", $arNormMethodDesc[$nNormMethod]);
+$arLog [] = sprintf("TVYear: %s", $szTVYear);
 
 // include both jpg and png file
 $szQueryPatName = sprintf("query%s-new", $nTVYear);
@@ -322,7 +362,7 @@ $arOutput[] = sprintf("<P><BR>\n");
      "9068" => 10, // small ROI, Mask/Rect > 0.5
 
  );
-*/
+
 
 $arWeightList = array(
     "9048" => 10, // small ROI
@@ -349,6 +389,7 @@ $arWeightList = array(
 )
 
 ;
+*/
 
 $nShowGT = $_REQUEST['vShowGT'];
 if ($nShowGT) {
@@ -389,7 +430,7 @@ if ($nShowGT) {
             $szResultDir1 = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID1, $szVideoPath, $szQueryIDz);
             $szResultDir2 = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID2, $szVideoPath, $szQueryIDz);
             
-            $arRawListz = fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTVYear);
+            $arRawListz = fuseRankedList($nNormMethod, $szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTVYear);
             $arRawList = array();
             $nCount = 0;
             
@@ -430,13 +471,20 @@ foreach ($arRawList as $szLine) {
     }
 }
 
-$arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs = 10000);
+//$arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs = 10000);
 // print_r($arTmpzzz);
 
 $arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs = 1000);
 $fMAP = $arTmpzzz['ap'];
 $nTotalHitsz = $arTmpzzz['total_hits'];
-$arOutput[] = sprintf("<P><H3>MAP: %0.2f. Num hits (@1000): %d<BR>\n", $fMAP, $nTotalHitsz);
+$szOut = sprintf("<P><H3>MAP: %0.2f. Num hits (@1000): %d<BR>\n", $fMAP, $nTotalHitsz);
+$arLog [] = $szOut;
+$arOutput[] = $szOut;
+
+// update Jul 11, 2014
+$szFPOutputFN = sprintf("%s/%s.log", $szQueryResultDir1, $szOutRunID);
+saveDataFromMem2File($arLog, $szFPOutputFN);
+exit();
 // //
 
 $nCount = 0;
@@ -623,8 +671,12 @@ function parseNISTResult($szFPInputFN)
     return $arOutput;
 }
 
-function fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTVYear)
+// update Jul 11, 2014
+function fuseRankedList($nNormMethod, $szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTVYear)
 {
+	global $nQueryID;
+	global $arLog;
+
     $arResultDirList = array();
     
     $arResultDirList[] = $szResultDir1;
@@ -633,6 +685,8 @@ function fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTV
     $arResultRankList = array();
 	$nRound = 1;
 	
+	
+	// first - compute shot score = max scores of keyframes
 	$arTmpList = array();
     foreach ($arResultDirList as $szResultDir) {
         $arFileList = collectFilesInOneDir($szResultDir, "", ".res");
@@ -664,6 +718,20 @@ function fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTV
             }
         }
         
+		// compute statistics such as mean and std
+        $nCount = 0;
+		$fSum = 0;
+		$fSumSq = 0;
+		foreach ($arRankList as $szShotID => $fScore) {
+			$fSum += $fScore;
+			$fSumSq += $fScore*$fScore;
+			$nCount++;
+		}		
+		$fMean = $fSum/$nCount;
+		$fStd = $fSumSq/$nCount - $fMean*$fMean;
+		$fStd = sqrt($fStd);
+		$arLog[] = sprintf("<P>QueryID = %s - Mean = %0.4f - Std = %0.4f - Path: %s<BR>\n", $nQueryID, $fMean, $fStd, $szResultDir);
+		// then fuse scores - before fusion, normalize scores
         foreach ($arRankList as $szShotID => $fScore) {
             
 			if($nRound == 1)
@@ -671,14 +739,30 @@ function fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTV
 				if (isset($arResultRankList[$szShotID]["score"])) {
 					exit("Serious ERROR - BUGGY!\n");
 				} else {
-					$arResultRankList[$szShotID]["score"] = $fWeight1 * normScore($fScore);
+					if($nNormMethod == 0)
+					{
+						$arResultRankList[$szShotID]["score"] = $fWeight1 * normScoreSigmoid($fScore);
+					}
+					
+					if($nNormMethod == 1)
+					{
+						$arResultRankList[$szShotID]["score"] = $fWeight1 * normScoreZMethod($fScore, $fMean, $fStd);
+					}
+					
 					$arResultRankList[$szShotID]["weight"] = $fWeight1;
 				}
 			}
 			else
 			{
 				if (isset($arResultRankList[$szShotID]["score"])) {
-					$arResultRankList[$szShotID]["score"] += $fWeight2 * normScore($fScore);
+					if($nNormMethod == 0)
+					{
+						$arResultRankList[$szShotID]["score"] += $fWeight2 * normScoreSigmoid($fScore);
+					}
+					if($nNormMethod == 1)
+					{
+						$arResultRankList[$szShotID]["score"] += $fWeight2 * normScoreZMethod($fScore, $fMean, $fStd);
+					}
 					$arResultRankList[$szShotID]["weight"] += $fWeight2;
 				}
 				else
@@ -706,10 +790,20 @@ function fuseRankedList($szResultDir1, $fWeight1, $szResultDir2, $fWeight2, $nTV
     return ($arResultRankList2);
 }
 
-function normScore($fScore)
+function normScoreSigmoid($fScore)
 {
     $fReturn = 1 / (1 + exp(- $fScore));
     
     return $fReturn;
 }
+
+function normScoreZMethod($fScore, $fMean, $fStd)
+{
+    $fReturn = ($fScore - $fMean)/($fStd+1); // $fStd+1 to avoid error of dividing to zero
+    
+	//printf("<P>Score = %0.4f - Norm Score = %0.4f <BR>\n", $fScore, $fReturn);exit();
+	
+    return $fReturn;
+}
+
 ?>
