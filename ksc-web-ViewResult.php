@@ -7,11 +7,14 @@
  *
  * 		Copyright (C) 2010-2013 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 09 Jul 2014.
+ * 		Last update	: 12 Jul 2014.
  */
 
 //  09 Jul 2014
 // Caizhi deleted keyframes in jpg format and replace by png format
+
+// 12 Jul 2014
+// Check and show unjudged shots
 
 require_once "ksc-AppConfig.php";
 require_once "ksc-Tool-EvalMAP.php";
@@ -30,6 +33,12 @@ $arImgFormatLUT  = array(
 );
 
 $szImgFormat = "jpg";
+
+// Update Jul 12, 2014
+// Use one global var to store judged shots --> in tv2013, there are many relevant shots but un-judged
+
+$arJudgedShots = array();
+
 
 ////////////////// START //////////////////
 
@@ -98,6 +107,14 @@ $szVideoPath = sprintf("%s/%s", $szTVYear, $szPatName);
 $szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
 $arDirList = collectDirsInOneDir($szResultDir);
 sort($arDirList);
+
+// setting 777
+foreach($arDirList as $szDirName)
+{
+	$szCmd = sprintf("chmod -R 777 %s/%s", $szResultDir, $szDirName);
+	//system($szCmd);
+	//printf("<--%s-->\n", $szCmd);
+}
 
 $szImgFormat = $arImgFormatLUT[$nTVYear];
 
@@ -196,7 +213,7 @@ if(file_exists($szFPModelConfigFN))
     loadListFile($arRawListz, $szFPModelConfigFN);
     // Scale : 2.000000
     $arTmp1 = explode(":", $arRawListz[0]);
-    print_r($arTmp1);
+    //print_r($arTmp1);
     $fConfigScale = floatval($arTmp1[1]);    
 }
 else
@@ -265,12 +282,22 @@ if($nShowGT)
 }
 else
 {
-    printf("Path:$szVideoPath <BR>\n");
+    //printf("Path:$szVideoPath <BR>\n");
     $szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szRunID, $szVideoPath);
     $szQueryResultDir = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID, $szVideoPath, $szQueryID);
 
     $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szQueryID);
-    if(!file_exists($szFPOutputFN))
+	
+	//if the run is using DPM --> need to load .res since it contains info of bounding box
+	if(stristr($szRunID, "dpm"))
+	{
+		$nLoadBoundingBox = 1;
+	}
+	else
+	{	
+		$nLoadBoundingBox = 0;
+	}
+    if(!file_exists($szFPOutputFN) || $nLoadBoundingBox)
     {
         $arRawListz = loadRankedList($szQueryResultDir, $nTVYear);
         $arRawList = array();
@@ -422,10 +449,12 @@ for($i=$nStartID; $i<$nEndID; $i++)
 		imagecopyresampled($tmp_img, $imgzz, 0, 0, 0, 0, $new_width, $new_height, $widthzz, $heightzz);
 		
 		$red = imagecolorallocate($tmp_img, 255, 0, 0);
+		$green = imagecolorallocate($tmp_img, 0, 255, 0);
 
 		//print_r($arBoundingBoxList[$szShotID]);
 		//exit($szKeyFrameIDz);
 		
+		$nMatch = 0;
 		foreach($arBoundingBoxList[$szShotID] as $szKeyFrameIDz => $arCoods)
 		{
 		    //print_r($arCoods); exit();
@@ -450,7 +479,15 @@ for($i=$nStartID; $i<$nEndID; $i++)
 		    }
         }
 
-        imagerectangle($tmp_img, $nLeft, $nTop, $nRight, $nBottom, $red);		//output to buffer
+		if($nMatch)
+		{
+			imagerectangle($tmp_img, $nLeft, $nTop, $nRight, $nBottom, $red);	// true detection result
+		}
+		else
+		{
+			imagerectangle($tmp_img, $nLeft, $nTop, $nRight, $nBottom, $green); // just for reference	because the keyframe is different - might be OK if two frames are adjcent
+		}
+			
         
  //       print_r($arBoundingBoxList[$szShotID]);
 //        print_r($arImgList);exit();
@@ -486,7 +523,14 @@ for($i=$nStartID; $i<$nEndID; $i++)
 	}
 	else
 	{
-		$arOutput[] = sprintf("<IMG SRC='sad-icon2.png'><BR>\n");
+		if(in_array($szShotID, $arJudgedShots[$szQueryID]))
+		{
+			$arOutput[] = sprintf("<IMG SRC='sad-icon2.png'><BR>\n");
+		}
+		else
+		{
+			$arOutput[] = sprintf("<IMG SRC='unknown-icon.png' WIDTH=50><BR>\n");
+		}
 	}
 
 	$arOutput[] = sprintf("<BR>\n");
@@ -563,8 +607,14 @@ function loadQueryDesc($szFPInputFN="ins.topics.2011.xml")
 	return $arOutput;
 }
 
+
+// Update Jul 12, 2014
+// Use one global var to store judged shots --> in tv2013, there are many relevant shots but un-judged
+
 function parseNISTResult($szFPInputFN)
 {
+	global $arJudgedShots;
+
 	loadListFile($arRawList, $szFPInputFN);
 
 	$arOutput = array();
@@ -580,6 +630,8 @@ function parseNISTResult($szFPInputFN)
 		{
 			$arOutput[$szQueryID][] = $szShotID;
 		}
+		
+		$arJudgedShots[$szQueryID][] = $szShotID; 
 	}
 
 	return $arOutput;
