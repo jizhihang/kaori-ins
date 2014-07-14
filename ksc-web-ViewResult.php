@@ -111,9 +111,12 @@ sort($arDirList);
 // setting 777
 foreach($arDirList as $szDirName)
 {
-	$szCmd = sprintf("chmod -R 777 %s/%s", $szResultDir, $szDirName);
-	//system($szCmd);
-	//printf("<--%s-->\n", $szCmd);
+	if(stristr($szDirName, "del"))
+	{
+		$szCmd = sprintf("chmod -R 777 %s/%s", $szResultDir, $szDirName);
+		system($szCmd);
+		//printf("<--%s-->\n", $szCmd);
+	}
 }
 
 $szImgFormat = $arImgFormatLUT[$nTVYear];
@@ -220,9 +223,9 @@ else
 {
     printf("Model config file [%s] not found\n", $szFPModelConfigFN);
 }
-/*
+
 $szFPOutputFN = sprintf("%s/ins.search.qrels.%s.csv", $szMetaDataDir, $szTVYear);
-if(!file_exists($szFPOutputFN))
+if(!file_exists($szFPOutputFN) || !filesize($szFPOutputFN))
 {
     $arTmpOutput = array();
     foreach($arNISTList as $szQueryIDx => $arTmp)
@@ -233,7 +236,7 @@ if(!file_exists($szFPOutputFN))
     
     saveDataFromMem2File($arTmpOutput, $szFPOutputFN);
 }
-*/
+
 ////////////////// SHOW QUERY ///////////////////
 $szRootKeyFrameDir = sprintf("%s/keyframe-5", $gszRootBenchmarkDir);
 $szKeyFrameDir = sprintf("%s/%s", $szRootKeyFrameDir, $szTVYear);
@@ -495,7 +498,10 @@ for($i=$nStartID; $i<$nEndID; $i++)
 		ob_start();
 		imagejpeg($tmp_img);
 		$szImgContent = base64_encode(ob_get_clean());
-		$arOutput[] = sprintf("<IMG  TITLE='%s - %s' SRC='data:image/jpeg;base64,". $szImgContent ."' />", $szShotID, $fScore);
+		// update Jul 13, 2014 --> adding URL to view matched points
+		$szURL = sprintf('ksc-web-ViewMatch.php?vQueryID=%s&vShotID=%s&vTVYear=%s&vPatName=%s&vRunID=%s', urlencode($szQueryIDz), $szShotID, $nTVYear, $szPatName, urlencode($szRunID));
+				
+		$arOutput[] = sprintf("<A HREF='%s' TARGET=_blank><IMG  TITLE='%s - %s' SRC='data:image/jpeg;base64,". $szImgContent ."' /></A>", $szURL, $szShotID, $fScore);
 
 		imagedestroy($imgzz);
 		imagedestroy($tmp_img);
