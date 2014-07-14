@@ -144,7 +144,7 @@ foreach($arQueryImgList as  $szQueryImg)
 		// calculate thumbnail size
 		$new_width = $thumbWidth;  // to reduce loading time
 		$new_height = floor($heightzz*($thumbWidth/$widthzz));
-
+		
 		// create a new temporary image
 		$tmp_img = imagecreatetruecolor($new_width, $new_height);
 
@@ -166,6 +166,7 @@ foreach($arQueryImgList as  $szQueryImg)
 $arOutput[] = sprintf("<P><BR>\n");
 
 
+
 $arOutput[] = sprintf("<BR>\n");
 $szShotID = $_REQUEST["vShotID"];
 $szShotKFDir = sprintf("%s/test/%s", $szKeyFrameDir, $szShotID);
@@ -173,6 +174,7 @@ $szShotKFDir = sprintf("%s/test/%s", $szKeyFrameDir, $szShotID);
 $arImgList = collectFilesInOneDir($szShotKFDir, "", "." . $szImgFormat);
 
 // TIEP: Tu cho nay em co the co duoc ds cac image cua shot	
+$arOutput[] = sprintf("<P><H1>ShotID - %s</H1>\n", $szShotID);
 	$nCountz = 0;
 	$nSampling = 0;
 	$nNumKFzz = sizeof($arImgList);
@@ -292,6 +294,91 @@ $arImgList = collectFilesInOneDir($szShotKFDir, "", "." . $szImgFormat);
 
 	$arOutput[] = sprintf("<BR>\n");
 
+
+// RANSAC
+$nMatchingMethod = $_REQUEST['vMatchMethod'];
+$nMatchingMethod = 1; //default
+$arMatchingMethodDesc = array(
+0 => "BOW", 
+1 => "RANSAC");
+
+foreach($arMatchingMethodDesc as $nMatchingMethod => $szDesc)
+{
+	$arOutput[] = sprintf("<P><H1>Matching Result by Using [%s] </H1>\n", $szDesc);
+	
+	printf("<!-- Matching by [%s] -->", $szDesc);
+	$szCodeDir = "/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/code/web"; // must be set to 777 before running
+	$szOutputDirz = "/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/web"; // must be set to 777 before running
+	makeDir($szOutputDirz);
+	$szCmdLine = sprintf("chmod 777 %s", $szOutputDirz);
+	system($szCmdLine);
+	
+	// unique dir for each pair (query, shot)
+	$szTmpOutputDir = sprintf("%s/%s-%s-%s", $szOutputDirz, $szDesc, $szQueryID, $szShotID);
+	makeDir($szTmpOutputDir);
+	$szCmdLine = sprintf("chmod 777 %s", $szTmpOutputDir);
+	system($szCmdLine);
+	printf("<!-- Making dir: [%s]-->", $szTmpOutputDir); 
+
+	$szTmpOutputFN = sprintf("%s/zz%s-%s.sh", $szTmpOutputDir, $szQueryID, $szShotID);
+	$arCmdLine = array();
+	$arCmdLine[] = sprintf("export MATLAB_PREFDIR=%s", $szTmpOutputDir);   // change pref dir to avoid permission error
+	$arCmdLine[] = sprintf("cd %s", $szCodeDir);
+	
+	if($nMatchingMethod == 0)
+	{
+		$arCmdLine[] = sprintf("/usr/local/matlab/bin/matlab -nodisplay -nojvm -r \"find_pair_matching_set2set_BOW('%s' , '%s', '%s')\"", $szQueryID, $szShotID, $szTmpOutputDir);
+	}
+
+	if($nMatchingMethod == 1)
+	{
+		$arCmdLine[] = sprintf("/usr/local/matlab/bin/matlab -nodisplay -nojvm -r \"find_pair_matching_set2set_RANSAC('%s' , '%s', '%s')\"", $szQueryID, $szShotID, $szTmpOutputDir);
+	}
+	saveDataFromMem2File($arCmdLine, $szTmpOutputFN);
+	$szCmdLine = sprintf("chmod 777 %s", $szTmpOutputFN);
+	system($szCmdLine);
+	print_r($arCmdLine);
+	system($szTmpOutputFN);
+	$arMatchingImgList = collectFilesInOneDir($szTmpOutputDir, "", ".jpg");
+	//print_r($arMatchingImgList);
+	foreach($arMatchingImgList as $szImg)
+	{
+		$szRetURL = sprintf("%s/%s.jpg", $szTmpOutputDir, $szImg);
+		//printf("Loading image [%s]\n", $szRetURL);
+
+		$imgzz = imagecreatefromjpeg($szRetURL);
+		$widthzz = imagesx($imgzz);
+		$heightzz = imagesy($imgzz);
+
+		// calculate thumbnail size
+//		$new_width = $thumbWidth;  // to reduce loading time
+//		$new_height = floor($heightzz*($thumbWidth/$widthzz));
+		
+		$new_width = $widthzz;
+		$new_height = $heightzz;
+
+
+		// create a new temporary image
+		$tmp_img = imagecreatetruecolor($new_width, $new_height);
+
+		// copy and resize old image into new image
+		// imagecopyresized($tmp_img, $imgzz, 0, 0, 0, 0, $new_width, $new_height, $widthzz, $heightzz);
+
+		// better quality compared with imagecopyresized
+		imagecopyresampled($tmp_img, $imgzz, 0, 0, 0, 0, $new_width, $new_height, $widthzz, $heightzz);
+		//output to buffer
+		ob_start();
+		imagejpeg($tmp_img);
+		$szImgContent = base64_encode(ob_get_clean());
+		$arOutput[] = sprintf("<P><IMG  TITLE='%s' SRC='data:image/jpeg;base64,". $szImgContent ."' />", $szImg);
+
+		imagedestroy($imgzz);
+		imagedestroy($tmp_img);
+	}
+	// SAU KHI LOAD XONG HET THI XOA CAC FILE TRONG DAY
+	$szCmdLine = sprintf("rm -rf %s", $szTmpOutputDir);
+	system($szCmdLine);
+}
 
 foreach($arOutput as $szLine)
 {
