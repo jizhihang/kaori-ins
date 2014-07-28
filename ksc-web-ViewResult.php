@@ -16,11 +16,15 @@
 // 12 Jul 2014
 // Check and show unjudged shots
 
+// 25 Jul 2014
+// special treatment for bad-positives-good-positives --> view prev info such as score and rank
+
 require_once "ksc-AppConfig.php";
 require_once "ksc-Tool-EvalMAP.php";
 //ob_start("ob_gzhandler"); 
 
 $arBoundingBoxList = array(); // used for displaying bounding box of DPM result
+$arPrevDataList = array(); // used for displaying additional info of prev score and rank
 $thumbWidth = 200;
 $nNumShownKFPerShot = 5;
 $fConfigScale = 1; // scale factor of DPM model
@@ -135,7 +139,7 @@ if($nAction == 1)
 	{
 	    if(isset($arQueryListCount[$szQueryID]))
 	    {
-	        printf("<OPTION VALUE='%s#%s'>%s - %d</OPTION>\n", $szQueryID, $szText, $szText, $arQueryListCount[$szQueryID]);  	        
+	        printf("<OPTION VALUE='%s#%s'>%s - %d</OPTION>\n", $szQueryID, str_replace("'", "|", $szText), $szText, $arQueryListCount[$szQueryID]);  	        
 	    }
 	    else
 	    {
@@ -300,7 +304,18 @@ else
 	{	
 		$nLoadBoundingBox = 0;
 	}
-    if(!file_exists($szFPOutputFN) || $nLoadBoundingBox)
+	
+	if(stristr($szRunID, "positive"))
+	{
+		$nShowPrevData = 1;  // showing previous rank and score
+	}
+	else
+	{	
+		$nShowPrevData = 0;
+	}
+
+	
+    if(!file_exists($szFPOutputFN) || $nLoadBoundingBox || $nShowPrevData) // re-load .res files
     {
         $arRawListz = loadRankedList($szQueryResultDir, $nTVYear);
         $arRawList = array();
@@ -403,6 +418,7 @@ for($i=$nStartID; $i<$nEndID; $i++)
 	
 	$arSelList = array();
 
+	$nGotIt = 0;
 	foreach($arImgList as $szImg)
 	{
 		$nSampling++;
@@ -456,52 +472,65 @@ for($i=$nStartID; $i<$nEndID; $i++)
 
 		//print_r($arBoundingBoxList[$szShotID]);
 		//exit($szKeyFrameIDz);
-		
-		$nMatch = 0;
-		foreach($arBoundingBoxList[$szShotID] as $szKeyFrameIDz => $arCoods)
+		if($nLoadBoundingBox)
 		{
-		    //print_r($arCoods); exit();
-		    //exit("$szKeyFrameIDz - $szImg");
-		    if(strstr($szKeyFrameIDz, $szImg))
-		    {
-		      $nLeft = intval($arCoods['l']*$fScaleFactor);
-		      $nTop = intval($arCoods['t']*$fScaleFactor);
-		      $nRight = intval($arCoods['r']*$fScaleFactor);
-		      $nBottom = intval($arCoods['b']*$fScaleFactor);
-		      
-		      $arSelList[] = $szImg;
-		      $nMatch = 1;
-		      break;
-		    }
-		    else  // keep it for the case of no match 
-		    {
-		        $nLeft = intval($arCoods['l']*$fScaleFactor);
-		        $nTop = intval($arCoods['t']*$fScaleFactor);
-		        $nRight = intval($arCoods['r']*$fScaleFactor);
-		        $nBottom = intval($arCoods['b']*$fScaleFactor);
-		    }
-        }
+			$nMatch = 0;
+			foreach($arBoundingBoxList[$szShotID] as $szKeyFrameIDz => $arCoods)
+			{
+				//print_r($arCoods); exit();
+				//exit("$szKeyFrameIDz - $szImg");
+				if(strstr($szKeyFrameIDz, $szImg))
+				{
+				  $nLeft = intval($arCoods['l']*$fScaleFactor);
+				  $nTop = intval($arCoods['t']*$fScaleFactor);
+				  $nRight = intval($arCoods['r']*$fScaleFactor);
+				  $nBottom = intval($arCoods['b']*$fScaleFactor);
+				  
+				  $arSelList[] = $szImg;
+				  $nMatch = 1;
+				  break;
+				}
+				else  // keep it for the case of no match 
+				{
+					$nLeft = intval($arCoods['l']*$fScaleFactor);
+					$nTop = intval($arCoods['t']*$fScaleFactor);
+					$nRight = intval($arCoods['r']*$fScaleFactor);
+					$nBottom = intval($arCoods['b']*$fScaleFactor);
+				}
+			}
 
-		if($nMatch)
-		{
-			imagerectangle($tmp_img, $nLeft, $nTop, $nRight, $nBottom, $red);	// true detection result
+			if($nMatch)
+			{
+				imagerectangle($tmp_img, $nLeft, $nTop, $nRight, $nBottom, $red);	// true detection result
+			}
+			else
+			{
+				imagerectangle($tmp_img, $nLeft, $nTop, $nRight, $nBottom, $green); // just for reference	because the keyframe is different - might be OK if two frames are adjcent
+			}
 		}
-		else
+		
+		$szPrevData = "";
+		if($nShowPrevData)
 		{
-			imagerectangle($tmp_img, $nLeft, $nTop, $nRight, $nBottom, $green); // just for reference	because the keyframe is different - might be OK if two frames are adjcent
-		}
+			//print_r($arPrevDataList); exit();
+			//printf("[%s] - [%s]", $szKeyFrameIDz, $szImg);
+			//exit();
 			
-        
- //       print_r($arBoundingBoxList[$szShotID]);
-//        print_r($arImgList);exit();
+			if(!isset($arPrevDataList[$szShotID]))
+			{
+				printf("Data not set for [%s]\n", $szShotID);
+				exit();
+			}
+			$szPrevData = sprintf("Prev rank: [%d] - Prev score [%0.4f]", $arPrevDataList[$szShotID]['rank'], $arPrevDataList[$szShotID]['score']);
+		}		
         
 		ob_start();
 		imagejpeg($tmp_img);
 		$szImgContent = base64_encode(ob_get_clean());
 		// update Jul 13, 2014 --> adding URL to view matched points
 		$szURL = sprintf('ksc-web-ViewMatch.php?vQueryID=%s&vShotID=%s&vTVYear=%s&vPatName=%s&vRunID=%s', urlencode($szQueryIDz), $szShotID, $nTVYear, $szPatName, urlencode($szRunID));
-				
-		$arOutput[] = sprintf("<A HREF='%s' TARGET=_blank><IMG  TITLE='%s - %s' SRC='data:image/jpeg;base64,". $szImgContent ."' /></A>", $szURL, $szShotID, $fScore);
+
+		$arOutput[] = sprintf("<A HREF='%s' TARGET=_blank><IMG  TITLE='%s - %s' SRC='data:image/jpeg;base64,". $szImgContent ."' /></A>", $szURL, $szShotID, $fScore );
 
 		imagedestroy($imgzz);
 		imagedestroy($tmp_img);
@@ -521,7 +550,7 @@ for($i=$nStartID; $i<$nEndID; $i++)
 	    print_r($arImgList);exit();
 	}
 */
-		
+	$arOutput[] = sprintf("[%s]\n", $szPrevData);	
 	if(in_array($szShotID, $arNISTList[$szQueryID]))
 	{
 		$arOutput[] = sprintf("<IMG SRC='winky-icon.png'><BR>\n");
@@ -640,6 +669,14 @@ function parseNISTResult($szFPInputFN)
 		$arJudgedShots[$szQueryID][] = $szShotID; 
 	}
 
+	// sort shots for each query
+	foreach($arOutput as $szQueryID => $arShotList)
+	{
+		$arTmp = $arShotList;
+		asort($arTmp);
+		$arOutput[$szQueryID] = $arTmp;
+	}
+	
 	return $arOutput;
 }
 
@@ -648,6 +685,9 @@ function loadRankedList($szResultDir, $nTVYear)
 {
     
     global $arBoundingBoxList;
+	global $nLoadBoundingBox;
+	global $arPrevDataList; 
+	global $nShowPrevData; // show old rank and old score 
     
     $arFileList = collectFilesInOneDir($szResultDir, "", ".res");
     //print_r($arFileList);
@@ -659,6 +699,7 @@ function loadRankedList($szResultDir, $nTVYear)
     	loadListFile($arScoreList, $szFPScoreListFN);
         foreach($arScoreList as $szLine)
     	{
+			//printf("%s", $szLine);exit();
             $arTmp = explode("#$#", $szLine);
         	$szTestKeyFrameID = trim($arTmp[0]);
         	$szQueryKeyFrameID = trim($arTmp[1]);
@@ -686,24 +727,48 @@ function loadRankedList($szResultDir, $nTVYear)
     			$arRankList[$szShotID] = $fScore;
     		}
     		
-
-    		// for dmp
-    		$fLeft = floatval($arTmp[3]);
-    		$fTop = floatval($arTmp[4]);
-    		$fRight = floatval($arTmp[5]);
-    		$fBottom = floatval($arTmp[6]);
-    		 
-    		$arBoundingBoxList[$szShotID][$szTestKeyFrameID]['l'] = $fLeft;
-    		$arBoundingBoxList[$szShotID][$szTestKeyFrameID]['t'] = $fTop;
-    		$arBoundingBoxList[$szShotID][$szTestKeyFrameID]['r'] = $fRight;
-    		$arBoundingBoxList[$szShotID][$szTestKeyFrameID]['b'] = $fBottom;
-    		//print_r($arBoundingBoxList); exit();
+			if($nLoadBoundingBox)
+			{
+				// for dmp
+				$fLeft = floatval($arTmp[3]);
+				$fTop = floatval($arTmp[4]);
+				$fRight = floatval($arTmp[5]);
+				$fBottom = floatval($arTmp[6]);
+				 
+				$arBoundingBoxList[$szShotID][$szTestKeyFrameID]['l'] = $fLeft;
+				$arBoundingBoxList[$szShotID][$szTestKeyFrameID]['t'] = $fTop;
+				$arBoundingBoxList[$szShotID][$szTestKeyFrameID]['r'] = $fRight;
+				$arBoundingBoxList[$szShotID][$szTestKeyFrameID]['b'] = $fBottom;
+				//print_r($arBoundingBoxList); exit();
+			}
+			
+			if($nShowPrevData)
+			{
+				$fPrevScore = floatval($arTmp[3]);
+				$fPrevRank = floatval($arTmp[4]);
+				
+				if(isset($arPrevDataList[$szShotID]))
+				{
+					if($arPrevDataList[$szShotID]['score'] < $fPrevScore)
+					{
+						$arPrevDataList[$szShotID]['score'] = $fPrevScore;
+						$arPrevDataList[$szShotID]['rank'] = $fPrevRank;
+					}
+				}
+				else
+				{
+					$arPrevDataList[$szShotID]['score'] = $fPrevScore;
+					$arPrevDataList[$szShotID]['rank'] = $fPrevRank;
+				}
+			}
     		    		
     	}
     }
     arsort($arRankList);
 
-    return ($arRankList);
+	//print_r($arPrevDataList);exit();
+    
+	return ($arRankList);
 }
 
 
