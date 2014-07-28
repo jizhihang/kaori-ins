@@ -7,11 +7,14 @@
  *
  * 		Copyright (C) 2010-2013 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 12 Jul 2014.
+ * 		Last update	: 28 Jul 2014.
  */
 
 // 12 Jul 2014
 // Copied from ksc-web-ViewResult.php
+
+// 28 Jul 2014
+// Adding MAP info to list of runs
 
 require_once "ksc-AppConfig.php";
 require_once "ksc-Tool-EvalMAP.php";
@@ -99,10 +102,24 @@ if($nAction == 1)
 	    if(!strstr($szRunID, $nTVYear))
 	    {
 	        printf('<!-- Skipping [%s]-->', $szRunID);
+			
 			continue;
 	    }
-	     
-	   printf("<INPUT TYPE='CHECKBOX' NAME='vRunList[]' VALUE='%s'>%s</BR>\n", $szRunID, $szRunID);
+		
+		// adding MAP info
+		$szMAP = "N/A";
+		$szFPMAPFN = sprintf("%s/%s/%s/%s/%s.eval.ksc.csv", $szResultDir, $szRunID, $szTVYear, $szPatName, $szRunID);
+		if(file_exists($szFPMAPFN))
+		{
+			$nNumRows = loadListFile($arTmpz, $szFPMAPFN);
+			$szMAP = sprintf("%0.4f", floatval($arTmpz[$nNumRows-1]));
+		}
+		else
+		{
+			printf("<!--File does not exist [%s]-->\n", $szFPMAPFN);
+		}
+
+		printf("<INPUT TYPE='CHECKBOX' NAME='vRunList[]' VALUE='%s'>%s - MAP: [%s]</BR>\n", $szRunID, $szRunID, $szMAP);
 	}
 
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='2'>\n");
@@ -188,9 +205,11 @@ foreach($arRunMAP as $szRunID => $fMAP)
 	foreach($arQueryList as $nQueryID => $fTmp)
 	{
 		//http://per900c.hpc.vpl.nii.ac.jp/users-ext/ledduy//www/kaori-ins/ksc-web-ViewResult.php?vQueryID=9069%239069+-+OBJECT+-+a+circular+&vShowGT=0&vRunID=1.1.run_query2013-new_test2013-new_Caizhi_No1_TV2013_soft_fg%2Bbg_6sift_asym_0.6&vPageID=1&vMaxVideosPerPage=100&vAction=2&vTVYear=2013&vPatName=test2013-new
-		$szURL = sprintf("http://per900c.hpc.vpl.nii.ac.jp/users-ext/ledduy//www/kaori-ins/ksc-web-ViewResult.php?vQueryID=%s&vShowGT=0&vRunID=%s&vPageID=1&vMaxVideosPerPage=100&vAction=2&vTVYear=%s&vPatName=%s", $nQueryID, urlencode($szRunID), $nTVYear, $szPatName);
-		printf("<TD> <A TITLE=\"%s - %s\" HREF=\"%s\" TARGET=_blank>%0.2f</A> </TD>\n", 
-		$arQueryListLUT[$nQueryID], $arQueryListCount[$nQueryID], 
+		
+		$szQueryZ = sprintf("%s#%s", $nQueryID, str_replace("'", "|", $arQueryListLUT[$nQueryID]));
+		$szURL = sprintf("ksc-web-ViewResult.php?vQueryID=%s&vShowGT=0&vRunID=%s&vPageID=1&vMaxVideosPerPage=100&vAction=2&vTVYear=%s&vPatName=%s", urlencode($szQueryZ), urlencode($szRunID), $nTVYear, $szPatName);
+		printf("<TD> <A TITLE=\"%s - %s - %s\" HREF=\"%s\" TARGET=_blank>%0.2f</A> </TD>\n", 
+		$szRunID, $arQueryListLUT[$nQueryID], $arQueryListCount[$nQueryID], 
 		$szURL, $arTmp[$nQueryID]);
 	}
 	printf("</TR>\n");
