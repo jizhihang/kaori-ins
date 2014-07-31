@@ -4,7 +4,7 @@ clc;
 %% parameter setting
 % directory setup
 DB = 'INS2013';
-database.num_sampled_features = 1e8;
+database.num_sampled_features = 1e8; % 100M points --> 1M clusters
 switch DB
 case 'INS2013'
     work_dir = fullfile('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/',DB);
@@ -23,9 +23,9 @@ clobber = false;
 mat_dir = dir(fullfile(database.mat_dir,'*.mat'));
 mat_dir = {mat_dir(:).name};
 database.num_mat = length(mat_dir);
-kp_length = 5;
-desc_length = 128;
-data_type = 'single';
+kp_length = 5; % affine param = x, y, a, b, c
+desc_length = 128; % SIFT descriptor
+data_type = 'single'; % float type
 database.totalfeatures = 0;
 features_per_mat = zeros(1,database.num_mat);
 
@@ -41,7 +41,9 @@ for i = 1:database.num_mat,
 		database.totalfeatures = database.totalfeatures + size(clip_kp{j},2);
 	end
 end
-fid = fopen(['/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/meta/nfeat_is_', num2str(database.totalfeatures), '.txt'], 'w');
+
+trickdir = fullfile(work_dir, '/meta/nfeat_is_');
+fid = fopen([trickdir, num2str(database.totalfeatures), '.txt'], 'w');
 fclose(fid);
 database.counting_time = toc;
 fprintf('total feature: %d, %.0f s',database.totalfeatures,database.counting_time);
@@ -103,7 +105,7 @@ clear database;
 
 % Save keypoints and descriptor
 sampled_feat_matfile = fullfile(database.cluster_dir,sprintf('%s%d.mat',feature_name,nsamples));
-save(sampled_feat_matfile, 'kp','-v7.3');
-sampled_feat_hdf5file = strrep(sampled_feat_matfile,'.mat','_128D.hdf5');
+save(sampled_feat_matfile, 'kp','-v7.3'); %-v7.3 --> for big data processing
+sampled_feat_hdf5file = strrep(sampled_feat_matfile,'.mat','_128D.hdf5'); % _128D.hdf5 --> used for AKM - parallell procesing
 hdf5write(sampled_feat_hdf5file,'/data',data);
 

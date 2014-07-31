@@ -4,7 +4,7 @@ clc;
 %% parameter setting
 % directory setup
 DB = 'INS2013';
-database.num_sampled_features = 1e8;
+database.num_sampled_features = 1e8; % 100M keypoints --> 1M cluster
 switch DB
 case 'INS2013'
     work_dir = fullfile('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/',DB);
