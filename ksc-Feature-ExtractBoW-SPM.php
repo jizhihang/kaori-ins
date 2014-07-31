@@ -502,7 +502,7 @@ function computeAssignmentSash(
 
     global $szSashKeypointToolApp;
 
-    $fScaleFactor = 4.0; // increase accuracy, eg. 4.0
+    $fScaleFactor = 1.0; // increase accuracy, eg. 4.0
     $nKNNSize = 4;
     $nSamplingInterval = 1;
 
