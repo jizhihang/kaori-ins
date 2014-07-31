@@ -6,18 +6,6 @@ function extract_hesaffine_rootsift_noangle(DB, startShotInd, endShotInd)
 % Du lieu duoc luu truc tiep len server dir --> next version se chinh lai de luu tren local tmp cua tung node, sau khi finish se upload len server dir
 % dung binary hesaffine --> du lieu luu ra file trung gian --> convert ve format dung chung nhu perdoch
 
-switch DB
-case 'INS2013'
-	% ds cac shotID - tao ra bang cach dung lenh >> ls /net/per610a/export/das11g/caizhizhu/ins/ins2013/frames_png
-	
-	lst_shots_file = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/meta/lst_shots.mat';
-	db_frame_dir = '/net/per610a/export/das11g/caizhizhu/ins/ins2013/frames_png';
-	db_feat_dir = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/hesaff_rootsift_noangle_mat';
-	if ~exist(db_feat_dir, 'dir')
-		mkdir(db_feat_dir);
-	end
-end
-
 DB = 'INS2013';
 switch DB
 case 'INS2013'
