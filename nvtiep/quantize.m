@@ -11,7 +11,7 @@ disp(DB)
 work_dir = fullfile('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS', DB);
 build_quant = true;
 build_bow = true;
-grid_mode = false;
+grid_mode = false; % Neu chay tren Grid Mode: chi chay nhung file co kich thuoc nho. Chay tren server mode: nhung file con lai
 
 database.comp_sim= struct('query_obj','fg+bg_0.1','feat_detr','-vgg -hesaff', 'feat_desc', '-rootsift -noangle',...
   'clustering','akmeans','K',1000000,'num_samps',100000000,'iter',50,...
@@ -29,7 +29,6 @@ database.comp_sim= struct('query_obj','fg+bg_0.1','feat_detr','-hesaff', 'feat_d
 
 quant_struct = struct('quantize','kdtree','build_params',database.comp_sim.build_params,'knn',database.comp_sim.knn,'delta_sqr',database.comp_sim.delta_sqr);
 
-
 % feature name
 feature_detr = database.comp_sim.feat_detr;
 feature_desc = database.comp_sim.feat_desc;
@@ -38,21 +37,15 @@ feature_name = strrep(feature_config, '-','');
 feature_name = strrep(feature_name, ' ','_');
 database.feat_mat_dir = sprintf('%s/%s_mat',work_dir,feature_name);
 
+% Neu soft-assignment thi chon parameter = 0.0125 (Duong nhien la tuy dataset, Neu Oxford thi chon delta_sqr = 6250)
 if quant_struct.knn>1 && quant_struct.delta_sqr~=-1
-    if ~isempty(strfind(feature_name, 'root'))
-        quant_struct.delta_sqr=quant_struct.delta_sqr/5e5;
-    elseif ~isempty(strfind(feature_name, 'color'))
-        quant_struct.delta_sqr=quant_struct.delta_sqr*2;
-    elseif ~isempty(strfind(feature_name, 'mom'))
-        quant_struct.delta_sqr=quant_struct.delta_sqr/1e3;
-    end
+    quant_struct.delta_sqr=quant_struct.delta_sqr/5e5;
 end
 
 % Clustering name
-if ~isempty(strfind(database.comp_sim.clustering,'akmeans'))
-	clustering_name = sprintf('%s_%d_%d_%d',database.comp_sim.clustering,...
-		database.comp_sim.K,database.comp_sim.num_samps,database.comp_sim.iter); 
-end
+clustering_name = sprintf('%s_%d_%d_%d',database.comp_sim.clustering,...
+				  database.comp_sim.K,database.comp_sim.num_samps,database.comp_sim.iter); 
+
 database.cluster_dir = fullfile(work_dir,[feature_name,'_cluster'],clustering_name);
 
 % Quantize name
@@ -66,6 +59,7 @@ else
         bow_name = sprintf('%s_%g', quantize_name,quant_struct.delta_sqr);
     end
 end
+
 database.build_dir = fullfile(database.cluster_dir,build_name);
 database.bow_dir = fullfile(database.build_dir,bow_name);
 database.subbow_dir = fullfile(database.bow_dir,'sub_bow');
@@ -80,59 +74,54 @@ if ~exist(database.quant_dir,'dir')
 	mkdir(database.quant_dir);
 end
 
-%filter out those sample video
+%filter out shot0 video
 test_ids = cellfun(@(x) isempty(strfind(x, 'shot0_')), lst_shots, 'UniformOutput', false);
 lst_shots = lst_shots(cell2mat(test_ids));
 num_clip = length(lst_shots);
 frame_sampling = database.comp_sim.frame_sampling;
 
 % Load codebook
-if strcmp(quant_struct.quantize, 'kdtree') 
-	tic;
-	disp('Loading codebook file ...');
-	cluster_filename = dir(fullfile(database.cluster_dir,'Cluster*.hdf5'));
-	assert(length(cluster_filename) == 1);
-	database.cluster_filename = cluster_filename(1).name;
-	avg_big_bow_file = fullfile(database.bow_dir,'avg_pooling_raw_bow.mat');
-	%max_big_bow_file = fullfile(database.bow_dir,'max_pooling_raw_bow.mat');
-	raw_bow_file = fullfile(database.bow_dir,'raw_bow.mat');
-	big_bow_info_file = fullfile(database.bow_dir,'raw_bow_info.mat');
-	if exist(big_bow_info_file,'file')~=0
-		disp('big bow files exist');
-		%return;
-	end
-	centers = hdf5read(fullfile(database.cluster_dir, database.cluster_filename),'/clusters');
-	dataset = single(centers);
-	[feat_len,hist_len] = size(dataset);
-	fprintf('Deduced cluster center info %d %d...\n', feat_len, hist_len);
+tic;
+disp('Loading codebook file ...');
+cluster_filename = dir(fullfile(database.cluster_dir,'Cluster*.hdf5'));
+assert(length(cluster_filename) == 1);
+database.cluster_filename = cluster_filename(1).name;
+avg_big_bow_file = fullfile(database.bow_dir,'avg_pooling_raw_bow.mat');
+%max_big_bow_file = fullfile(database.bow_dir,'max_pooling_raw_bow.mat');
+raw_bow_file = fullfile(database.bow_dir,'raw_bow.mat');
+big_bow_info_file = fullfile(database.bow_dir,'raw_bow_info.mat');
+if exist(big_bow_info_file,'file')~=0
+	disp('big bow files exist'); pause;
 end
+centers = hdf5read(fullfile(database.cluster_dir, database.cluster_filename),'/clusters');
+dataset = single(centers);
+[feat_len,hist_len] = size(dataset);
+fprintf('Deduced cluster center info %d %d...\n', feat_len, hist_len);
 
 if build_quant
 	%% Build flann
-	if ~isempty(strfind(quant_struct.quantize, 'kdtree'))
-		kdtree_filename = fullfile(database.build_dir,'flann_kdtree.bin');
-		kdsearch_filename = fullfile(database.build_dir,'flann_kdtree_search.mat');
-		
-		if exist(kdtree_filename,'file')
-			fprintf('Loading kdtree ...');
-			tic;
-			kdtree = flann_load_index(kdtree_filename,dataset);
-			load(kdsearch_filename);
-			search_params.cores = quant_struct.build_params.cores;
-			kdtree_time.load = toc;
-		else
-			tic;
-			fprintf('Building kdtree ...');
-			[kdtree,search_params,speedup] = flann_build_index(dataset,quant_struct.build_params); 
-			kdtree_time.speedup = speedup;
-			kdtree_time.build = toc;
-			fprintf('%.0f \n',kdtree_time.build);
-			fprintf('save kdtree ...');
-			tic;
-			flann_save_index(kdtree,kdtree_filename);
-			save(kdsearch_filename,'search_params');
-			kdtree_time.save = toc;
-		end
+	kdtree_filename = fullfile(database.build_dir,'flann_kdtree.bin');
+	kdsearch_filename = fullfile(database.build_dir,'flann_kdtree_search.mat');
+	
+	if exist(kdtree_filename,'file')
+		fprintf('Loading kdtree ...');
+		tic;
+		kdtree = flann_load_index(kdtree_filename,dataset);
+		load(kdsearch_filename);
+		search_params.cores = quant_struct.build_params.cores;
+		kdtree_time.load = toc;
+	else
+		tic;
+		fprintf('Building kdtree ...');
+		[kdtree,search_params,speedup] = flann_build_index(dataset,quant_struct.build_params); 
+		kdtree_time.speedup = speedup;
+		kdtree_time.build = toc;
+		fprintf('%.0f \n',kdtree_time.build);
+		fprintf('save kdtree ...');
+		tic;
+		flann_save_index(kdtree,kdtree_filename);
+		save(kdsearch_filename,'search_params');
+		kdtree_time.save = toc;
 	end
 end
 
@@ -196,11 +185,6 @@ if build_quant
 		end
 		clear bins sqrdists	frame_desc clip_desc
 	end
-	
-	% Log
-	logfile=fopen(sprintf('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/quantize_%d.txt', grid_mode),'a');
-	fprintf(logfile, '%d - %d: Quantizing done!\n', sID, eID);
-	fclose(logfile);
 end
 
 if build_bow
@@ -286,11 +270,6 @@ if build_bow
 
 		clear bins sqrdists frame_bow frame_freq weis bin bins sqrdists
 	end
-	
-	% Log
-	logfile=fopen(sprintf('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/quantize_%d.txt', grid_mode),'a');
-	fprintf(logfile, '%d - %d: Build bow done!\n', sID, eID);
-	fclose(logfile);
 end
 fprintf('\nFinished\n');
 quit;

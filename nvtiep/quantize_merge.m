@@ -73,7 +73,7 @@ if ~exist(database.quant_dir,'dir'),
 	mkdir(database.quant_dir);
 end
 
-%filter out those sample video
+%filter out shot0 videos
 test_ids = cellfun(@(x) isempty(strfind(x, 'shot0_')), lst_shots, 'UniformOutput', false);
 lst_shots = lst_shots(cell2mat(test_ids));
 disp('Building quant files separately');
@@ -102,8 +102,7 @@ centers = hdf5read(fullfile(database.cluster_dir, database.cluster_filename),'/c
 disp('Load bow files into a big one');
 list_term_freq=struct('occu',zeros(hist_len+1,1),'frame',zeros(hist_len+1,1),'clip',zeros(hist_len+1,1));
 list_clip_frame_num = zeros(num_clip,1);
-
-list_id2clip_lut = lst_shots; %cellfun(@(x) x(1:end-4), lst_shots, 'UniformOutput',false);
+list_id2clip_lut = lst_shots;
 
 % Clear unused data
 clear test_ids centers
