@@ -170,6 +170,7 @@ save(big_bow_info_file, 'list_term_freq','list_clip_frame_num','list_id2clip_lut
 fprintf('\n save big avg bow ..');
 save(avg_big_bow_file, 'list_avg_pooling_bow','-v7.3');   
 
+% Save bag-of-word after weighting using idf with and without L1_norm. Notice: idf first, normalization after.
 if idf_l1_norm 
 	load(big_bow_info_file);
 	term_freq = list_term_freq.clip;
