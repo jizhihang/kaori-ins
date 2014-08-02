@@ -9,16 +9,16 @@ addpath(genpath('/net/per610a/export/das11f/ledduy/plsang/nvtiep/funcs'));
 DB = 'INS2013';
 disp(DB)
 work_dir = fullfile('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS', DB);
-build_quant = true;
-build_bow = true;
+build_quant = true; % set build_quant=true when we want to quantize feature using given codebook. It only computes wordID and distance to  feature
+build_bow = true;	% set build_bow=true when we want to use quantization info to compute weight of each wordID of feature. Ref: Philbin et.al.
 grid_mode = false; % Neu chay tren Grid Mode: chi chay nhung file co kich thuoc nho. Chay tren server mode: nhung file con lai
 
-database.comp_sim= struct('query_obj','fg+bg_0.1','feat_detr','-vgg -hesaff', 'feat_desc', '-rootsift -noangle',...
-  'clustering','akmeans','K',1000000,'num_samps',100000000,'iter',50,...
-  'build_params',struct('algorithm', 'kdtree','trees', 8, 'checks', 800, 'cores', 20),...
-  'video_sampling',1,'frame_sampling',1,'knn',3,'delta_sqr',6250,'db_agg','avg_pooling',...
-  'vocab','full','trim','notrim','freq','clip','weight','idf','norm','l1',...
-  'query_knn',3,'query_delta_sqr',6250,'query_num',-1,'query_agg','avg_pooling','dist','l2asym_ivf');
+%database.comp_sim= struct('query_obj','fg+bg_0.1','feat_detr','-vgg -hesaff', 'feat_desc', '-rootsift -noangle',...
+%  'clustering','akmeans','K',1000000,'num_samps',100000000,'iter',50,...
+%  'build_params',struct('algorithm', 'kdtree','trees', 8, 'checks', 800, 'cores', 20),...
+%  'video_sampling',1,'frame_sampling',1,'knn',3,'delta_sqr',6250,'db_agg','avg_pooling',...
+%  'vocab','full','trim','notrim','freq','clip','weight','idf','norm','l1',...
+%  'query_knn',3,'query_delta_sqr',6250,'query_num',-1,'query_agg','avg_pooling','dist','l2asym_ivf');
 
 database.comp_sim= struct('query_obj','fg+bg_0.1','feat_detr','-hesaff', 'feat_desc', '-rootsift -noangle',...
   'clustering','akmeans','K',1000000,'num_samps',100000000,'iter',50,...
@@ -80,19 +80,12 @@ lst_shots = lst_shots(cell2mat(test_ids));
 num_clip = length(lst_shots);
 frame_sampling = database.comp_sim.frame_sampling;
 
-% Load codebook
+% Load codebook from file hdf5
 tic;
 disp('Loading codebook file ...');
 cluster_filename = dir(fullfile(database.cluster_dir,'Cluster*.hdf5'));
 assert(length(cluster_filename) == 1);
 database.cluster_filename = cluster_filename(1).name;
-avg_big_bow_file = fullfile(database.bow_dir,'avg_pooling_raw_bow.mat');
-%max_big_bow_file = fullfile(database.bow_dir,'max_pooling_raw_bow.mat');
-raw_bow_file = fullfile(database.bow_dir,'raw_bow.mat');
-big_bow_info_file = fullfile(database.bow_dir,'raw_bow_info.mat');
-if exist(big_bow_info_file,'file')~=0
-	disp('big bow files exist'); pause;
-end
 centers = hdf5read(fullfile(database.cluster_dir, database.cluster_filename),'/clusters');
 dataset = single(centers);
 [feat_len,hist_len] = size(dataset);
@@ -103,6 +96,7 @@ if build_quant
 	kdtree_filename = fullfile(database.build_dir,'flann_kdtree.bin');
 	kdsearch_filename = fullfile(database.build_dir,'flann_kdtree_search.mat');
 	
+	% Neu da build san kdtree thi chi can load len, nguoc lai thi phai build lai tu dau
 	if exist(kdtree_filename,'file')
 		fprintf('Loading kdtree ...');
 		tic;
@@ -127,7 +121,7 @@ end
 
 clear test_ids centers
 
-% Quantize first
+% Quantize cac feature cua moi frame su dung given codebook voi cau truc du lieu kdtree
 if build_quant
 	disp('Building quant files separately');
 	% Log
@@ -139,29 +133,29 @@ if build_quant
 		fprintf('\r%d(%d~%d) - %s', clip_id,sID,eID, lst_shots{clip_id});
 		quant_file = fullfile(database.quant_dir, [lst_shots{clip_id},'.mat']);
 		
-		% Check consistency
+		% Check consistency: Kiem tra xem co file nao dang ghi giua chung thi bi dut ko?
 		if exist(quant_file,'file')
 			try
-				%load(quant_file);
+				load(quant_file);
 				%fprintf('\r%d/%d', clip_id,num_clip);
 				continue;
 			catch err
 				%unix(['rm', quant_file]);
 				logfile=fopen(sprintf('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/quantize_%d.txt', grid_mode),'a');
-				fprintf(logfile, '%d - %d: Loi o line 153 -> Shot:%s - %s\n', sID, eID, lst_shots{clip_id}, err.identifier);
+				fprintf(logfile, '%d - %d: Loi o line 145 -> Shot:%s - %s\n', sID, eID, lst_shots{clip_id}, err.identifier);
 				fclose(logfile);
 			end
 		end
+		% duong dan den file chua feature cua mot shot
 		clip_feat_file = fullfile(database.feat_mat_dir,[lst_shots{clip_id},'.mat']);
 		if ~exist(clip_feat_file,'file')
 			disp([clip_feat_file ' does not exist!']);
 			continue;
 		end
 
-		%load feature
+		%load feature cua tung shot
 		try
 			load(clip_feat_file, 'clip_desc');
-
 			%quantize feature
 			num_frame = length(clip_desc);
 			selected_frame_id = 1:frame_sampling:num_frame;
@@ -174,19 +168,21 @@ if build_quant
 					continue;
 				end
 				frame_desc = clip_desc{frame_id}(1:feat_len,:);
+				% quantize feature
 				[bins{frame_id},sqrdists{frame_id}] = flann_search(kdtree,single(frame_desc),quant_struct.knn, search_params);
 			end
 			% Save quant file
 			save(quant_file, 'bins','sqrdists');
 		catch err
 			logfile=fopen(sprintf('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/quantize_%d.txt', grid_mode),'a');
-			fprintf(logfile, '%d - %d: Loi o line 186 -> Shot:%s NFrame=%d - %s\n', sID, eID, lst_shots{clip_id}, selected_frame_num, err.identifier);
+			fprintf(logfile, '%d - %d: Loi o line 178 -> Shot:%s NFrame=%d - %s\n', sID, eID, lst_shots{clip_id}, selected_frame_num, err.identifier);
 			fclose(logfile);
 		end
 		clear bins sqrdists	frame_desc clip_desc
 	end
 end
 
+% Voi moi frame cua shot, tinh sparse vector bang cach cong don tung trong so cua cac bin
 if build_bow
 	disp('Building bow files separately');
 	% Clear remained data
@@ -199,13 +195,13 @@ if build_bow
 	logfile=fopen(sprintf('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/quantize_%d.txt', grid_mode),'a');
 	fprintf(logfile, '%d - %d: Bat dau build bow\n', sID, eID);
 	fclose(logfile);
-	% Build Bag of Word
+	% Build Bag of Word cho tung Frame (chu ko phai shot)
 	for clip_id = sID:eID
 		fprintf('\r%d(%d~%d) -%s', clip_id,sID,eID, lst_shots{clip_id});
 		quant_file = fullfile(database.quant_dir, [lst_shots{clip_id},'.mat']);
 		subbow_file = fullfile(database.subbow_dir, [lst_shots{clip_id},'.mat']);
 		
-		% Check error bow file
+		% Check error bow file cua nhung file da co san.
 		if exist(subbow_file,'file')
 			try
 				%load(subbow_file);
@@ -214,7 +210,7 @@ if build_bow
 			catch err
 				%unix(['rm ', subbow_file]);
 				logfile=fopen(sprintf('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/quantize_%d.txt', grid_mode),'a');
-				fprintf(logfile, '%d - %d: Loi o line 224 -> Shot:%s - %s\n', sID, eID, lst_shots{clip_id}, err.identifier);
+				fprintf(logfile, '%d - %d: Loi o line 213 -> Shot:%s - %s\n', sID, eID, lst_shots{clip_id}, err.identifier);
 				fclose(logfile);
 			end
 		end
@@ -264,7 +260,7 @@ if build_bow
 			end
 		catch err
 			logfile=fopen(sprintf('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/quantize_%d.txt', grid_mode),'a');
-			fprintf(logfile, '%d - %d: Loi o line 275 -> Shot:%s NFrame=%d - %s\n', sID, eID, lst_shots{clip_id}, selected_frame_num, err.identifier);
+			fprintf(logfile, '%d - %d: Loi o line 263 -> Shot:%s NFrame=%d - %s\n', sID, eID, lst_shots{clip_id}, selected_frame_num, err.identifier);
 			fclose(logfile);
 		end
 

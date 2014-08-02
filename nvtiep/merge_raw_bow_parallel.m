@@ -1,3 +1,10 @@
+function merge_raw_bow_parallel(sID, eID)
+if nargin == 0
+	sID = 400001
+	eID = 450000
+end
+%% IMPORTANT NOTE: Muc tieu cua doan code nay la gom tat ca cac raw bag-of-word cua tung shot thanh 1 khoi de sau nay chi load len 1 lan.
+%% De co the gop lai nhanh hon, ta chia thanh n=10 khoi nho, sau do su dung merge_raw_bow de gom n khoi nay thanh 1 khoi lon hon
 
 %% Load list shot
 run('/net/per610a/export/das11f/ledduy/plsang/nvtiep/libs/vlfeat-0.9.18/toolbox/vl_setup.m');
@@ -6,8 +13,6 @@ addpath(genpath('/net/per610a/export/das11f/ledduy/plsang/nvtiep/funcs'));
 
 %% Set perameters
 DB = 'INS2013';
-disp(DB)
-clobber = false
 save_raw_bow = true
 work_dir = fullfile('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS', DB);
 
@@ -28,35 +33,27 @@ feature_name = strrep(feature_config, '-','');
 feature_name = strrep(feature_name, ' ','_');
 database.feat_mat_dir = sprintf('%s/%s_mat',work_dir,feature_name);
 
-
+% Neu la soft-assignment thi chon parameter = 0.0125 cho dataset INS2013 va dac trung rootsift
 if quant_struct.knn>1 && quant_struct.delta_sqr~=-1
     if ~isempty(strfind(feature_name, 'root'))
         quant_struct.delta_sqr=quant_struct.delta_sqr/5e5;
-    elseif ~isempty(strfind(feature_name, 'color'))
-        quant_struct.delta_sqr=quant_struct.delta_sqr*2;
-    elseif ~isempty(strfind(feature_name, 'mom'))
-        quant_struct.delta_sqr=quant_struct.delta_sqr/1e3;
     end
 end
 
 % Clustering name
-if ~isempty(strfind(database.comp_sim.clustering,'akmeans'))
-	clustering_name = sprintf('%s_%d_%d_%d',database.comp_sim.clustering,...
-		database.comp_sim.K,database.comp_sim.num_samps,database.comp_sim.iter); 
-end
+clustering_name = sprintf('%s_%d_%d_%d',database.comp_sim.clustering,...
+	database.comp_sim.K,database.comp_sim.num_samps,database.comp_sim.iter); 
 database.cluster_dir = fullfile(work_dir,[feature_name,'_cluster'],clustering_name);
 
 % Quantize name
 quantize_name = sprintf('v%d_f%d_%d', database.comp_sim.video_sampling, database.comp_sim.frame_sampling, quant_struct.knn);
 bow_name = quantize_name;
-if ~strcmp(quant_struct.quantize,'kdtree') 
-    build_name = sprintf('%s',quant_struct.quantize); 
-else
-    build_name = sprintf('%s_%d_%d',quant_struct.build_params.algorithm,quant_struct.build_params.trees,quant_struct.build_params.checks); 
-    if quant_struct.knn>1
-        bow_name = sprintf('%s_%g', quantize_name,quant_struct.delta_sqr);
-    end
+
+build_name = sprintf('%s_%d_%d',quant_struct.build_params.algorithm,quant_struct.build_params.trees,quant_struct.build_params.checks); 
+if quant_struct.knn>1
+	bow_name = sprintf('%s_%g', quantize_name,quant_struct.delta_sqr);
 end
+
 database.build_dir = fullfile(database.cluster_dir,build_name);
 database.bow_dir = fullfile(database.build_dir,bow_name);
 database.subbow_dir = fullfile(database.bow_dir,'sub_bow');
@@ -71,7 +68,7 @@ if ~exist(database.quant_dir,'dir'),
 	mkdir(database.quant_dir);
 end
 
-%filter out those sample video
+%filter out shot0 videos
 test_ids = cellfun(@(x) isempty(strfind(x, 'shot0_')), lst_shots, 'UniformOutput', false);
 lst_shots = lst_shots(cell2mat(test_ids));
 disp('Building quant files separately');
@@ -95,11 +92,6 @@ disp('Load bow files into a big one');
 clear test_ids centers
 
 %% begin merge data
-%sID = 1;
-%eID = num_clip;
-sID = 400001
-eID = 450000
-
 clear list_frame_bow
 list_frame_bow = cell(1,eID-sID+1);
 list_clip_freq = cell(1,eID-sID+1);
@@ -107,20 +99,22 @@ list_clip_freq = cell(1,eID-sID+1);
 for clip_id = sID:eID,
 	fprintf('\r%d(%d~%d) - %s', clip_id,sID,eID, lst_shots{clip_id});
 	clip_feat_file = fullfile(database.feat_mat_dir, [lst_shots{clip_id},'.mat']);
+	% Neu khong ton tai file feature thi skip va gan frame bag-of-word bang mang rong
 	if ~exist(clip_feat_file,'file')
 		if save_raw_bow
 			list_frame_bow{clip_id} = sparse(hist_len,1);
 		end
 		continue;
 	end
+	% Load sub_bow file
 	subbow_file = fullfile(database.subbow_dir, [lst_shots{clip_id},'.mat']);
 	load (subbow_file);
-
+	% Merge sub_bow file to a bigger one
 	list_clip_freq{clip_id-sID+1} = sum(frame_freq,2);
 	list_frame_bow{clip_id-sID+1} = frame_bow;
 end
 
-% make sure your memory can handle
+% Save sub raw bow file to be used to merge in merge_raw_bow.m
 fprintf('\n save raw bow');
 save([raw_bow_file,'_from_',num2str(sID),'.mat'], 'list_frame_bow', 'list_clip_freq', '-v7.3');
 

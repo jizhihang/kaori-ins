@@ -165,10 +165,8 @@ if save_raw_bow
 	fprintf('\n save raw bow');
 	save(raw_bow_file, 'list_frame_bow','-v7.3');   
 end
-if save_max_avg_bow
-	%fprintf('\n save big max bow');
-	%save(max_big_bow_file, 'list_max_pooling_bow','-v7.3');   
 
+if save_max_avg_bow
 	fprintf('\n save big avg bow ..');
 	save(avg_big_bow_file, 'list_avg_pooling_bow','-v7.3');   
 
@@ -200,22 +198,6 @@ if save_max_avg_bow
 		end 
 		fprintf('%.0fs\n', toc);
 		save(wei_norm_bow_file,'db_bow','db_lut','weight','clip_frame_num','-v7.3');
-
-		%% Build for max-pooling
-		%clear list_avg_pooling_bow
-		%db_bow = list_max_pooling_bow;
-		
-		%wei_nonorm_bow_file = fullfile(database.bow_dir,'bow_clip_full_notrim_clip_idf_nonorm_max_pooling.mat');
-		%wei_norm_bow_file = fullfile(database.bow_dir,'bow_clip_full_notrim_clip_idf_l1_max_pooling.mat');
-		%for i=1:size(db_bow,2)
-		%	db_bow(:,i) = db_bow(:,i).*weight;
-		%end
-		%save(wei_nonorm_bow_file,'db_bow','db_lut','weight','clip_frame_num','-v7.3');
-		%for i=1:size(db_bow,2)
-		%	bow_norm = sum(db_bow(:,i))+eps;
-		%	db_bow(:,i) = db_bow(:,i)./bow_norm;
-		%end
-		%save(wei_norm_bow_file,'db_bow','db_lut','weight','clip_frame_num','-v7.3');
 	end
 end
 

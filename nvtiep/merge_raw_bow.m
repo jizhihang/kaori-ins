@@ -1,4 +1,4 @@
-
+%% IMPORTANT NOTE: Muc tieu cua doan code nay la merge n=10 nhung file raw_bow nho thanh 1 file raw_bow duy nhat.
 %% Load list shot
 run('/net/per610a/export/das11f/ledduy/plsang/nvtiep/libs/vlfeat-0.9.18/toolbox/vl_setup.m');
 addpath(genpath('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/code/funcs'));
@@ -6,11 +6,9 @@ addpath(genpath('/net/per610a/export/das11f/ledduy/plsang/nvtiep/funcs'));
 
 %% Set perameters
 DB = 'INS2013';
-disp(DB)
-clobber = false
-save_raw_bow = true
-save_max_avg_bow = true
-idf_l1_norm = true
+save_raw_bow = true 		% Choose this option if we want to save raw bag-of-word for all frames
+save_max_avg_bow = true		% Choose this option if we want to save avg pooling bag-of-word for each shot
+idf_l1_norm = true			% Choose this option if we want to normalize pooled bag-of-word for each shot
 work_dir = fullfile('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS', DB);
 
 %database.comp_sim= struct('query_obj','fg+bg_0.1','feat_detr','-perdoch -hesaff', 'feat_desc', '-rootsift',...
@@ -37,14 +35,10 @@ feature_name = strrep(feature_config, '-','');
 feature_name = strrep(feature_name, ' ','_');
 database.feat_mat_dir = sprintf('%s/%s_mat',work_dir,feature_name);
 
-
+% If soft-assignment, chon parameter delta_sqr = 0.0125 cho data INS2013 va dac trung rootsift
 if quant_struct.knn>1 && quant_struct.delta_sqr~=-1
     if ~isempty(strfind(feature_name, 'root'))
         quant_struct.delta_sqr=quant_struct.delta_sqr/5e5;
-    elseif ~isempty(strfind(feature_name, 'color'))
-        quant_struct.delta_sqr=quant_struct.delta_sqr*2;
-    elseif ~isempty(strfind(feature_name, 'mom'))
-        quant_struct.delta_sqr=quant_struct.delta_sqr/1e3;
     end
 end
 
@@ -58,14 +52,11 @@ database.cluster_dir = fullfile(work_dir,[feature_name,'_cluster'],clustering_na
 % Quantize name
 quantize_name = sprintf('v%d_f%d_%d', database.comp_sim.video_sampling, database.comp_sim.frame_sampling, quant_struct.knn);
 bow_name = quantize_name;
-if ~strcmp(quant_struct.quantize,'kdtree') 
-    build_name = sprintf('%s',quant_struct.quantize); 
-else
-    build_name = sprintf('%s_%d_%d',quant_struct.build_params.algorithm,quant_struct.build_params.trees,quant_struct.build_params.checks); 
-    if quant_struct.knn>1
-        bow_name = sprintf('%s_%g', quantize_name,quant_struct.delta_sqr);
-    end
+build_name = sprintf('%s_%d_%d',quant_struct.build_params.algorithm,quant_struct.build_params.trees,quant_struct.build_params.checks); 
+if quant_struct.knn>1
+	bow_name = sprintf('%s_%g', quantize_name,quant_struct.delta_sqr);
 end
+
 database.build_dir = fullfile(database.cluster_dir,build_name);
 database.bow_dir = fullfile(database.build_dir,bow_name);
 database.subbow_dir = fullfile(database.bow_dir,'sub_bow');
@@ -80,7 +71,7 @@ if ~exist(database.quant_dir,'dir'),
 	mkdir(database.quant_dir);
 end
 
-%filter out those sample video
+%filter out shot0 video
 test_ids = cellfun(@(x) isempty(strfind(x, 'shot0_')), lst_shots, 'UniformOutput', false);
 lst_shots = lst_shots(cell2mat(test_ids));
 disp('Building quant files separately');
@@ -89,7 +80,6 @@ num_clip = length(lst_shots);
 %% Quantize and build bag-of-word
 frame_sampling = database.comp_sim.frame_sampling;
 avg_big_bow_file = fullfile(database.bow_dir,'avg_pooling_raw_bow.mat');
-%max_big_bow_file = fullfile(database.bow_dir,'max_pooling_raw_bow.mat');
 raw_bow_file = fullfile(database.bow_dir,'raw_bow.mat');
 big_bow_info_file = fullfile(database.bow_dir,'raw_bow_info.mat');
 
@@ -109,26 +99,20 @@ centers = hdf5read(fullfile(database.cluster_dir, database.cluster_filename),'/c
 disp('Load bow files into a big one');
 list_term_freq=struct('occu',zeros(hist_len+1,1),'frame',zeros(hist_len+1,1),'clip',zeros(hist_len+1,1));
 list_clip_frame_num = zeros(num_clip,1);
-
-list_id2clip_lut = lst_shots; %cellfun(@(x) x(1:end-4), lst_shots, 'UniformOutput',false);
+list_id2clip_lut = lst_shots;
 
 % Clear unused data
 clear test_ids centers
 
 %% begin merge data
-sID = 1;
-eID = num_clip;
-
 if save_max_avg_bow
-	%clear list_max_pooling_bow
-	%list_max_pooling_bow = sparse(hist_len,eID-sID+1);
 	clear list_avg_pooling_bow
-	list_avg_pooling_bow = sparse(hist_len,eID-sID+1);
+	list_avg_pooling_bow = sparse(hist_len,num_clip);
 end
 
 if save_raw_bow
 	clear list_frame_bow
-	list_frame_bow = cell(1,eID-sID+1);
+	list_frame_bow = cell(1,num_clip);
 end
 
 %% Load all part of raw bow
@@ -136,7 +120,7 @@ file_name = 'raw_bow.mat';
 file_path = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/perdoch_hesaff_rootsift_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_3_0.0125/';
 files = dir([file_path,file_name,'*']);
 
-% Sort files
+% Sort files 1, 50000, 10000, .... 
 nfile = length(files);
 
 for i=1:nfile-1
@@ -154,8 +138,7 @@ for i=1:nfile-1
 	end
 end
 
-% Load
-
+% Load sub raw_bow files to merge into a bigger one
 clip_id = 0;
 for i=1:nfile
 	clear list_frame_bow list_clip_freq
