@@ -1,2 +1,0 @@
-qsub -e /dev/null -o /dev/null /net/per610a/export/das11f/ledduy/ndthanh/InstanceSearch2013/code/matlab/ins13RawFeatureExtraction.sgejob.sh tv2013 819 819
-qsub -e /dev/null -o /dev/null /net/per610a/export/das11f/ledduy/ndthanh/InstanceSearch2013/code/matlab/ins13RawFeatureExtraction.sgejob.sh tv2013 820 820
