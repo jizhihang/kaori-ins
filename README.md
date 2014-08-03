@@ -3,6 +3,8 @@ kaori-ins
 
 KAORI-INS - A Framework for Instance Search
 
+INS2014 
+
 1. IDE Setup
 - Download Eclipse PDT: http://www.zend.com/en/company/community/pdt/downloads (Zend Eclipse PDT  PDT 3.2.0 w/Eclipse Indigo	(ZIP) 127.69 MB)
 - Install on D:\zend-eclipse-php
