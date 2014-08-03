@@ -31,3 +31,11 @@ II. Datasets
 
 III. Experiments
 1. RootDir: @per610a/das11f/ledduy/trecvid-ins-2014
+
+IV. Diary
+*** 03Aug2014 ***
+1. Tạo thư mục RootDir và các thư mục con
+
+2. Cập nhật các tập tin cho KAORI-INS app config như là ksc-AppConfig.php, etc.
+
+3. Xóa các tập tin dùng BoW (từ hệ thống KAORI-SECODE).
