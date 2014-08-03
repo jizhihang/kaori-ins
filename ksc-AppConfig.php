@@ -2,20 +2,20 @@
 
 /**
  * 		@file 	ksc-AppConfig.php
- * 		@brief 	Configuration file for KAORI-SECODE App.
+ * 		@brief 	Configuration file for KAORI- App.
  *		@author Duy-Dinh Le (ledduy@gmail.com, ledduy@ieee.org).
  *
- * 		Copyright (C) 2010-2013 Duy-Dinh Le.
+ * 		Copyright (C) 2010-2014 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 04 Aug 2013.
+ * 		Last update	: 03 Aug 2014.
  */
 
 ////////////////// HOW TO CUSTOMIZE /////////////////////////
 
 //--> Look for *** CHANGED *** and make appropriate changes
-// $gszRootBenchmarkDir = "/net/sfv215/export/raid4/ledduy/lqvu-Experiments/2012/MediaEval2012"; // *** CHANGED ***
+// $gszRootBenchmarkDir = "/net/sfv215/export/raid4/ledduy/XXX"; // *** CHANGED ***
 // $gszRootBenchmarkExpDir = $gszRootBenchmarkDir; --> change it if experiment dir is on different server for load balancing. 
-// $gszSGEScriptDir = "/net/per900b/raid0/ledduy/kaori-secode/php-DemoV1-MediaEval12"; // *** CHANGED ***
+// $gszSGEScriptDir = "/net/per900b/raid0/ledduy/XXX"; // *** CHANGED ***
 // $gszTmpDir = "/net/dl380g7a/export/ddn11a6/ledduy/tmp"; // *** CHANGED ***
 
 //--> max frame size: 500x500
@@ -46,7 +46,6 @@
 /////////////////////////////////////////////////////////////////
 
 
-
 /////////////////////////////////////////////////////////////////
 // Import kaori-lib tools
 require_once "kaori-lib/kl-AppConfig.php";
@@ -59,6 +58,33 @@ require_once "kaori-lib/kl-SVMTools.php";
 
 // this is used for csv-style file
 $gszDelim = "#$#";
+
+
+//////////////////// THIS PART FOR CUSTOMIZATION ////////////////////
+
+// Root of a benchmark, e.g. trecvid-ins-2013
+$gszRootBenchmarkDir = "/net/per610a/export/das11f/ledduy/trecvid-ins-2014"; // *** CHANGED ***
+
+// Dir for experiments --> for load balancing, use another server
+$gszRootBenchmarkExpDir = $gszRootBenchmarkDir; // *** CHANGED ***
+
+// Dir for php code
+$gszSGEScriptDir = "/net/per900c/raid0/ledduy/github-projects/kaori-ins2014"; // *** CHANGED ***
+
+//*** SHOULD NOT CHANGE *****
+// Dir for .sh script
+$gszScriptBinDir = "/net/per900c/raid0/ledduy/binCmd/kaori-ins2014"; // new 02Aug2014
+makedir($gszScriptBinDir);
+
+// TmpDir
+$gszTmpDir = "/local/ledduy";
+if(!file_exists($gszTmpDir))
+{
+	$gszTmpDir = "/net/dl380g7a/export/ddn11a6/ledduy/tmp/kaori-ins2014"; // *** CHANGED *** // new 02Aug2014
+	makeDir($gszTmpDir);
+}
+
+//////////////////// MIGHT NOT BE USED BUT KEEP FOR REFERENCE /////////////////// // new 02Aug2014
 
 // LUT for annotaton data used in collaborative annotation and NIST ground truth
 $garLabelList = array("P" => "Pos", "N" => "Neg", "S" => "Skipped");
@@ -93,45 +119,7 @@ $gszFeatureFormat = "dvf";
 // Dir for feature config files --> GLOBAL features
 $gszFeatureConfigDir = "BaselineFeatureConfig";
 
-//////////////////// THIS PART FOR CUSTOMIZATION ////////////////////
-
-// Root of a benchmark, e.g. trecvid-ins-2013
-$gszRootBenchmarkDir = "/net/per610a/export/das11f/ledduy/trecvid-ins-2013"; // *** CHANGED ***
-
-// Dir for experiments --> for load balancing, use another server
-$gszRootBenchmarkExpDir = $gszRootBenchmarkDir; // *** CHANGED ***
-
-// Dir for php code
-$gszSGEScriptDir = "/net/per900b/raid0/ledduy/github-projects/kaori-ins"; // *** CHANGED ***
-
-//*** SHOULD NOT CHANGE *****
-// Dir for .sh script
-$gszScriptBinDir = "/net/per900b/raid0/ledduy/bin-ins13";
-makedir($gszScriptBinDir);
-
-// feature extraction app
-$garAppConfig["BL_FEATURE_EXTRACT_APP"] = "FeatureExtractorCmd/FeatureExtractorCmd";
-
-// UvA's color descriptor code
-$garAppConfig["RAW_COLOR_SIFF_APP"] = "colordescriptor30/x86_64-linux-gcc/colorDescriptor ";
-
-// VLFEAT
-$garAppConfig["RAW_VLFEAT_DIR"] = "vlfeat-0.9.14"; //--> move to subdir
-
-// Oxford VGG's code
-$garAppConfig["RAW_AFF_COV_SIFF_APP"] = "aff.cov.sift/extract_features_64bit.ln";
-
-$garAppConfig["SASH_KEYPOINT_TOOL_BOW_L2_APP"] = "sashKeyPointTool/sashKeyPointTool-nsc-BOW-L2";
-
-// TmpDir
-$gszTmpDir = "/local/ledduy";
-if(!file_exists($gszTmpDir))
-{
-	$gszTmpDir = "/net/dl380g7a/export/ddn11a6/ledduy/tmp"; // *** CHANGED ***
-	makeDir($gszTmpDir);
-}
-
-// !!! IMPORTANT PARAMS !!! 
+// !!! IMPORTANT PARAMS !!!
 // used with BOW features
 $gnHavingResized = 1;
 $gnMaxFrameWidth = 500; // *** CHANGED ***
@@ -147,8 +135,25 @@ $szTrialName = sprintf("Soft-%d", $nNumClusters);
 
 $nMaxCodeBookSize = $nNumClusters*2;
 
+// feature extraction app
+$garAppConfig["BL_FEATURE_EXTRACT_APP"] = "FeatureExtractorCmd/FeatureExtractorCmd";
+
+// UvA's color descriptor code
+$garAppConfig["RAW_COLOR_SIFF_APP"] = "colordescriptor30/x86_64-linux-gcc/colorDescriptor ";
+
+// VLFEAT
+$garAppConfig["RAW_VLFEAT_DIR"] = "vlfeat-0.9.14"; //--> move to subdir
+
+// Oxford VGG's code
+$garAppConfig["RAW_AFF_COV_SIFF_APP"] = "aff.cov.sift/extract_features_64bit.ln";
+
+$garAppConfig["SASH_KEYPOINT_TOOL_BOW_L2_APP"] = "sashKeyPointTool/sashKeyPointTool-nsc-BOW-L2";
+
+
 //////////////////// END FOR CUSTOMIZATION ////////////////////
 
 require_once "ksc-AppConfigForProject.php";
+
+
 
 ?>
