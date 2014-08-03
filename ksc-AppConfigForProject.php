@@ -6,9 +6,9 @@
  * 		Some variables will be overrided.
  *		@author Duy-Dinh Le (ledduy@gmail.com, ledduy@ieee.org).
  *
- * 		Copyright (C) 2010-2013 Duy-Dinh Le.
+ * 		Copyright (C) 2010-2014 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 04 Aug 2013.
+ * 		Last update	: 03 Aug 2014.
  */
 
 
@@ -40,10 +40,10 @@ $gszSVMScaleApp = sprintf("libsvm291/svm-scale");
 
 // The information below is mainly for feature extraction using SGE
 
-$szExpName = "ins-tv2013"; // *** CHANGED ***
+$szExpName = "ins-tv2014"; // *** CHANGED ***
 $szExpConfig = $szExpName; 
 
-$szProjectCodeName = "kaori-ins13"; // *** CHANGED ***
+$szProjectCodeName = "kaori-ins2014"; // *** CHANGED ***
 
 //--> name of list of videos, i.e, metadata/keyframe-5/<pat-name.lst> = metadata/keyframe-5/tv2012.devel.lst
 $arPat2PathList = array(
@@ -51,17 +51,10 @@ $arPat2PathList = array(
 		"test2012-new" => "tv2012/test2012-new", 
 		"test2011-new" => "tv2011/test2011-new", 
 
-        "queryext502013-new" => "tv2013/queryext502013-new", 
-		"queryext502012-new" => "tv2012/queryext502012-new", 
-		"queryext502011-new" => "tv2011/queryext502011-new", 
-
         "query2013-new" => "tv2013/query2013-new",
         "query2012-new" => "tv2012/query2012-new",
         "query2011-new" => "tv2011/query2011-new",
     
-		"subtest2013-new" => "tv2013/subtest2013-new",
-		"subtest2012-new" => "tv2012/subtest2012-new", 
-		"subtest2011-new" => "tv2011/subtest2011-new", 
 );  // *** CHANGED ***
 
 $nNumPats = sizeof($arPat2PathList);
@@ -75,18 +68,10 @@ $arMaxVideosPerPatList = array(
 		"test2012-new" => 1000, // *** CHANGED ***
 		"test2011-new" => 1000, // *** CHANGED ***
 
-        "queryext502013-new" => 100, // *** CHANGED ***
-		"queryext502012-new" => 100, // *** CHANGED ***
-		"queryext502011-new" => 100, // *** CHANGED ***
-
         "query2013-new" => 100, // *** CHANGED ***
         "query2012-new" => 100, // *** CHANGED ***
         "query2011-new" => 100, // *** CHANGED ***
     
-		"subtest2013-new" => 100,
-		"subtest2012-new" => 100, 
-		"subtest2011-new" => 100, 
-
 ); // Precise: N/A
 
 $arMaxHostsPerPatList = array(
@@ -94,17 +79,10 @@ $arMaxHostsPerPatList = array(
 		"test2012-new" => 100, // *** CHANGED ***
 		"test2011-new" => 100, // *** CHANGED ***
 
-        "queryext502013-new" => 100, // *** CHANGED ***
-		"queryext502012-new" => 100, // *** CHANGED ***
-		"queryext502011-new" => 100, // *** CHANGED ***
-
         "query2013-new" => 100, // *** CHANGED ***
         "query2012-new" => 100, // *** CHANGED ***
         "query2011-new" => 100, // *** CHANGED ***
     
-        "subtest2013-new" => 100,
-		"subtest2012-new" => 100, 
-		"subtest2011-new" => 100, 
 ); // Precise: N/A
 
 
@@ -131,8 +109,8 @@ $nAveShotPerVideo = 1000; // *** CHANGED ***
 // set for training --> used to find cluster centers
 $arBOWDevPatList = array("test2013-new");
 
-$szSysID = "ins-tv2013"; // *** CHANGED ***
-$szSysDesc = "Experiments for TRECVID-INS-2013"; // *** CHANGED ***
+$szSysID = "ins-tv2014"; // *** CHANGED ***
+$szSysDesc = "Experiments for TRECVID-INS-2014"; // *** CHANGED ***
 
 // used for codeword assignment
 $arBOWTargetPatList = array_keys($arPat2PathList);
