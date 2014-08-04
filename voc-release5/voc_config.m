@@ -184,7 +184,7 @@ conf = cv(conf, 'training.interval_bg', 4);
 % -------------------------------------------------------------------
 conf = cv(conf, 'eval.interval', 10);
 conf = cv(conf, 'eval.test_set', 'test');
-conf = cv(conf, 'eval.max_thresh', -5.1);   %original : -1.1
+conf = cv(conf, 'eval.max_thresh', -5.1);   %original : -1.1 --> Lower threshold to get high recall
 conf.pascal.VOCopts.testset = conf.eval.test_set;
 
 
