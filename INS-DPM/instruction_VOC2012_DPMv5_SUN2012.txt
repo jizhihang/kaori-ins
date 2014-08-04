@@ -1,0 +1,76 @@
+Instruction to run DPM v5 with Pascal VOC devkit
+
+Assume you will to put everything inside a path called rootVOC4SUN (e.g. /home/jxiao/expVOC4SUN)
+
+1. Download DPM v5 (http://people.cs.uchicago.edu/~rbg/latent/voc-release5.tgz) from http://people.cs.uchicago.edu/~rbg/latent/
+
+2. Untar voc-release5.tgz to rootVOC4SUN/voc-release5/
+(i.e. you should have the file rootVOC4SUN/voc-release5/compile.m by now)
+
+In matlab, cd into rootVOC4SUN/voc-release5/, and run 
+>> addpath(genpath('.')); compile
+as instructed by rootVOC4SUN/voc-release5/README
+
+3. Download Pascal VOC devkit 2012 (http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2012/VOCdevkit_18-May-2011.tar) from http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2012/index.html
+
+4. Untar VOCdevkit_18-May-2011.tar to rootVOC4SUN/VOC2012/VOCdevkit
+(i.e. you should have the folder rootVOC4SUN/VOC2012/VOCdevkit/VOCcode by now)
+
+5. Edit VOCinit.m under rootVOC4SUN/VOC2012/VOCdevkit/VOCcode
+
+Line 9: 
+From: VOCopts.dataset='VOC2012';
+To:   VOCopts.dataset='SUN2012pascalformat';
+
+Line 30-31:
+From: 
+      VOCopts.testset='val'; % use validation data for development test set
+      % VOCopts.testset='test'; % use test set for final challenge
+To:
+      % VOCopts.testset='val'; % use validation data for development test set
+      VOCopts.testset='test'; % use test set for final challenge
+
+6. Edit VOCreadrecxml.m under rootVOC4SUN/VOC2012/VOCdevkit/VOCcode
+
+Line 9-10:
+From:
+      rec.source.annotation=x.source.annotation;
+      rec.source.image=x.source.image;
+To:
+      %rec.source.annotation=x.source.annotation;
+      %rec.source.image=x.source.image;
+
+7. Edit voc_config.m under rootVOC4SUN/voc-release5/
+
+Line 22:
+From:  BASE_DIR    = '/var/tmp/rbg';
+To:    BASE_DIR    = 'rootVOC4SUN';    % your rootVOC4SUN. Without a "/" at the end.
+
+Line 25:
+From:  PASCAL_YEAR = '2007';
+To:    PASCAL_YEAR = '2012';
+
+Line 149:
+From:  conf = cv(conf, 'training.train_set_fg', 'trainval');
+To:    conf = cv(conf, 'training.train_set_fg', 'train');
+
+8. Download SUN Database 2012 release in Pascal Format ( http://groups.csail.mit.edu/vision/SUN/releases/SUN2012pascalformat.tar.gz )
+from http://sundatabase.mit.edu/
+
+9. Untar SUN2012pascalformat.tar.gz to rootVOC4SUN/VOC2012/VOCdevkit/SUN2012pascalformat
+(i.e. you should have the file rootVOC4SUN/VOC2012/VOCdevkit/SUN2012pascalformat/report.txt by now)
+
+10. Now, everything is ready, and you can train a detector by:
+In matlab, cd into rootVOC4SUN/voc-release5/
+>> pascal('mug',3); % this will train a mug detector using SUN2012.
+You can see the list of object category in rootVOC4SUN/VOC2012/VOCdevkit/SUN2012pascalformat/report.txt .
+
+-------------------------
+
+Notice: You can download our pretrained result at http://sundatabase.mit.edu/
+
+
+We welcome any feedback or bug report.
+Please email me (http://mit.edu/jxiao/)
+
+Jianxiong Xiao
