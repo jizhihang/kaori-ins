@@ -14,6 +14,8 @@ function train_model(cls, n, note, dotrainval, testyear)
 %                 This is used to collect training data for context rescoring
 %   testyear      Test set year (e.g., '2007', '2011')
 
+% //DuyCmt//: train_model tuong tu nhu pascal.m, chi khac la chi su dung phan train (bo phan test/evaluate)
+
 startup;
 
 conf = voc_config();
