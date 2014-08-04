@@ -53,8 +53,6 @@ toc(th);
 fv_cache('free');
 
 % Lower threshold to get high recall
-
-% Edit 24/04/2013: keep the trained medel threshold
 model.thresh = min(conf.eval.max_thresh, model.thresh);
 model.interval = conf.eval.interval;
 

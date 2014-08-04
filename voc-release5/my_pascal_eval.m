@@ -1,4 +1,4 @@
-function pascal(cls, n, note, dotrainval, testyear)
+function my_pascal_eval(cls, n, note, dotrainval, testyear)
 % Train and evaluate a model. 
 %   pascal(cls, n, note, dotrainval, testyear)
 %
@@ -45,17 +45,19 @@ end
 diary(conf.training.log([cls '-' timestamp]));
 
 % Train a model (and record how long it took)
-th = tic;
-model = pascal_train(cls, n, note);
-toc(th);
+% th = tic;
+% model = pascal_train(cls, n, note);
+% toc(th);
 
 % Free the feature vector cache memory
-fv_cache('free');
+% fv_cache('free');
+
+% load model
+load([conf.paths.model_dir cls '_final']);
+model.class = cls;
 
 % Lower threshold to get high recall
-
-% Edit 24/04/2013: keep the trained medel threshold
-model.thresh = min(conf.eval.max_thresh, model.thresh);
+model.thresh = -10;%min(conf.eval.max_thresh, model.thresh);
 model.interval = conf.eval.interval;
 
 suffix = testyear;
@@ -64,7 +66,7 @@ suffix = testyear;
 ds = pascal_test(model, testset, testyear, suffix);
 
 % Evaluate the model without bounding box prediction
-[ap1,prec, recall] = pascal_eval(cls, ds, testset, testyear, suffix);
+ap1 = pascal_eval(cls, ds, testset, testyear, suffix);
 fprintf('AP = %.4f (without bounding box prediction)\n', ap1)
 
 % Recompute AP after applying bounding box prediction
