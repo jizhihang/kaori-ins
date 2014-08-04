@@ -5,10 +5,17 @@
  * 		@brief 	View query, groundtruth, and ranking result.
  *		@author Duy-Dinh Le (ledduy@gmail.com, ledduy@ieee.org).
  *
- * 		Copyright (C) 2010-2013 Duy-Dinh Le.
+ * 		Copyright (C) 2010-2014 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 12 Jul 2014.
+ * 		Last update	: 04 Aug 2014.
  */
+
+// 04 Aug 2014
+// Update for viewing result of INS 2014. 
+// Note that INS2013 and INS2014 share the same test dataset.
+// To show query images --> scan dir, not use metadata
+// Query images --> png format
+// Fixed lots of hard-code 
 
 //  09 Jul 2014
 // Caizhi deleted keyframes in jpg format and replace by png format
@@ -31,6 +38,7 @@ $fConfigScale = 1; // scale factor of DPM model
 
 // added on Jul 09, 2014
 $arImgFormatLUT  = array(
+2014 => "png",
 2013 => "png",
 2012 => "jpg",
 2011 => "jpg"
@@ -52,23 +60,24 @@ if(isset($_REQUEST['vAction']))
 	$nAction = $_REQUEST['vAction'];
 }
 
-if($nAction == 0)
+if($nAction == 0)  // Let user pick the TVYear
 {
-	printf("<P><H1>Select TVYear</H1>\n");
+    printf("<P><H1>View Results</H1>\n");
+    
+    printf("<P><H2>Select TVYear</H2>\n");
 	printf("<FORM TARGET='_blank'>\n");
 	printf("<P>TVYear<BR>\n");
 	printf("<SELECT NAME='vTVYear'>\n");
+	printf("<OPTION VALUE='2014'>2014</OPTION>\n");
 	printf("<OPTION VALUE='2013'>2013</OPTION>\n");
-	printf("<OPTION VALUE='2012'>2012</OPTION>\n");
-	printf("<OPTION VALUE='2011'>2011</OPTION>\n");
+//	printf("<OPTION VALUE='2012'>2012</OPTION>\n");
+//	printf("<OPTION VALUE='2011'>2011</OPTION>\n");
 	printf("</SELECT>\n");
 
 	printf("<P>Partition<BR>\n");
 	printf("<SELECT NAME='vPatName'>\n");
+	printf("<OPTION VALUE='test2014-new'>test2014-new</OPTION>\n");
 	printf("<OPTION VALUE='test2013-new'>test2013-new</OPTION>\n");
-	printf("<OPTION VALUE='subtest2012-new'>subtest2012-new</OPTION>\n");
-	printf("<OPTION VALUE='test2012-new'>test2012-new</OPTION>\n");
-	printf("<OPTION VALUE='test2011-new'>test2011-new</OPTION>\n");
 	printf("</SELECT>\n");
 	
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='1'>\n");
@@ -85,12 +94,16 @@ $nTVYear = $_REQUEST['vTVYear'];
 $szTVYear = sprintf("tv%d", $nTVYear);
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
+
 $szPatName = $_REQUEST['vPatName'];
 
-// ins.topics.2013.xml 
+$szPatName4KFDir = sprintf("test%s", $nTVYear); // BUG MIGHT BE HERE (HARD-CODED)
+
+// ins.topics.2013.xml  --> list of topics provided by TRECVID
 $szFPInputFN = sprintf("%s/ins.topics.%d.xml", $szMetaDataDir, $nTVYear);
 $arQueryList = loadQueryDesc($szFPInputFN);
 
+// groundtruth provided by TRECVID, only available after submission
 $szFPInputFN = sprintf("%s/ins.search.qrels.%s.csv", $szMetaDataDir, $szTVYear);
 $arQueryListCount = array();
 if(file_exists($szFPInputFN))
@@ -108,11 +121,12 @@ if(file_exists($szFPInputFN))
 //$szVideoPath = $arVideoPathLUT[$nTVYear];
 $szVideoPath = sprintf("%s/%s", $szTVYear, $szPatName);
 
+// list of runID
 $szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
 $arDirList = collectDirsInOneDir($szResultDir);
 sort($arDirList);
 
-// setting 777
+// setting 777  --> Used to delete directory generated from the web
 foreach($arDirList as $szDirName)
 {
 	if(stristr($szDirName, "del"))
@@ -123,7 +137,7 @@ foreach($arDirList as $szDirName)
 	}
 }
 
-$szImgFormat = $arImgFormatLUT[$nTVYear];
+$szImgFormat = $arImgFormatLUT[$nTVYear]; // to support keyframes in png or jpg format
 
 //print_r($arQueryListCount);
 // show form
@@ -139,6 +153,7 @@ if($nAction == 1)
 	{
 	    if(isset($arQueryListCount[$szQueryID]))
 	    {
+	        //  str_replace("'", "|", $szText) --> to avoid special char (') in the query desc
 	        printf("<OPTION VALUE='%s#%s'>%s - %d</OPTION>\n", $szQueryID, str_replace("'", "|", $szText), $szText, $arQueryListCount[$szQueryID]);  	        
 	    }
 	    else
@@ -174,7 +189,7 @@ if($nAction == 1)
 	printf("<INPUT TYPE='TEXT' NAME='vPageID' VALUE='1' SIZE=10>\n");
 
 	printf("<P>Max Videos Per Page<BR>\n");
-	printf("<INPUT TYPE='TEXT' NAME='vMaxVideosPerPage' VALUE='100' SIZE=10>\n");
+	printf("<INPUT TYPE='TEXT' NAME='vMaxVideosPerPage' VALUE='50' SIZE=10>\n");
 
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='2'>\n");
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vTVYear' VALUE='%s'>\n", $nTVYear);
@@ -185,20 +200,26 @@ if($nAction == 1)
 	exit();
 }
 
+//////////////////// MAIN /////////////////////////////
+$szRootKeyFrameDir = sprintf("%s/keyframe-5", $gszRootBenchmarkDir);
+$szKeyFrameDir = sprintf("%s/%s", $szRootKeyFrameDir, $szTVYear);
+
 // view query images
 $szQueryIDz = $_REQUEST['vQueryID'];
 $arTmp = explode("#", $szQueryIDz);
-$szQueryID = trim($arTmp[0]);
+$szQueryID = trim($arTmp[0]); // e.g 9069
 $szText = trim($arTmp[1]);
 
 $szRunID = $_REQUEST['vRunID'];
 
 // include both jpg and png file
-$szQueryPatName = sprintf("query%s-new", $nTVYear);
-$szFPQueryImgListFN = sprintf("%s/%s/%s.prg", $szMetaDataDir, $szQueryPatName, $szQueryID);
-loadListFile($arQueryImgList, $szFPQueryImgListFN);
-//print_r($arQueryImgList);
-//ins.search.qrels.tv2011
+$szQueryPatName = sprintf("query%s", $nTVYear);
+$szQueryKeyFrameDir = sprintf("%s/%s/%s", $szKeyFrameDir, $szQueryPatName, $szQueryID);
+$arQueryImgList = collectFilesInOneDir($szQueryKeyFrameDir, ".src.", ".png");
+//print_r($arQueryImgList); exit();
+
+
+//load groundtruth data - ins.search.qrels.tv2011
 $szFPNISTResultFN = sprintf("%s/ins.search.qrels.%s", $szMetaDataDir, $szTVYear);
 
 if(file_exists($szFPNISTResultFN))
@@ -214,6 +235,8 @@ foreach($arNISTList[$szQueryID] as $szShotID)
     $arAnnList[$szShotID] = 1;    
 }
 
+// for DPM config
+$fConfigScale = -1; // meaning [N/A]
 $szFPModelConfigFN = sprintf("%s/%s.cfg", $szMetaDataDir, $szQueryID);
 if(file_exists($szFPModelConfigFN))
 {
@@ -225,9 +248,10 @@ if(file_exists($szFPModelConfigFN))
 }
 else
 {
-    printf("Model config file [%s] not found\n", $szFPModelConfigFN);
+    printf("DPM model config file [%s] not found\n", $szFPModelConfigFN);
 }
 
+// for counting number of relevant shots per query
 $szFPOutputFN = sprintf("%s/ins.search.qrels.%s.csv", $szMetaDataDir, $szTVYear);
 if(!file_exists($szFPOutputFN) || !filesize($szFPOutputFN))
 {
@@ -242,18 +266,19 @@ if(!file_exists($szFPOutputFN) || !filesize($szFPOutputFN))
 }
 
 ////////////////// SHOW QUERY ///////////////////
-$szRootKeyFrameDir = sprintf("%s/keyframe-5", $gszRootBenchmarkDir);
-$szKeyFrameDir = sprintf("%s/%s", $szRootKeyFrameDir, $szTVYear);
 $arOutput = array();
-$arOutput[] = sprintf("<P><H1>RunID: %s</H1>\n", $szRunID);
-$arOutput[] = sprintf("<P><H1>Query - %s</H1>\n", $szText);
-$arOutput[] = sprintf("<P><H1>Scale factor (to scale up the test image using DPM model) - %0.4f</H1><BR>\n", $fConfigScale);
+$arOutput[] = sprintf("<P><H1>RunID: [%s]</H1>\n", $szRunID);
+$arOutput[] = sprintf("<P><H1>Query [%s] - [%s]</H1>\n", $szQueryID, $szText);
+$arOutput[] = sprintf("<P><H1>Scale factor (to scale up the test image using DPM model) - [%0.6f]</H1><BR>\n", $fConfigScale);
 foreach($arQueryImgList as  $szQueryImg)
 {
-		$szURLImg = sprintf("%s/%s/%s/%s.%s", $szKeyFrameDir, $szQueryPatName, $szQueryID, $szQueryImg, "jpg");
-		//exit($szURLImg);
+		$szURLImg = sprintf("%s/%s.%s", $szQueryKeyFrameDir, $szQueryImg, "png");
+		if(!file_exists($szURLImg))
+		{
+            printf("<!-- File not found [%s] -->\n", $szURLImg);		  
+		}
 		$szRetURL = $szURLImg;
-		$imgzz = imagecreatefromjpeg($szRetURL);
+		$imgzz = imagecreatefrompng($szRetURL);
 		$widthzz = imagesx($imgzz);
 		$heightzz = imagesy($imgzz);
 
@@ -282,6 +307,7 @@ foreach($arQueryImgList as  $szQueryImg)
 $arOutput[] = sprintf("<P><BR>\n");
 
 //// VERY SPECIAL ****
+////////////////// SHOW GROUNDTRUTH ///////////////////
 $nShowGT = $_REQUEST['vShowGT'];
 if($nShowGT)
 {
@@ -322,7 +348,7 @@ else
         $nCount = 0;
         foreach($arRawListz as $szShotID => $fScore)
         {
-            $arRawList[] = sprintf("%s#$#%0.4f", $szShotID, $fScore);
+            $arRawList[] = sprintf("%s#$#%0.6f", $szShotID, $fScore);
             $nCount++;
             if($nCount>20000)
                 break;
@@ -342,14 +368,11 @@ foreach($arRawList as $szLine)
     $arTmp = explode("#$#", $szLine);
     $szShotID = trim($arTmp[0]);
     $fScore = floatval($arTmp[1]);
-    if(sizeof($arScoreList) < 10000)
+    if(sizeof($arScoreList) < 100000)
     {
         $arScoreList[$szShotID] = $fScore;
     }
 }
-
-//$arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=10000);
-//print_r($arTmpzzz);
 
 $arTmpzzz = computeTVAveragePrecision($arAnnList, $arScoreList, $nMaxDocs=1000);
 $fMAP = $arTmpzzz['ap'];
@@ -357,8 +380,9 @@ $nTotalHitsz = $arTmpzzz['total_hits'];
 $arOutput[] = sprintf("<P><H3>MAP: %0.2f. Num hits (@1000): %d<BR>\n", $fMAP, $nTotalHitsz);
 ////
 
+////////////////// SHOW RANKED LIST ///////////////////
+
 $nCount = 0;
-//foreach($arRawList as $szLine)
 
 $nMaxVideosPerPage = intval($_REQUEST['vMaxVideosPerPage']);
 $nPageID = max(0, intval($_REQUEST['vPageID'])-1);
@@ -375,14 +399,14 @@ $szURLz = sprintf("ksc-web-ViewResult.php?%s&vShowGT=1", $queryURL);
 $nViewImg = 0;
 if($nShowGT)
 {
-	$arOutput[] = sprintf("<P><H1>Ranked List - [Ground Truth] - [%d] Video Clips</H1>\n", $nNumVideos);
+	$arOutput[] = sprintf("<P><H2>Ranked List - [Ground Truth] - [%d] Video Clips</H2>\n", $nNumVideos);
 }
 else
 {
-	$arOutput[] = sprintf("<P><H1>Total Relevant Videos <A HREF='%s'>[%s]</A>. Click the link to view all relevant ones!</H1>\n",
+	$arOutput[] = sprintf("<P><H2>Total Relevant Videos <A HREF='%s'>[%s]</A>. Click the link to view all relevant ones!</H2>\n",
 			$szURLz, sizeof($arNISTList[$szQueryID]));
 }
-$arOutput[] = sprintf("<P><H1>Page: ");
+$arOutput[] = sprintf("<P><H2>Page: ");
 for($i=0; $i<$nNumPages; $i++)
 {
 	if($i != $nPageID)
@@ -405,10 +429,21 @@ for($i=$nStartID; $i<$nEndID; $i++)
 	$szShotID = trim($arTmp[0]);
 	$fScore = floatval($arTmp[1]);
 
-	$szShotKFDir = sprintf("%s/test/%s", $szKeyFrameDir, $szShotID);
+	$szShotKFDir = sprintf("%s/%s/%s", $szKeyFrameDir, $szPatName4KFDir, $szShotID); 
 	
 	//$arImgList = collectFilesInOneDir($szShotKFDir, "", ".jpg");
-	$arImgList = collectFilesInOneDir($szShotKFDir, "", "." . $szImgFormat);
+	//$arImgList = collectFilesInOneDir($szShotKFDir, "", "." . $szImgFormat);
+	//printf("ShotDir: [%s] - Source: [%s]", $szShotKFDir, $szLine); exit();
+	
+	// load from frame.txt --> only work with CZ data
+	$szFPKeyFrameListFN = sprintf("%s/frames.txt", $szShotKFDir);
+	if(!file_exists($szFPKeyFrameListFN))
+	{
+		printf("<!-- File not found [%s]-->\n", $szFPKeyFrameListFN);
+		continue;
+	}
+	loadListFile($arImgList, $szFPKeyFrameListFN);
+	
 	
 	$arOutput[] = sprintf("%d. ", $nCount+1);
 	$nCountz = 0;
@@ -427,11 +462,20 @@ for($i=$nStartID; $i<$nEndID; $i++)
 			continue;
 		}
 
-		$szURLImg = sprintf("%s/test/%s/%s.%s",
-				$szKeyFrameDir, $szShotID, $szImg, $szImgFormat);			
+		//$szURLImg = sprintf("%s/%s/%s/%s.%s",
+		//		$szKeyFrameDir, $szPatName4KFDir, $szShotID, $szImg, $szImgFormat);
+
+		$szURLImg = sprintf("%s/%s/%s/%s",
+				$szKeyFrameDir, $szPatName4KFDir, $szShotID, $szImg);
 		///
 		// generate thumbnail image
 		$szRetURL = $szURLImg;
+		
+		if(!file_exists($szURLImg))
+		{
+		    printf("<!-- File not found [%s] -->\n", $szURLImg);
+		    exit();
+		}
 		
 		if($szImgFormat == "png")
 		{
@@ -521,7 +565,7 @@ for($i=$nStartID; $i<$nEndID; $i++)
 				printf("Data not set for [%s]\n", $szShotID);
 				exit();
 			}
-			$szPrevData = sprintf("Prev rank: [%d] - Prev score [%0.4f]", $arPrevDataList[$szShotID]['rank'], $arPrevDataList[$szShotID]['score']);
+			$szPrevData = sprintf("Prev rank: [%d] - Prev score [%0.6f]", $arPrevDataList[$szShotID]['rank'], $arPrevDataList[$szShotID]['score']);
 		}		
         
 		ob_start();
@@ -550,7 +594,11 @@ for($i=$nStartID; $i<$nEndID; $i++)
 	    print_r($arImgList);exit();
 	}
 */
-	$arOutput[] = sprintf("[%s]\n", $szPrevData);	
+	$arOutput[] = sprintf("[%s-%0.6f]\n", $szShotID, $fScore);
+	if($szPrevData!="")
+	{
+	    $arOutput[] = sprintf("[%s]\n", $szPrevData);
+	}	
 	if(in_array($szShotID, $arNISTList[$szQueryID]))
 	{
 		$arOutput[] = sprintf("<IMG SRC='winky-icon.png'><BR>\n");
@@ -577,9 +625,9 @@ for($i=$nStartID; $i<$nEndID; $i++)
 	}
 }
 
-$arOutput[] = sprintf("<P><H1>Num hits (top %s): %d/%d.</H1>\n", $nMaxVideosPerPage, $nHits, $nTotalHits);
+$arOutput[] = sprintf("<P><H2>Num hits (top %s): %d/%d.</H2>\n", $nMaxVideosPerPage, $nHits, $nTotalHits);
 
-$arOutput[] = sprintf("<P><H1>Page: ");
+$arOutput[] = sprintf("<P><H2>Page: ");
 for($i=0; $i<$nNumPages; $i++)
 {
 	if($i != $nPageID)
@@ -680,7 +728,6 @@ function parseNISTResult($szFPInputFN)
 	return $arOutput;
 }
 
-
 function loadRankedList($szResultDir, $nTVYear)
 {
     
@@ -699,20 +746,25 @@ function loadRankedList($szResultDir, $nTVYear)
     	loadListFile($arScoreList, $szFPScoreListFN);
         foreach($arScoreList as $szLine)
     	{
-			//printf("%s", $szLine);exit();
-            $arTmp = explode("#$#", $szLine);
+			//printf("TVYear: %d\n", $nTVYear);
+    	    //printf("%s", $szLine);exit();
+            
+    	    $arTmp = explode("#$#", $szLine);
         	$szTestKeyFrameID = trim($arTmp[0]);
         	$szQueryKeyFrameID = trim($arTmp[1]);
         	$fScore = floatval($arTmp[2]);
 
             $arTmp1 = explode("_", $szTestKeyFrameID);
-        	if($nTVYear != 2013)
+
+            // Format of INS2013 & INS2014 is followed by CZ
+        	if($nTVYear < 2013)
         	{
                 $szShotID = trim($arTmp1[0]);
         	}
         	else 
         	{
                 $szShotID = sprintf("%s_%s", trim($arTmp1[0]), trim($arTmp1[1]));
+                //printf($szShotID); exit();
         	}
 
             if(isset($arRankList[$szShotID]))
@@ -770,6 +822,5 @@ function loadRankedList($szResultDir, $nTVYear)
     
 	return ($arRankList);
 }
-
 
 ?>
