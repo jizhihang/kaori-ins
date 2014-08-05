@@ -1,4 +1,5 @@
 function processOneRun(config_file, data_name, query_pat, test_pat, topK)
+% processOneRun('surrey_soft_soft.cfg', 'tv2013', 'query2013', 'test2013', 10000)
 % config_file: all info for a run
 % data_name: tv2014
 % query_pat: query2014
@@ -82,6 +83,10 @@ eval_topN = topK;
 
 root_dir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014';
 work_dir = fullfile(root_dir, 'result', data_name, test_pat); % result/tv2014/test2014
+if ~exist(work_dir,'dir')
+	mkdir(work_dir);
+	fileattrib(work_dir,'+w','a');
+end
 
 database.db_frame_dir = fullfile(root_dir, 'keyframe-5', data_name, test_pat); % keyframe-5/tv2014/test2014
 database.query_dir = fullfile(root_dir, 'keyframe-5', data_name, query_pat); % keyframe-5/tv2014/query2014
@@ -193,6 +198,7 @@ query_quant_dirname = sprintf('%s_%s_%s_%s',query_feature_name,clustering_name,b
 database.query_bow_dir = fullfile(query_feature_dir,['bow.' query_quant_dirname]); % bow feature
 if ~exist(database.query_bow_dir,'dir')
 	mkdir(database.query_bow_dir);
+	fileattrib(database.query_bow_dir,'+w','a');
 end
 
 %dist_name
@@ -201,21 +207,23 @@ dist_name = database.comp_sim.dist;
 % res_name
 res_name = sprintf('%s_%s_%s_%s_%s_%s_%s_%s_%s_%s',run_prefix,query_feature_name,clustering_name,...
 	build_name,db_quantize_name,db_agg_name,bow_making_name,query_quantize_name,query_agg_name,dist_name);
-
 	
-result_dir = fullfile(workdir,res_name); % result/tv2014/test2014/runID (runID = res_name)	
+result_dir = fullfile(work_dir,res_name); % result/tv2014/test2014/runID (runID = res_name)	
 if ~exist(result_dir,'dir')
-	mkdir(result_dir)
+	mkdir(result_dir);
+	fileattrib(result_dir,'+w','a');
 end
 
 knn_txt_dir = fullfile(result_dir, 'txt'); % result/tv2014/test2014/runID/txt (runID = res_name)
 if ~exist(knn_txt_dir,'dir')
-	mkdir(knn_txt_dir)
+	mkdir(knn_txt_dir);
+	fileattrib(knn_txt_dir,'+w','a');
 end
 
 database.query_mat_dir	= fullfile(result_dir, 'mat'); %runID/mat: store tmp .mat file
 if ~exist(database.query_mat_dir,'dir')
     mkdir(database.query_mat_dir);
+	fileattrib(database.query_mat_dir,'+w','a');	
 end
 
 res_filename = fullfile(database.query_mat_dir,['res_' res_name, '.mat']);
