@@ -4,6 +4,7 @@ function extract_perdoch_rootsift(DB, startShotInd, endShotInd)
 
 % IMPORTANT NOTE
 % Du lieu duoc luu truc tiep len server dir --> next version se chinh lai de luu tren local tmp cua tung node, sau khi finish se upload len server dir
+% perdoch does not support -no_angle option
 
 renew = false; % dung de chay lai tu dau (starting from scratch) --> ghi de len file da ton tai
 addpath('/net/per610a/export/das11f/ledduy/plsang/nvtiep/funcs/perdoch_hesaff');
