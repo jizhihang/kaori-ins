@@ -7,8 +7,14 @@
  *
  * 		Copyright (C) 2010-2014 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 04 Aug 2014.
+ * 		Last update	: 06 Aug 2014.
  */
+
+// 06 Aug 2014
+// Modify code because the dir structure is changed
+// Before: runID/tv2013/test2013
+// Current: tv2013/test2013/runID
+// Do not use szPatName
 
 // 04 Aug 2014
 // Update for viewing result of INS 2014. 
@@ -74,11 +80,13 @@ if($nAction == 0)  // Let user pick the TVYear
 //	printf("<OPTION VALUE='2011'>2011</OPTION>\n");
 	printf("</SELECT>\n");
 
+	/* Changed to auto assign using nTVYear
 	printf("<P>Partition<BR>\n");
 	printf("<SELECT NAME='vPatName'>\n");
-	printf("<OPTION VALUE='test2014-new'>test2014-new</OPTION>\n");
-	printf("<OPTION VALUE='test2013-new'>test2013-new</OPTION>\n");
+	printf("<OPTION VALUE='test2014'>test2014</OPTION>\n");
+	printf("<OPTION VALUE='test2013'>test2013</OPTION>\n");
 	printf("</SELECT>\n");
+	*/
 	
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='1'>\n");
 	printf("<INPUT TYPE='SUBMIT' VALUE='Submit'>\n");
@@ -95,9 +103,9 @@ $szTVYear = sprintf("tv%d", $nTVYear);
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
 
-$szPatName = $_REQUEST['vPatName'];
+//$szPatName = $_REQUEST['vPatName'];
 
-$szPatName4KFDir = sprintf("test%s", $nTVYear); // BUG MIGHT BE HERE (HARD-CODED)
+$szPatName4KFDir = sprintf("test%s", $nTVYear); 
 
 // ins.topics.2013.xml  --> list of topics provided by TRECVID
 $szFPInputFN = sprintf("%s/ins.topics.%d.xml", $szMetaDataDir, $nTVYear);
@@ -119,10 +127,10 @@ if(file_exists($szFPInputFN))
 }
 
 //$szVideoPath = $arVideoPathLUT[$nTVYear];
-$szVideoPath = sprintf("%s/%s", $szTVYear, $szPatName);
+//$szVideoPath = sprintf("%s/%s", $szTVYear, $szPatName);
 
 // list of runID
-$szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
+$szResultDir = sprintf("%s/result/%s/%s", $gszRootBenchmarkDir, $szTVYear, $szPatName4KFDir);
 $arDirList = collectDirsInOneDir($szResultDir);
 sort($arDirList);
 
@@ -176,13 +184,11 @@ if($nAction == 1)
 	{
 	    if(!strstr($szRunID, $nTVYear))
 	    {
-	        continue;
+//	        continue;
 	    }
 	     
 	   printf("<OPTION VALUE='%s'>%s</OPTION>\n", $szRunID, $szRunID);
 	}
-//	printf("<OPTION VALUE='RunDetection'>Detecting Using DPM</OPTION>\n");
-//	printf("<OPTION VALUE='RunFusion'>Fusion of Matching and Detection Scores</OPTION>\n");
 	printf("</SELECT>\n");
 
 	printf("<P>PageID<BR>\n");
@@ -218,7 +224,6 @@ $szQueryKeyFrameDir = sprintf("%s/%s/%s", $szKeyFrameDir, $szQueryPatName, $szQu
 $arQueryImgList = collectFilesInOneDir($szQueryKeyFrameDir, ".src.", ".png");
 //print_r($arQueryImgList); exit();
 
-
 //load groundtruth data - ins.search.qrels.tv2011
 $szFPNISTResultFN = sprintf("%s/ins.search.qrels.%s", $szMetaDataDir, $szTVYear);
 
@@ -248,7 +253,7 @@ if(file_exists($szFPModelConfigFN))
 }
 else
 {
-    printf("DPM model config file [%s] not found\n", $szFPModelConfigFN);
+    printf("<!--DPM model config file [%s] not found-->\n", $szFPModelConfigFN);
 }
 
 // for counting number of relevant shots per query
