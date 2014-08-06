@@ -1,5 +1,5 @@
 function processOneRun(config_file, data_name, query_pat, test_pat, topK)
-% processOneRun('surrey_soft_soft.cfg', 'tv2013', 'query2013', 'test2013', 10000)
+% processOneRun('run_configs/surrey_soft_soft.cfg', 'tv2013', 'query2013', 'test2013', 10000)
 % config_file: all info for a run
 % data_name: tv2014
 % query_pat: query2014
@@ -77,7 +77,7 @@ addpath(genpath('/net/per610a/export/das11f/ledduy/plsang/nvtiep/funcs'));
 % DB = test_pat
 % disp(exp_purpose)
 % disp(DB)
-% clobber = false;
+clobber = false;
 
 eval_topN = topK;
 
@@ -227,7 +227,6 @@ if ~exist(database.query_mat_dir,'dir')
 end
 
 res_filename = fullfile(database.query_mat_dir,['res_' res_name, '.mat']);
-return; %debug
 
 if exist(res_filename, 'file')
 	disp('Loading result file...')
@@ -241,7 +240,9 @@ else
 			fprintf('centroid file (%s) doesnot exist!\n',clustering_file)
 			return;
 		end
-		time('centers=hdf5read(clustering_file,''/clusters'');');
+		%time('centers=hdf5read(clustering_file,''/clusters'');');
+		disp('Loading codebook...')
+		centers=hdf5read(clustering_file,'/clusters');
 		[feat_len,hist_len]=size(centers);
 		prev_clustering_file = clustering_file;
 	end
@@ -251,7 +252,9 @@ else
 	end
 	if ~exist('prev_bow_file','var') || ~strcmp(bow_file,prev_bow_file)
 		if exist(bow_file,'file') && ~clobber
-			time('load(bow_file)','Loading weighted and normalized database bow file...');
+			%time('load(bow_file)','Loading weighted and normalized database bow file...');
+			disp('Loading weighted and normalized database bow file...')
+			load(bow_file);
 		else
 			%% Compute database bow at the beginning
 			% Load raw bag of word of the database
@@ -261,7 +264,8 @@ else
 				fprintf('raw bow file (%s) doesnot exist!\n',raw_bow_file)
 				return;
 			end;
-			time('load(raw_bow_file);','Loading raw database frame bow...');
+			%time('load(raw_bow_file);','Loading raw database frame bow...');
+			load(raw_bow_file);
 			
 			assert(exist('list_frame_bow', 'var') ~= 0);
 			if database.comp_sim.frame_sampling > 1
@@ -286,7 +290,8 @@ else
 				return;
 			end
 			big_bow_info_file = fullfile(database.bow_dir,'raw_bow_info.mat');
-			time('load(big_bow_info_file);','load raw bow info ...');
+			%time('load(big_bow_info_file);','load raw bow info ...');
+			load(big_bow_info_file);
 			
 			% computing tf 
 			term_freq = list_term_freq.(database.comp_sim.freq);
@@ -327,13 +332,16 @@ else
 				end
 			end
 			%matlabpool close
-			time('save(bow_file,''db_bow'',''db_lut'',''weight'',''clip_frame_num'',''-v7.3'')',...
-				 'saving weighted and normalized database bow file ...');
+			%time('save(bow_file,''db_bow'',''db_lut'',''weight'',''clip_frame_num'',''-v7.3'')',...
+			%	 'saving weighted and normalized database bow file ...');
+			save(bow_file,'db_bow','db_lut','weight','clip_frame_num','-v7.3');
 		end
 		% Build inverted file
 		ivf = [];
 		if ~isempty(strfind(database.comp_sim.dist,'ivf'))
-			time('ivf = BuildInvFile([],db_bow,0,false);','Building inverted file...');
+			%time('ivf = BuildInvFile([],db_bow,0,false);','Building inverted file...');
+			disp('Building inverted file...')
+			ivf = BuildInvFile([],db_bow,0,false);
 			db_bow = [];
 		end
 		prev_bow_file = bow_file;
@@ -342,12 +350,15 @@ else
 	% query bow file
 	query_bow_file = fullfile(database.query_bow_dir,['bow_' query_bow_making_name, '.mat']);
 	if exist(query_bow_file,'file') && ~clobber
-		time('load(query_bow_file)','load weighted and normalized query bow file ...');
+		%time('load(query_bow_file)','load weighted and normalized query bow file ...');
+		disp('Loading weighted and normalized query bow file ...')
+		load(query_bow_file);
 	else
 		% raw query bow
 		query_raw_bow_file = fullfile(database.query_bow_dir,'raw_bow.mat');
 		if exist(query_raw_bow_file,'file') && ~clobber
-			time('load(query_raw_bow_file)','load raw query bow file ...');
+			%time('load(query_raw_bow_file)','load raw query bow file ...');
+			load(query_raw_bow_file);
 		else
 			if strcmp(database.comp_sim.build_params.algorithm,'kdtree')
 				kdtree_filename = fullfile(database.build_dir,'flann_kdtree.bin');
@@ -451,7 +462,7 @@ else
 					end
 					
 					if ~strcmp(database.comp_sim.query_obj,'crop_fg')  %'crop_fg' is a obsolete option
-						query_mask_filename=fullfile(database.query_mask_dir,strrep(query_imgs{i},'src','mask'));
+						query_mask_filename=fullfile(database.query_mask_dir,query_dir{qid},strrep(query_imgs{i},'src','mask'));
 						if exist(query_mask_filename,'file')
 							mask = imread(query_mask_filename);
 							mask = mask(:,:,1)>128;
@@ -552,8 +563,9 @@ else
 				fprintf(' %.0f',toc);
 			end
 			fprintf('\n');
-			time('save(query_raw_bow_file,''topic_bows'',''frame_quant_info'',''query_filenames'',''-v7.3'')',...
-				'save raw query bow file ...');
+			%time('save(query_raw_bow_file,''topic_bows'',''frame_quant_info'',''query_filenames'',''-v7.3'')',...
+			%	'save raw query bow file ...');
+			save(query_raw_bow_file,'topic_bows','frame_quant_info','query_filenames','-v7.3');
 		end
 
 		disp('Normalizing raw query bow ...');
@@ -645,11 +657,13 @@ else
 		end
 		fprintf('\n');
 		if isfield(database.comp_sim, 'query_feat_corr') && database.comp_sim.query_feat_corr.bridge_vq
-			time('save(query_bow_file,''topic_bows'',''frame_quant_info'',''query_filenames'',''query_feat_corr_bridges'',''-v7.3'')',...
-				'save normalized query bow ...');
+			%time('save(query_bow_file,''topic_bows'',''frame_quant_info'',''query_filenames'',''query_feat_corr_bridges'',''-v7.3'')',...
+			%	'save normalized query bow ...');
+			save(query_bow_file,'topic_bows','frame_quant_info','query_filenames','query_feat_corr_bridges','-v7.3');
 		else
-			time('save(query_bow_file,''topic_bows'',''frame_quant_info'',''query_filenames'',''-v7.3'')',...
-				'save normalized query bow ...');
+			%time('save(query_bow_file,''topic_bows'',''frame_quant_info'',''query_filenames'',''-v7.3'')',...
+			%	'save normalized query bow ...');
+			save(query_bow_file,'topic_bows','frame_quant_info','query_filenames','-v7.3');
 		end
 	end
 	
@@ -753,7 +767,8 @@ else
 	fprintf(' %.0f\n',toc);
 
 	% Save result
-	time('save(res_filename,''db_lut'',''score'',''ranks'',''query_filenames'',''-v7.3'')');
+	%time('save(res_filename,''db_lut'',''score'',''ranks'',''query_filenames'',''-v7.3'')');
+	save(res_filename,'db_lut','score','ranks','query_filenames','-v7.3');
 end
 
 tic;
@@ -765,4 +780,9 @@ write_knn(query_filenames, db_lut, score, ranks, database.db_frame_dir, ...
     knn_txt_dir, eval_topN, num_shown_frames, false);
 fprintf(' %.0fs\n',toc);
 
+% Copying config file
+disp(['cp ' config_file ' ' result_dir]);
+unix(['cp ' config_file ' ' result_dir]);
+
+convert_my_rank_to_thay_Duy(result_dir, topK)
 end
