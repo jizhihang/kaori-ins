@@ -39,7 +39,7 @@ database.feat_mat_dir = sprintf('%s/%s_mat',work_dir,feature_name);
 
 % Neu soft-assignment thi chon parameter = 0.0125 (Duong nhien la tuy dataset, Neu Oxford thi chon delta_sqr = 6250)
 if quant_struct.knn>1 && quant_struct.delta_sqr~=-1
-    quant_struct.delta_sqr=quant_struct.delta_sqr/5e5;
+    quant_struct.delta_sqr=quant_struct.delta_sqr/5e5; % delta_sqr = 6250/5e5 = 0.0125
 end
 
 % Clustering name
