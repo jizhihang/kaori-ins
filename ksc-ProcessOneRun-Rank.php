@@ -5,10 +5,16 @@
  * 		@brief 	Ranking and Evaluation
  *		@author Duy-Dinh Le (ledduy@gmail.com, ledduy@ieee.org).
  *
- * 		Copyright (C) 2010-2013 Duy-Dinh Le.
+ * 		Copyright (C) 2010-2014 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 18 Aug 2013.
+ * 		Last update	: 06 Aug 2014.
  */
+
+// 06 Aug 2014
+// Modify code because the dir structure is changed
+// Before: runID/tv2013/test2013
+// Current: tv2013/test2013/runID
+// Not necessary to input fullname of a run, only part of it is OK (use strstr)
 
 
 require_once "ksc-AppConfig.php";
@@ -18,11 +24,12 @@ require_once "ksc-Tool-EvalMAP.php";
 ////////////////// START //////////////////
 
 
-$nTVYear = 2012;
+$nTVYear = 2013;
 //$arVideoPathLUT[2012] = "tv2012/subtest2012-new";
-$arVideoPathLUT[2011] = "tv2011/test2011-new";
-$arVideoPathLUT[2012] = "tv2012/test2012-new";
-$arVideoPathLUT[2013] = "tv2013/test2013-new";
+$arVideoPathLUT[2011] = "tv2011/test2011";
+$arVideoPathLUT[2012] = "tv2012/test2012";
+$arVideoPathLUT[2013] = "tv2013/test2013";
+$arVideoPathLUT[2014] = "tv2014/test2014";
 
 if($argc<2)
 {
@@ -47,7 +54,7 @@ $arQueryList = loadQueryDesc($szFPInputFN);
 
 $szVideoPath = $arVideoPathLUT[$nTVYear];
 
-$szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
+$szResultDir = sprintf("%s/result/%s", $gszRootBenchmarkDir, $szVideoPath);
 
 $arDirList = collectDirsInOneDir($szResultDir);
 sort($arDirList);
@@ -63,20 +70,13 @@ $nMaxDocs = 1000;
 $nTVYearz = sprintf("%s", $nTVYear);
 foreach($arDirList as $szRunID)
 {
-    if((!strstr($szRunID, "run_")) || (!strstr($szRunID, $nTVYearz)))
-    {
-        printf("### Skipping [%s] ...\n", $szRunID);
-        continue;        
-    }
-    
     if($szTargetRunID != "")
     {
-        if($szTargetRunID != $szRunID)
+        if(!strstr($szRunID, $szTargetRunID))
             continue;
     }
 
-    $szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szRunID, $szVideoPath);
-    makeDir($szQueryResultDir1);
+    $szQueryResultDir1 = sprintf("%s/%s", $szResultDir, $szRunID);
     $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szRunID);
     if(file_exists($szFPOutputFN))
     {
@@ -90,8 +90,8 @@ foreach($arDirList as $szRunID)
     foreach($arQueryList as $szQueryID => $szTmp)
     {
     	printf("Path:$szVideoPath <BR>\n");
-    	$szQueryResultDir1 = sprintf("%s/%s/%s", $szResultDir, $szRunID, $szVideoPath);
-    	$szQueryResultDir = sprintf("%s/%s/%s/%s", $szResultDir, $szRunID, $szVideoPath, $szQueryID);
+    	$szQueryResultDir1 = sprintf("%s/%s", $szResultDir, $szRunID);
+    	$szQueryResultDir = sprintf("%s/%s/%s", $szResultDir, $szRunID, $szQueryID);
     
         $arRawListz = loadRankedList($szQueryResultDir, $nTVYear);
         $arRawList = array();
@@ -100,7 +100,7 @@ foreach($arDirList as $szRunID)
         $arScoreList = array();
         foreach($arRawListz as $szShotID => $fScore)
         {
-            if(($nTVYear == 2013) &&(strstr($szShotID, "shot0_")))
+            if((($nTVYear == 2013) || ($nTVYear == 2014)) &&(strstr($szShotID, "shot0_")))
             {
                 continue; // skip shot0_
             }
@@ -165,7 +165,6 @@ foreach($arDirList as $szRunID)
 
 //////////////////////////////// FUNCTIONS ///////////////////////////////////
 
-
 /**
  <videoInstanceTopic
  text="George W. Bush"
@@ -225,8 +224,6 @@ function parseNISTResult($szFPInputFN)
 	return $arOutput;
 }
 
-
-
 function loadRankedList($szResultDir, $nTVYear)
 {
     $arFileList = collectFilesInOneDir($szResultDir, "", ".res");
@@ -270,6 +267,5 @@ function loadRankedList($szResultDir, $nTVYear)
 
     return ($arRankList);
 }
-
 
 ?>

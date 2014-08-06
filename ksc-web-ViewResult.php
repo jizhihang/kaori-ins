@@ -103,8 +103,6 @@ $szTVYear = sprintf("tv%d", $nTVYear);
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
 
-//$szPatName = $_REQUEST['vPatName'];
-
 $szPatName4KFDir = sprintf("test%s", $nTVYear); 
 
 // ins.topics.2013.xml  --> list of topics provided by TRECVID
@@ -125,9 +123,6 @@ if(file_exists($szFPInputFN))
         $arQueryListCount[$szQueryIDx] = $nCount;
     }
 }
-
-//$szVideoPath = $arVideoPathLUT[$nTVYear];
-//$szVideoPath = sprintf("%s/%s", $szTVYear, $szPatName);
 
 // list of runID
 $szResultDir = sprintf("%s/result/%s/%s", $gszRootBenchmarkDir, $szTVYear, $szPatName4KFDir);
@@ -199,7 +194,6 @@ if($nAction == 1)
 
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='2'>\n");
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vTVYear' VALUE='%s'>\n", $nTVYear);
-	printf("<P><INPUT TYPE='HIDDEN' NAME='vPatName' VALUE='%s'>\n", $szPatName);
 	printf("<INPUT TYPE='SUBMIT' VALUE='Submit'>\n");
 	printf("&nbsp;&nbsp; <INPUT TYPE='RESET' VALUE='Reset'>\n");
 	printf("</FORM>\n");
@@ -395,8 +389,8 @@ $nStartID = $nPageID*$nMaxVideosPerPage;
 $nEndID = min($nStartID+$nMaxVideosPerPage, $nNumVideos, 1000);
 
 $nNumPages = min(20, intval(($nNumVideos+$nMaxVideosPerPage-1)/$nMaxVideosPerPage));
-$queryURL = sprintf("vPatName=%s&vQueryID=%s&vRunID=%s&vMaxVideosPerPage=%s&vTVYear=%d&vAction=%d&", 
-    $szPatName, urlencode($szQueryIDz), urlencode($szRunID), urlencode($nMaxVideosPerPage), $nTVYear, $nAction);
+$queryURL = sprintf("vQueryID=%s&vRunID=%s&vMaxVideosPerPage=%s&vTVYear=%d&vAction=%d&", 
+    urlencode($szQueryIDz), urlencode($szRunID), urlencode($nMaxVideosPerPage), $nTVYear, $nAction);
 	//printf($queryURL);
 
 $szURLz = sprintf("ksc-web-ViewResult.php?%s&vShowGT=1", $queryURL);
@@ -577,7 +571,7 @@ for($i=$nStartID; $i<$nEndID; $i++)
 		imagejpeg($tmp_img);
 		$szImgContent = base64_encode(ob_get_clean());
 		// update Jul 13, 2014 --> adding URL to view matched points
-		$szURL = sprintf('ksc-web-ViewMatch.php?vQueryID=%s&vShotID=%s&vTVYear=%s&vPatName=%s&vRunID=%s', urlencode($szQueryIDz), $szShotID, $nTVYear, $szPatName, urlencode($szRunID));
+		$szURL = sprintf('ksc-web-ViewMatch.php?vQueryID=%s&vShotID=%s&vTVYear=%s&vRunID=%s', urlencode($szQueryIDz), $szShotID, $nTVYear, urlencode($szRunID));
 
 		$arOutput[] = sprintf("<A HREF='%s' TARGET=_blank><IMG  TITLE='%s - %s' SRC='data:image/jpeg;base64,". $szImgContent ."' /></A>", $szURL, $szShotID, $fScore );
 

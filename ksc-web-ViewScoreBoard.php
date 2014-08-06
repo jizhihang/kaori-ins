@@ -7,8 +7,14 @@
  *
  * 		Copyright (C) 2010-2013 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 28 Jul 2014.
+ * 		Last update	: 06 Aug 2014.
  */
+
+// 06 Aug 2014
+// Modify code because the dir structure is changed
+// Before: runID/tv2013/test2013
+// Current: tv2013/test2013/runID
+// Do not use szPatName
 
 // 12 Jul 2014
 // Copied from ksc-web-ViewResult.php
@@ -34,17 +40,8 @@ if($nAction == 0)
 	printf("<FORM TARGET='_blank'>\n");
 	printf("<P>TVYear<BR>\n");
 	printf("<SELECT NAME='vTVYear'>\n");
+	printf("<OPTION VALUE='2014'>2014</OPTION>\n");
 	printf("<OPTION VALUE='2013'>2013</OPTION>\n");
-	printf("<OPTION VALUE='2012'>2012</OPTION>\n");
-	printf("<OPTION VALUE='2011'>2011</OPTION>\n");
-	printf("</SELECT>\n");
-
-	printf("<P>Partition<BR>\n");
-	printf("<SELECT NAME='vPatName'>\n");
-	printf("<OPTION VALUE='test2013-new'>test2013-new</OPTION>\n");
-	printf("<OPTION VALUE='subtest2012-new'>subtest2012-new</OPTION>\n");
-	printf("<OPTION VALUE='test2012-new'>test2012-new</OPTION>\n");
-	printf("<OPTION VALUE='test2011-new'>test2011-new</OPTION>\n");
 	printf("</SELECT>\n");
 	
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='1'>\n");
@@ -61,7 +58,8 @@ $nTVYear = $_REQUEST['vTVYear'];
 $szTVYear = sprintf("tv%d", $nTVYear);
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
-$szPatName = $_REQUEST['vPatName'];
+
+$szPatName4KFDir = sprintf("test%s", $nTVYear); 
 
 // ins.topics.2013.xml 
 $szFPInputFN = sprintf("%s/ins.topics.%d.xml", $szMetaDataDir, $nTVYear);
@@ -82,10 +80,7 @@ if(file_exists($szFPInputFN))
     }
 }
 
-//$szVideoPath = $arVideoPathLUT[$nTVYear];
-$szVideoPath = sprintf("%s/%s", $szTVYear, $szPatName);
-
-$szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
+$szResultDir = sprintf("%s/result/%s/%s", $gszRootBenchmarkDir, $szTVYear, $szPatName4KFDir);
 $arDirList = collectDirsInOneDir($szResultDir);
 sort($arDirList);
 //print_r($arDirList);exit();
@@ -98,17 +93,10 @@ if($nAction == 1)
 	printf("<P>Select Multi-RunID <BR>\n");
 
 	foreach($arDirList as $szRunID)
-	{
-	    if(!strstr($szRunID, $nTVYear))
-	    {
-	        printf('<!-- Skipping [%s]-->', $szRunID);
-			
-			continue;
-	    }
-		
+	{		
 		// adding MAP info
 		$szMAP = "N/A";
-		$szFPMAPFN = sprintf("%s/%s/%s/%s/%s.eval.ksc.csv", $szResultDir, $szRunID, $szTVYear, $szPatName, $szRunID);
+		$szFPMAPFN = sprintf("%s/%s/%s.eval.ksc.csv", $szResultDir, $szRunID, $szRunID);
 		if(file_exists($szFPMAPFN))
 		{
 			$nNumRows = loadListFile($arTmpz, $szFPMAPFN);
@@ -124,7 +112,6 @@ if($nAction == 1)
 
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='2'>\n");
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vTVYear' VALUE='%s'>\n", $nTVYear);
-	printf("<P><INPUT TYPE='HIDDEN' NAME='vPatName' VALUE='%s'>\n", $szPatName);
 	printf("<INPUT TYPE='SUBMIT' VALUE='Submit'>\n");
 	printf("&nbsp;&nbsp; <INPUT TYPE='RESET' VALUE='Reset'>\n");
 	printf("</FORM>\n");
@@ -147,7 +134,7 @@ foreach($arRunList as $szRunID)
 {
 	// load csv file
 	// sftp://ledduy@per610a.hpc.vpl.nii.ac.jp/export/das11f/ledduy/trecvid-ins-2013/result/run_fusion2013-TiepBoW_No1_10K+DPM[R1=R2.1xw1=2.0-R2=R2.2xw2=1.0-Norm=1]/tv2013/test2013-new/run_fusion2013-TiepBoW_No1_10K+DPM[R1=R2.1xw1=2.0-R2=R2.2xw2=1.0-Norm=1].eval.ksc.csv
-	$szFPPerfFN = sprintf("%s/%s/%s/%s/%s.eval.ksc.csv", $szResultDir, $szRunID, $szTVYear, $szPatName, $szRunID);
+	$szFPPerfFN = sprintf("%s/%s/%s.eval.ksc.csv", $szResultDir, $szRunID, $szRunID);
 	
 	if(file_exists($szFPPerfFN))
 	{
@@ -207,7 +194,7 @@ foreach($arRunMAP as $szRunID => $fMAP)
 		//http://per900c.hpc.vpl.nii.ac.jp/users-ext/ledduy//www/kaori-ins/ksc-web-ViewResult.php?vQueryID=9069%239069+-+OBJECT+-+a+circular+&vShowGT=0&vRunID=1.1.run_query2013-new_test2013-new_Caizhi_No1_TV2013_soft_fg%2Bbg_6sift_asym_0.6&vPageID=1&vMaxVideosPerPage=100&vAction=2&vTVYear=2013&vPatName=test2013-new
 		
 		$szQueryZ = sprintf("%s#%s", $nQueryID, str_replace("'", "|", $arQueryListLUT[$nQueryID]));
-		$szURL = sprintf("ksc-web-ViewResult.php?vQueryID=%s&vShowGT=0&vRunID=%s&vPageID=1&vMaxVideosPerPage=100&vAction=2&vTVYear=%s&vPatName=%s", urlencode($szQueryZ), urlencode($szRunID), $nTVYear, $szPatName);
+		$szURL = sprintf("ksc-web-ViewResult.php?vQueryID=%s&vShowGT=0&vRunID=%s&vPageID=1&vMaxVideosPerPage=100&vAction=2&vTVYear=%s", urlencode($szQueryZ), urlencode($szRunID), $nTVYear);
 		printf("<TD> <A TITLE=\"%s - %s - %s\" HREF=\"%s\" TARGET=_blank>%0.2f</A> </TD>\n", 
 		$szRunID, $arQueryListLUT[$nQueryID], $arQueryListCount[$nQueryID], 
 		$szURL, $arTmp[$nQueryID]);
