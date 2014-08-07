@@ -7,6 +7,12 @@ function prepare_annotation_for_dpm(data_name, query_pat)
 % path to src images
 
 work_dir = fullfile ('/net/per610a/export/das11f/ledduy/trecvid-ins-2014/keyframe-5', data_name, query_pat) ; % tv2013/query2013
+neg_img_dir = [work_dir '-neg-images'];
+neg_files = dir([neg_img_dir '/*.jpg']);
+for i=1:length(neg_files)
+	neg_files(i).name = strrep(neg_files(i).name, '.jpg', '');
+end
+
 model_dir = fullfile ('/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm', data_name, query_pat);
 if ~exist(model_dir,'dir')
 	mkdir(model_dir);
@@ -54,7 +60,8 @@ for i=1:length(query_folders)
 		fileattrib(output_img_dir,'+w','a');
 	end
 	
-	trainval_dir = fullfile(model_dir, query_id, 'ImageSets');  
+	trainval_dir = fullfile(model_dir, query_id, 'ImageSets');  % dir for pos images
+	train_dir = fullfile(model_dir, query_id, 'ImageSets');  % dir for neg images (same as dir for pos images)
 	if ~exist(trainval_dir,'dir')
 		mkdir(trainval_dir);
 		fileattrib(trainval_dir,'+w','a');
@@ -161,8 +168,12 @@ for i=1:length(query_folders)
         fclose(fout);
         
         % write image
-        imwrite(src_img, fullfile(output_img_dir, query_img_names{j}), 'png');
+        imwrite(src_img, strrep(fullfile(output_img_dir, query_img_names{j}), '.src.png', '.src.jpg'), 'jpg');
     end
+	% copy neg-images to output_img_dir
+	cmdLinux = ['cp ' neg_img_dir '/*.jpg ' output_img_dir];
+	unix(cmdLinux);
+	
     % write .cfg file
     config_fname = fullfile(config_file_dir, [query_id, '.cfg']); % 9069.cfg - used for visualization too
     fout = fopen(config_fname,'w');
@@ -182,6 +193,13 @@ for i=1:length(query_folders)
         end
         fclose(fout);
     end
+	
+    train_fname = fullfile(train_dir, ['train_' query_id '.txt']);
+	fout = fopen(train_fname, 'w');
+    for i=1:length(neg_files)
+		fprintf(fout, '%s\n', neg_files(i).name);
+	end
+	fclose(fout);
 end
 
 % # PASCAL Annotation Version 1.00
