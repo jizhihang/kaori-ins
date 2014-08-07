@@ -194,7 +194,7 @@ database.query_frame_dir = fullfile(database.query_dir); % already put all in on
 database.query_feat_dir = fullfile(query_feature_dir, ['raw.'  strrep(feature_name,'rootsift','sift')]); % raw feature
 
 % query_quant_dirname: place contains bow of query
-query_quant_dirname = sprintf('%s_%s_%s_%s',query_feature_name,clustering_name,build_name,query_quantize_name);
+query_quant_dirname = sprintf('db_%s_qr_%s_%s_%s_%s', quantize_name, query_feature_name,clustering_name,build_name,query_quantize_name);
 database.query_bow_dir = fullfile(query_feature_dir,['bow.' query_quant_dirname]); % bow feature
 if ~exist(database.query_bow_dir,'dir')
 	mkdir(database.query_bow_dir);
