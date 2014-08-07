@@ -1,4 +1,4 @@
-function [rects, scale] = validate_mask( src, mask, separateRegion)
+function [rects, scale] = validate_mask(src, mask, separateRegion)
 % Return values (more details are below)
 %   ROIs      Cell array of ROI images
 %
@@ -8,17 +8,20 @@ function [rects, scale] = validate_mask( src, mask, separateRegion)
 %   extPercent      percentage of extended part according to the region 
 %                   (to capture context information)
 %   separateRegion  crop each region as a ROI or not (boolean)
-
-    % Parameter configuration
+% Output	
+%   scale is estimated by min_size of bounding boxex
+%	bounding boxes
+    
+	% Parameter configuration
     BW_THRESHOLD = 0.5;
     MIN_REGION_SIZE = 80;
     AREA_THRESHOLD = 40*40.0;
-    DIM_THRESHOLD = 50.0;
+    DIM_THRESHOLD = 50.0; % minimum size of bounding box
     min_wh = Inf;
     scale = 1;
     min_area = Inf;
     
-    WIDTH = 768; HEIGHT = 576;
+    WIDTH = 768; HEIGHT = 576; % image size of TV2013 videos (BBCEastEnders)
     RATIO = 20;
     MIN_X = WIDTH/RATIO;
     MAX_X = WIDTH - MIN_X;
@@ -145,7 +148,7 @@ function [rects, scale] = validate_mask( src, mask, separateRegion)
 %         scale = sqrt(AREA_THRESHOLD/min_area);
 %     end
     if min_wh < DIM_THRESHOLD
-        scale = DIM_THRESHOLD/double(min_wh);
+        scale = DIM_THRESHOLD/double(min_wh); % scale is estimated by min_size of bounding boxex
     end
 end
 

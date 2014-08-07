@@ -6,7 +6,7 @@ function prepare_annotation_for_dpm(data_name, query_pat)
 
 % path to src images
 
-work_dir = fullfile ('/net/per610a/export/das11f/ledduy/trecvid-ins-2014/keyframe-5', data_name, query_pat) ;
+work_dir = fullfile ('/net/per610a/export/das11f/ledduy/trecvid-ins-2014/keyframe-5', data_name, query_pat) ; % tv2013/query2013
 model_dir = fullfile ('/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm', data_name, query_pat);
 if ~exist(model_dir,'dir')
 	mkdir(model_dir);
@@ -60,7 +60,8 @@ for i=1:length(query_folders)
 		fileattrib(trainval_dir,'+w','a');
 	end
 	
-    files = dir([src_img_dir query_id]); % list all files in query dir
+	query_img_dirz = fullfile(src_img_dir, query_id);
+    files = dir(query_img_dirz); % list all files in query dir
     n_discarded = 0;
     query_rects = [];
     query_scales = [];
@@ -72,17 +73,17 @@ for i=1:length(query_folders)
 
 
     for j=1:length(files)
-        img_path = [src_img_dir query_id '/' files(j).name]
+        img_path = fullfile(query_img_dirz, files(j).name);
         if strcmp(files(j).name,'.') || strcmp(files(j).name, '..')
             continue;
         end
 		
         src_img = imread(img_path); % read image
-		if isempty(strfind(src_img, 'src.png'))
+		if isempty(strfind(img_path, 'src.png'))
 			continue; % skip
 		end
         mask_img_name = strrep(files(j).name, 'src', 'mask'); % mask.png
-        mask = imread([mask_img_path mask_img_name]);
+        mask = imread(fullfile(query_img_dirz, mask_img_name));
         % extract roi image(s): not write annotation, not separate region
         [rects scale] = validate_mask(src_img, mask, SEPERATE_REGION);
         if isempty(rects) % remove images with small rects
@@ -118,7 +119,7 @@ for i=1:length(query_folders)
         
         % write annotation 
         % print initial info to annotation file
-        anno_filename = [anotation_dir '/' strrep(query_img_names{j},'png','txt')]; % annotation name - replace .png = .txt, eg. 9069/Annotations/xxx.src.txt
+        anno_filename = fullfile(anotation_dir, strrep(query_img_names{j},'png','txt')); % annotation name - replace .png = .txt, eg. 9069/Annotations/xxx.src.txt
         fout = fopen(anno_filename, 'w');
         % basic info
         fprintf(fout, '# PASCAL Annotation Version 1.00\n\n');
@@ -160,10 +161,10 @@ for i=1:length(query_folders)
         fclose(fout);
         
         % write image
-        imwrite(src_img, [output_img_dir query_img_names{j}], 'jpg');
+        imwrite(src_img, fullfile(output_img_dir, query_img_names{j}), 'png');
     end
     % write .cfg file
-    config_fname = [config_file_dir query_id '.cfg']; % 9069.cfg - used for visualization too
+    config_fname = fullfile(config_file_dir, [query_id, '.cfg']); % 9069.cfg - used for visualization too
     fout = fopen(config_fname,'w');
     fprintf(fout, 'Scale : %f\n', scale);
     fprintf(fout, 'Number of sample images: %d\n', counter); 
@@ -174,7 +175,7 @@ for i=1:length(query_folders)
 	% trainval_txt --> pos images
 	% train.txt -->  neg images
     if n_discarded < counter
-        trainval_fname = [trainval_dir 'trainval_' query_id '.txt'];
+        trainval_fname = fullfile(trainval_dir, ['trainval_' query_id '.txt']);
         fout = fopen(trainval_fname, 'w');
         for j=1:counter2
             fprintf(fout, '%s\n', valid_imgname{j});
