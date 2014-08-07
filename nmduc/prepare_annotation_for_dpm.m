@@ -198,6 +198,13 @@ for i=1:length(query_folders)
 	fout = fopen(train_fname, 'w');
     for i=1:length(neg_files)
 		fprintf(fout, '%s\n', neg_files(i).name);
+		
+		% create a new file in annotation dir, eg neg_1.txt
+		negzz_fname = fullfile(anotation_dir, [neg_files(i).name '.txt']);
+		fout2 = fopen(negzz_fname, 'w');
+		fprintf(fout2, 'Image filename : "%s.jpg"\n', neg_files(i).name);
+		fclose(fout2);
+		
 	end
 	fclose(fout);
 	
