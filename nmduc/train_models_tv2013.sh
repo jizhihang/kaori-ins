@@ -1,30 +1,30 @@
-sh train_dpm_models_job.sh 9069
-sh train_dpm_models_job.sh 9070
-sh train_dpm_models_job.sh 9071
-sh train_dpm_models_job.sh 9072
-sh train_dpm_models_job.sh 9073
-sh train_dpm_models_job.sh 9074
-sh train_dpm_models_job.sh 9075
-sh train_dpm_models_job.sh 9076
-sh train_dpm_models_job.sh 9077
-sh train_dpm_models_job.sh 9078
-sh train_dpm_models_job.sh 9079
-sh train_dpm_models_job.sh 9080
-sh train_dpm_models_job.sh 9081
-sh train_dpm_models_job.sh 9082
-sh train_dpm_models_job.sh 9083
-sh train_dpm_models_job.sh 9084
-sh train_dpm_models_job.sh 9085
-sh train_dpm_models_job.sh 9086
-sh train_dpm_models_job.sh 9087
-sh train_dpm_models_job.sh 9088
-sh train_dpm_models_job.sh 9089
-sh train_dpm_models_job.sh 9090
-sh train_dpm_models_job.sh 9091
-sh train_dpm_models_job.sh 9092
-sh train_dpm_models_job.sh 9093
-sh train_dpm_models_job.sh 9094
-sh train_dpm_models_job.sh 9095
-sh train_dpm_models_job.sh 9096
-sh train_dpm_models_job.sh 9097
-sh train_dpm_models_job.sh 9098
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9069
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9070
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9071
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9072
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9073
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9074
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9075
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9076
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9077
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9078
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9079
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9080
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9081
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9082
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9083
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9084
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9085
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9086
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9087
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9088
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9089
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9090
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9091
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9092
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9093
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9094
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9095
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9096
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9097
+qsub -pe localslots 6 -e /dev/null -o /dev/null /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nmduc/train_dpm_models_job.sh 9098

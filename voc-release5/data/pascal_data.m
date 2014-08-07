@@ -21,7 +21,7 @@ try
   load([cachedir cls '_' dataset_fg '_' year]);
 catch
   % Positive examples from the foreground dataset
-  ids      = textread(sprintf(VOCopts.imgsetpath, dataset_fg), '%s');
+  ids      = textread(sprintf(VOCopts.imgsetpath, [dataset_fg '_' year]), '%s'); %trainval_9069.txt
   pos      = [];
   impos    = [];
   numpos   = 0;
@@ -32,7 +32,7 @@ catch
                   cls, dataset_fg, year, i, length(ids));
     % Parse record and exclude difficult examples
     rec           = PASreadrecord(sprintf(VOCopts.annopath, ids{i}));
-    clsinds       = strmatch(cls, {rec.objects(:).class}, 'exact');
+    clsinds       = strmatch(cls, {rec.objects(:).class}, 'exact'); % cu chuoi vi lower case --> Query_9069 --> query_9069 (correct)
     diff          = [rec.objects(clsinds).difficult];
     clsinds(diff) = [];
     count         = length(clsinds(:));
@@ -119,7 +119,7 @@ catch
   end
 
   % Negative examples from the background dataset
-  ids    = textread(sprintf(VOCopts.imgsetpath, dataset_bg), '%s');
+  ids    = textread(sprintf(VOCopts.imgsetpath, [dataset_bg '_' year]), '%s'); %train_9069.txt
   neg    = [];
   numneg = 0;
   for i = 1:length(ids);

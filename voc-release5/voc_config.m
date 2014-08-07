@@ -20,18 +20,17 @@ function conf = voc_config(varargin)
 
 % Parent directory that everything (model cache, VOCdevkit) is under
 % BASE_DIR    = '/var/tmp/rbg';
-BASE_DIR    = '/net/per610a/export/das09f/satoh-lab/minhduc/resources/object_Detection/voc-release5/';
+BASE_DIR    = '/net/per900c/raid0/ledduy/github-projects/kaori-ins2014/voc-release5/';
 
 % PASCAL dataset year to use
 %PASCAL_YEAR = '2007';
 %PASCAL_YEAR = 'TVHID';
-PASCAL_YEAR = 'TRECVID';
-
+PASCAL_YEAR = 'TRECVID'; % this var will be changed to 9069 in voc_config_9069.m 
 
 % Models are stored in BASE_DIR/PROJECT/PASCAL_YEAR/
 % e.g., /var/tmp/rbg/voc-release5/2007/
 %PROJECT     = 'INRIA_PASCAL';
-PROJECT     = 'UPPER_BODY';
+PROJECT     = 'INS-DPM'; % dir containing VOCdevkit downloaded from PASCAL-VOC site --> hard-coded later conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/INS-DPM/VOCdevkit/']);
 
 % The code will look for your PASCAL VOC devkit in 
 % BASE_DIR/VOC<PASCAL_YEAR>/VOCdevkit
@@ -122,7 +121,10 @@ conf = cv(conf, 'pascal.year', PASCAL_YEAR);
 %conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/INRIA_PASCAL/VOCdevkit/']);
 
 % For Upper body detection
-conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/UPPER_BODY/VOCdevkit/']);
+%conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/UPPER_BODY/VOCdevkit/']);
+
+% For INS-DPM
+conf = cv(conf, 'pascal.dev_kit', fullfile(conf.paths.base_dir, 'INS-DPM/VOCdevkit/'));
 
 if exist(conf.pascal.dev_kit) == 0
   msg = sprintf(['~~~~~~~~~~~ Hello ~~~~~~~~~~~\n' ...
@@ -240,7 +242,7 @@ if isempty(voc_opts) || ~voc_opts.isKey(key)
   % Edit1 : 11/8/2013: use my_vocinit for training models
   my_VOCinit;
   % Edit2 : 20/8/2013: use default vocinit for testing trecvid
-  VOCinit;
+  %VOCinit;
   cd(tmp);
   voc_opts(key) = VOCopts;
 end

@@ -36,6 +36,7 @@ DATABASE = 'trecvid_query'; % ????
 
 query_folders = dir(src_img_dir);
 for i=1:length(query_folders) 
+	i
     query_id = query_folders(i).name; % each dir --> 1 query, e.g 9069
     if strcmp(query_id,'.') || strcmp(query_id, '..')
         continue;
@@ -131,12 +132,12 @@ for i=1:length(query_folders)
         % basic info
         fprintf(fout, '# PASCAL Annotation Version 1.00\n\n');
         img_name = strrep(query_img_names{j},'png','jpg'); % output image source use .jpg format
-        fprintf(fout, 'Image filename : "%s%s"\n', output_img_dir, img_name); % replace BASE_DIR by output_img_dir
+        fprintf(fout, 'Image filename : "%s/Images/%s"\n', query_id, img_name); % replace BASE_DIR by output_img_dir, SHITTTTTTTT in pascal_data.m:  pos(numpos).im      = [VOCopts.datadir rec.imgname];
         fprintf(fout, 'Image size (X x Y x C) : %d x %d x %d\n', WIDTH, HEIGHT, 3);
         fprintf(fout, 'Database : "%s"\n', DATABASE); %???
 
 		label = ['PASquery_' query_id]; % --> PAS_query_9069
-		origional_label = ['Query_' query_id]; % Query_9069 is the input of the train model function
+		origional_label = ['query_' query_id]; % query_9069 is the input of the train model function --> MUST BE IN LOWERCASE + train_model('query_9069', 1) SHHHHHHHHHHH
         object_labels = sprintf('"%s"', label);
         obj_counter = 0; % number of objects in the input image
         for k=1:length(rects)
@@ -202,7 +203,8 @@ for i=1:length(query_folders)
 		% create a new file in annotation dir, eg neg_1.txt
 		negzz_fname = fullfile(anotation_dir, [neg_files(i).name '.txt']);
 		fout2 = fopen(negzz_fname, 'w');
-		fprintf(fout2, 'Image filename : "%s.jpg"\n', neg_files(i).name);
+		% relative path to model/ins-dpm/tv2013/query2013 --> set in my_VOCinit (VOCopts.datadir=fullfile('/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/'); )
+		fprintf(fout2, 'Image filename : "%s/Images/%s.jpg"\n', query_id, neg_files(i).name); % SHITTTTT in pascal_data.m: neg(numneg).im     = [VOCopts.datadir rec.imgname];
 		fclose(fout2);
 		
 	end
