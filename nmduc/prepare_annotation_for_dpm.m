@@ -200,6 +200,27 @@ for i=1:length(query_folders)
 		fprintf(fout, '%s\n', neg_files(i).name);
 	end
 	fclose(fout);
+	
+	voc_config_fname = fullfile(config_file_dir, ['voc_config_' query_id, '.m']); % voc_config_9069.m
+	fout = fopen(voc_config_fname, 'w');
+
+	fprintf(fout, 'function conf = voc_config_%s()\n', query_id);
+	fprintf(fout, 'conf.pascal.year = \'%s\';\n', query_id);
+	%conf.paths.model_dir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/model/9098/';
+	fprintf(fout, 'conf.paths.model_dir = \'%s/\';\n', config_file_dir);
+	%conf.training.log = @(x) sprintf([conf.paths.model_dir '%s.log'], x);
+	fprintf(fout, 'conf.training.log = @(x) sprintf([conf.paths.model_dir \'%%s.log\'], x);\n');
+	%conf.pascal.VOCopts.annopath = '9098/Annotations/%s.txt';
+	fprintf(fout, 'conf.pascal.VOCopts.annopath = \'%s/Annotations/%%s.txt\';\n', config_file_dir);
+	%conf.pascal.VOCopts.imgsetpath = '9098/ImageSets/%s.txt';
+	fprintf(fout, 'conf.pascal.VOCopts.imgsetpath = \'%s/ImageSets/%%s.txt\';\n', config_file_dir);
+	%conf.pascal.VOCopts.imgpath = '9098/Images/%s.txt';
+	fprintf(fout, 'conf.pascal.VOCopts.imgpath = \'%s/Images/%%s.txt\';\n', config_file_dir);
+	%end
+	fprintf(fout, 'end\n');
+	fclose(fout);
+	
+	
 end
 
 % # PASCAL Annotation Version 1.00

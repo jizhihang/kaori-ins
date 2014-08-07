@@ -12,7 +12,7 @@ export LD_LIBRARY_PATH=/net/per610a/export/das09f/satoh-lab/minhduc/dependencies
 # display your command here
 echo [$HOSTNAME] [$JOB_ID] [matlab -nodisplay -r "train_model( 'query_$1' )"]
 # change to your code directory here
-cd /net/per610a/export/das09f/satoh-lab/minhduc/resources/object_Detection/voc-release5
+cd /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/voc-release5
 # Log info of current dir
 pwd
 # run your command with parameters ($1, $2,...) here, string variable is put in ' '
