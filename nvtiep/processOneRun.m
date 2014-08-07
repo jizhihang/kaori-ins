@@ -788,4 +788,9 @@ write_knn(query_filenames, db_lut, score, ranks, database.db_frame_dir, ...
     knn_txt_dir, eval_topN, num_shown_frames, false);
 fprintf(' %.0fs\n',toc);
 
+% Copying config file
+disp(['cp ' config_file ' ' result_dir]);
+unix(['cp ' config_file ' ' result_dir]);
+
+convert_my_rank_to_thay_Duy(result_dir, topK);
 end

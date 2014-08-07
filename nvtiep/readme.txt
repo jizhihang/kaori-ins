@@ -14,3 +14,6 @@ akm.py
 quantize.m
 quantize_check.m
 quantize_merge.m
+
+Execute multiple runs: 
+processOneRun('run_configs/tv2013.surrey.soft.soft.latefusion.asym.cfg', 'tv2013', 'query2013', 'test2013', 10000); processOneRun('run_configs/tv2013.surrey.hard.soft.latefusion.asym.cfg', 'tv2013', 'query2013', 'test2013', 10000); processOneRun('run_configs/tv2013.perdoch.soft.soft.latefusion.asym.cfg', 'tv2013', 'query2013', 'test2013', 10000);
