@@ -107,7 +107,7 @@ if($nAction == 1)
 			printf("<!--File does not exist [%s]-->\n", $szFPMAPFN);
 		}
 
-		printf("<INPUT TYPE='CHECKBOX' NAME='vRunList[]' VALUE='%s'>%s - MAP: [%s]</BR>\n", $szRunID, $szRunID, $szMAP);
+		printf("<INPUT TYPE='CHECKBOX' NAME='vRunList[]' VALUE='%s'>%s - MAP: [%s]</BR>\n", $szRunID, substr($szRunID, 0, 100), $szMAP);
 	}
 
 	printf("<P><INPUT TYPE='HIDDEN' NAME='vAction' VALUE='2'>\n");
