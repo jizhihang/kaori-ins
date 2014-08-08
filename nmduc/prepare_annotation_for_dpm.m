@@ -31,8 +31,7 @@ MEAN_ROI = 2.9374e+004; % UNUSED
 % to deal with small object
 MAX_SCALE_FACTOR = 2.0; % maximum scale --> larger scale requires high computational cost, so should not set larger than 2.0
 
-BASE_DIR = 'VOC2007/Images/'; %???
-DATABASE = 'trecvid_query'; % ????
+DATABASE = [data_name '/' query_pat]; %tv2013/query2013
 
 query_folders = dir(src_img_dir);
 for i=1:length(query_folders) 
@@ -187,7 +186,7 @@ for i=1:length(query_folders)
 	% trainval_txt --> pos images
 	% train.txt -->  neg images
     if n_discarded < counter
-        trainval_fname = fullfile(trainval_dir, ['trainval_' query_id '.txt']);
+        trainval_fname = fullfile(trainval_dir, ['trainval' '.txt']); % use trainval.txt
         fout = fopen(trainval_fname, 'w');
         for j=1:counter2
             fprintf(fout, '%s\n', valid_imgname{j});
@@ -195,7 +194,7 @@ for i=1:length(query_folders)
         fclose(fout);
     end
 	
-    train_fname = fullfile(train_dir, ['train_' query_id '.txt']);
+    train_fname = fullfile(train_dir, ['train' '.txt']); % use train.txt - declared in voc_config.m (conf = cv(conf, 'training.train_set_fg', 'trainval');)
 	fout = fopen(train_fname, 'w');
     for i=1:length(neg_files)
 		fprintf(fout, '%s\n', neg_files(i).name);
@@ -225,6 +224,10 @@ for i=1:length(query_folders)
 	fprintf(fout, 'conf.pascal.VOCopts.imgsetpath = ''%s/ImageSets/%%s.txt'';\n', config_file_dir);
 	%conf.pascal.VOCopts.imgpath = '9098/Images/%s.txt';
 	fprintf(fout, 'conf.pascal.VOCopts.imgpath = ''%s/Images/%%s.txt'';\n', config_file_dir);
+	
+	%conf.pascal.VOCopts.datadir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/model/tv2013/query2013';
+	fprintf(fout, 'conf.pascal.VOCopts.datadir = ''%s/'';\n', model_dir);
+
 	%end
 	fprintf(fout, 'end\n');
 	fclose(fout);
@@ -267,8 +270,19 @@ end
 % Original label for object 4 "PASquery_9090" : "Query_9090"
 % Bounding box for object 4 "PASquery_9090" (Xmin, Ymin) - (Xmax, Ymax) : (686, 304) - (845, 701)
 
-% trainval_9090.txt
+% trainval.txt
 % 9090.1.src
 % 9090.2.src
 % 9090.3.src
 % 9090.4.src
+
+% voc_config_9069
+%function conf = voc_config_9069()
+%conf.pascal.year = '9069';
+%conf.paths.model_dir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/9069/';
+%conf.training.log = @(x) sprintf([conf.paths.model_dir '%s.log'], x);
+%conf.pascal.VOCopts.annopath = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/9069/Annotations/%s.txt';
+%conf.pascal.VOCopts.imgsetpath = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/9069/ImageSets/%s.txt';
+%conf.pascal.VOCopts.imgpath = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/9069/Images/%s.txt';
+%conf.pascal.VOCopts.datadir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/';
+%end
