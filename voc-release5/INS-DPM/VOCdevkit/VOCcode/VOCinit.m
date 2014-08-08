@@ -1,5 +1,16 @@
 clear VOCopts
 
+% DuyLe - look for CHANGED if you want to modify this code for your own use
+% VOCopts is changed partially in voc_config_90xx --> REM to avoid override
+
+% voc_config_9090.m
+% conf.pascal.year = '9090';
+% conf.paths.model_dir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/9090/';
+% conf.training.log = @(x) sprintf([conf.paths.model_dir '%s.log'], x);
+% conf.pascal.VOCopts.annopath = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/9090/Annotations/%s.txt';
+% conf.pascal.VOCopts.imgsetpath = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/9090/ImageSets/%s.txt';
+% conf.pascal.VOCopts.imgpath = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/9090/Images/%s.txt';
+
 % dataset
 %
 % Note for experienced users: the VOC2008-11 test sets are subsets
@@ -8,23 +19,34 @@ clear VOCopts
 
 % Used for determining training data (images, annotation) - VOCopts.annopath=[VOCopts.datadir VOCopts.dataset '/Annotations/%s.xml'];
 % these info is overriden in voc_config_90xx --> do not change anything here
-VOCopts.dataset='VOC2012';
+VOCopts.dataset='VOC2012'; 
 
 % get devkit directory with forward slashes
-devkitroot=strrep(fileparts(fileparts(mfilename('fullpath'))),'\','/');
+devkitroot=strrep(fileparts(fileparts(mfilename('fullpath'))),'\','/'); % CHANGED (REM ALL)
 
 % change this path to point to your copy of the PASCAL VOC data
-VOCopts.datadir=[devkitroot '/'];
+% override in voc_config_90xx
+% VOCopts.datadir=[devkitroot '/']; % CHANGED (REM ALL)
+
+% change this path to point to your copy of the PASCAL VOC data
+% this dir is used in pascal_data_m (line neg(numneg).im     = [VOCopts.datadir rec.imgname];)
+% rec.imgname is declared in Annotations/neg-img-name.txt
+
+if isempty(conf.pascal.VOCopts.datadir)
+	VOCopts.datadir=[devkitroot '/'];
+else
+    VOCopts.datadir = [conf.pascal.VOCopts.datadir]; % training data is located at the same dir with model-dir
+end
 
 % change this path to a writable directory for your results
-VOCopts.resdir=[devkitroot '/results/' VOCopts.dataset '/'];
+VOCopts.resdir=[devkitroot '/results/' VOCopts.dataset '/']; % CHANGED (REM ALL)
 
 % change this path to a writable local directory for the example code
-VOCopts.localdir=[devkitroot '/local/' VOCopts.dataset '/'];
+VOCopts.localdir=[devkitroot '/local/' VOCopts.dataset '/']; % CHANGED (REM ALL)
 
 % initialize the training set
 
-VOCopts.trainset='train'; % use train for development
+ VOCopts.trainset='train'; % use train for development
 % VOCopts.trainset='trainval'; % use train+val for final challenge
 
 % initialize the test set
@@ -34,103 +56,40 @@ VOCopts.testset='val'; % use validation data for development test set
 
 % initialize main challenge paths
 
-% these info is overriden in voc_config_90xx --> do not change anything here
-VOCopts.annopath=[VOCopts.datadir VOCopts.dataset '/Annotations/%s.xml'];
-VOCopts.imgpath=[VOCopts.datadir VOCopts.dataset '/JPEGImages/%s.jpg'];
-VOCopts.imgsetpath=[VOCopts.datadir VOCopts.dataset '/ImageSets/Main/%s.txt'];
-VOCopts.clsimgsetpath=[VOCopts.datadir VOCopts.dataset '/ImageSets/Main/%s_%s.txt'];
-VOCopts.clsrespath=[VOCopts.resdir 'Main/%s_cls_' VOCopts.testset '_%s.txt'];
-VOCopts.detrespath=[VOCopts.resdir 'Main/%s_det_' VOCopts.testset '_%s.txt'];
+% these info is overriden in voc_config_90xx --> do not change anything here (REM ALL)
+% VOCopts.annopath=[VOCopts.datadir VOCopts.dataset '/Annotations/%s.xml']; % CHANGED
+% VOCopts.imgpath=[VOCopts.datadir VOCopts.dataset '/JPEGImages/%s.jpg']; % CHANGED
+% VOCopts.imgsetpath=[VOCopts.datadir VOCopts.dataset '/ImageSets/Main/%s.txt']; % CHANGED
+% VOCopts.clsimgsetpath=[VOCopts.datadir VOCopts.dataset '/ImageSets/Main/%s_%s.txt']; % CHANGED
+% VOCopts.clsrespath=[VOCopts.resdir 'Main/%s_cls_' VOCopts.testset '_%s.txt']; % CHANGED
+% VOCopts.detrespath=[VOCopts.resdir 'Main/%s_det_' VOCopts.testset '_%s.txt']; % CHANGED
 
-% initialize segmentation task paths
+if isempty(conf.pascal.VOCopts.imgsetpath)
+    VOCopts.imgsetpath=[VOCopts.datadir VOCopts.dataset '/ImageSets/Main/%s.txt'];
+else % always  use this because conf.pascal.VOCopts.imgsetpath is set in voc_config_9069.m
+    VOCopts.imgsetpath = [conf.pascal.VOCopts.imgsetpath]; % we use absolute path in voc_config_9069.m
+end
 
-VOCopts.seg.clsimgpath=[VOCopts.datadir VOCopts.dataset '/SegmentationClass/%s.png'];
-VOCopts.seg.instimgpath=[VOCopts.datadir VOCopts.dataset '/SegmentationObject/%s.png'];
+if isempty(conf.pascal.VOCopts.annopath)
+    VOCopts.annopath=[VOCopts.datadir VOCopts.dataset '/Annotations/%s.txt'];
+else
+    VOCopts.annopath = [conf.pascal.VOCopts.annopath]; % we use absolute path in voc_config_9069.m
+end
 
-VOCopts.seg.imgsetpath=[VOCopts.datadir VOCopts.dataset '/ImageSets/Segmentation/%s.txt'];
+if isempty(conf.pascal.VOCopts.annopath)
+    VOCopts.imgpath=[VOCopts.datadir VOCopts.dataset '/JPEGImages/%s.jpg'];
+else
+    VOCopts.imgpath = [conf.pascal.VOCopts.imgpath]; % we use absolute path in voc_config_9069.m
+end
 
-VOCopts.seg.clsresdir=[VOCopts.resdir 'Segmentation/%s_%s_cls'];
-VOCopts.seg.instresdir=[VOCopts.resdir 'Segmentation/%s_%s_inst'];
-VOCopts.seg.clsrespath=[VOCopts.seg.clsresdir '/%s.png'];
-VOCopts.seg.instrespath=[VOCopts.seg.instresdir '/%s.png'];
-
-% initialize layout task paths
-
-VOCopts.layout.imgsetpath=[VOCopts.datadir VOCopts.dataset '/ImageSets/Layout/%s.txt'];
-VOCopts.layout.respath=[VOCopts.resdir 'Layout/%s_layout_' VOCopts.testset '.xml'];
-
-% initialize action task paths
-
-VOCopts.action.imgsetpath=[VOCopts.datadir VOCopts.dataset '/ImageSets/Action/%s.txt'];
-VOCopts.action.clsimgsetpath=[VOCopts.datadir VOCopts.dataset '/ImageSets/Action/%s_%s.txt'];
-VOCopts.action.respath=[VOCopts.resdir 'Action/%s_action_' VOCopts.testset '_%s.txt'];
 
 % initialize the VOC challenge options
 
 % classes
 
-VOCopts.classes={...
-    'aeroplane'
-    'bicycle'
-    'bird'
-    'boat'
-    'bottle'
-    'bus'
-    'car'
-    'cat'
-    'chair'
-    'cow'
-    'diningtable'
-    'dog'
-    'horse'
-    'motorbike'
-    'person'
-    'pottedplant'
-    'sheep'
-    'sofa'
-    'train'
-    'tvmonitor'};
+VOCopts.classes={'trecvid_ins'};
 
 VOCopts.nclasses=length(VOCopts.classes);	
-
-% poses
-
-VOCopts.poses={...
-    'Unspecified'
-    'Left'
-    'Right'
-    'Frontal'
-    'Rear'};
-
-VOCopts.nposes=length(VOCopts.poses);
-
-% layout parts
-
-VOCopts.parts={...
-    'head'
-    'hand'
-    'foot'};    
-
-VOCopts.nparts=length(VOCopts.parts);
-
-VOCopts.maxparts=[1 2 2];   % max of each of above parts
-
-% actions
-
-VOCopts.actions={...    
-    'other'             % skip this when training classifiers
-    'jumping'
-    'phoning'
-    'playinginstrument'
-    'reading'
-    'ridingbike'
-    'ridinghorse'
-    'running'
-    'takingphoto'
-    'usingcomputer'
-    'walking'};
-
-VOCopts.nactions=length(VOCopts.actions);
 
 % overlap threshold
 
@@ -143,3 +102,5 @@ VOCopts.annocachepath=[VOCopts.localdir '%s_anno.mat'];
 % options for example implementations
 
 VOCopts.exfdpath=[VOCopts.localdir '%s_fd.mat'];
+
+
