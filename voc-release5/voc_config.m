@@ -19,18 +19,14 @@ function conf = voc_config(varargin)
 % Please read the next few lines
 
 % Parent directory that everything (model cache, VOCdevkit) is under
-% BASE_DIR    = '/var/tmp/rbg';
-BASE_DIR    = '/net/per900c/raid0/ledduy/github-projects/kaori-ins2014/voc-release5/';
+BASE_DIR    = '/var/tmp/rbg';
 
 % PASCAL dataset year to use
-%PASCAL_YEAR = '2007';
-%PASCAL_YEAR = 'TVHID';
-PASCAL_YEAR = 'TRECVID'; % this var will be changed to 9069 in voc_config_9069.m 
+PASCAL_YEAR = '2007';
 
 % Models are stored in BASE_DIR/PROJECT/PASCAL_YEAR/
 % e.g., /var/tmp/rbg/voc-release5/2007/
-%PROJECT     = 'INRIA_PASCAL';
-PROJECT     = 'INS-DPM'; % dir containing VOCdevkit downloaded from PASCAL-VOC site --> hard-coded later conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/INS-DPM/VOCdevkit/']);
+PROJECT     = 'voc-release5';
 
 % The code will look for your PASCAL VOC devkit in 
 % BASE_DIR/VOC<PASCAL_YEAR>/VOCdevkit
@@ -115,16 +111,10 @@ conf = cv(conf, 'single_byte_size', 4);
 conf = cv(conf, 'pascal.year', PASCAL_YEAR);
 
 % Directory with PASCAL VOC development kit and dataset
-%conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/VOC' ...
-%                                   conf.pascal.year '/VOCdevkit/']);
+conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/VOC' ...
+                                   conf.pascal.year '/VOCdevkit/']);
 % For INRIA person                                   
-%conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/INRIA_PASCAL/VOCdevkit/']);
-
-% For Upper body detection
-%conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/UPPER_BODY/VOCdevkit/']);
-
-% For INS-DPM
-conf = cv(conf, 'pascal.dev_kit', fullfile(conf.paths.base_dir, 'INS-DPM/VOCdevkit/'));
+%conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/INRIA/VOCdevkit/']);
 
 if exist(conf.pascal.dev_kit) == 0
   msg = sprintf(['~~~~~~~~~~~ Hello ~~~~~~~~~~~\n' ...
@@ -159,8 +149,6 @@ exists_or_mkdir(conf.paths.model_dir);
 conf = cv(conf, 'training.train_set_fg', 'trainval');
 conf = cv(conf, 'training.train_set_bg', 'train');
 conf = cv(conf, 'training.C', 0.001);
-%conf = cv(conf, 'training.C', 0.006);	% my edit
-
 conf = cv(conf, 'training.bias_feature', 10);
 % File size limit for the feature vector cache (2^30 bytes = 1GB)
 conf = cv(conf, 'training.cache_byte_limit', 3*2^30);
@@ -168,8 +156,8 @@ conf = cv(conf, 'training.cache_byte_limit', 3*2^30);
 conf.training.log = @(x) sprintf([conf.paths.model_dir '%s.log'], x);
 
 conf = cv(conf, 'training.cache_example_limit', 24000);
-conf = cv(conf, 'training.num_negatives_small', 200); % origional: 200
-conf = cv(conf, 'training.num_negatives_large', 2000);% origional: 2000
+conf = cv(conf, 'training.num_negatives_small', 200);
+conf = cv(conf, 'training.num_negatives_large', 2000);
 conf = cv(conf, 'training.wlssvm_M', 0);
 conf = cv(conf, 'training.fg_overlap', 0.7);
 
@@ -186,7 +174,7 @@ conf = cv(conf, 'training.interval_bg', 4);
 % -------------------------------------------------------------------
 conf = cv(conf, 'eval.interval', 10);
 conf = cv(conf, 'eval.test_set', 'test');
-conf = cv(conf, 'eval.max_thresh', -5.1);   %original : -1.1 --> Lower threshold to get high recall
+conf = cv(conf, 'eval.max_thresh', -1.1);
 conf.pascal.VOCopts.testset = conf.eval.test_set;
 
 
@@ -226,11 +214,8 @@ end
 % devkit is also added to the matlab path.
 function VOCopts = get_voc_opts(conf)
 % cache VOCopts from VOCinit
+persistent voc_opts;
 
-% MY EDIT: 12/8/2013: 
-% origional: persistent voc_opts;
-voc_opts = containers.Map();
-% end of MY EDIT
 key = conf.pascal.year;
 if isempty(voc_opts) || ~voc_opts.isKey(key)
   if isempty(voc_opts)
@@ -239,10 +224,7 @@ if isempty(voc_opts) || ~voc_opts.isKey(key)
   tmp = pwd;
   cd(conf.pascal.dev_kit);
   addpath([cd '/VOCcode']);
-  % Edit1 : 11/8/2013: use my_vocinit for training models
-  my_VOCinit;
-  % Edit2 : 20/8/2013: use default vocinit for testing trecvid
-  %VOCinit;
+  VOCinit;
   cd(tmp);
   voc_opts(key) = VOCopts;
 end
