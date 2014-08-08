@@ -1,4 +1,6 @@
 function conf = voc_config(varargin)
+% DuyLe - look for CHANGED if you want to modify this code for your own use
+
 % Set up configuration variables.
 %   conf = voc_config(varargin)
 %
@@ -118,6 +120,7 @@ conf = cv(conf, 'single_byte_size', 4);
 % -------------------------------------------------------------------
 
 % Configure the PASCAL VOC dataset year
+% pascal.year is set in voc_config_90xx ==> do nothing
 conf = cv(conf, 'pascal.year', PASCAL_YEAR);
 
 % Directory with PASCAL VOC development kit and dataset
@@ -152,7 +155,7 @@ conf.pascal.VOCopts = get_voc_opts(conf);
 % Directory for caching models, intermediate data, and results
 % [was called 'cachedir' in previous releases]
 
-% DEBUG - want to remove because paths.model_dir is overriden in voc_config_90xx.m  (VOC_CONFIG_OVERRIDE)
+% do nothing because model_dir is set in voc_config_90xx.m
 conf = cv(conf, 'paths.model_dir', [conf.paths.base_dir '/' ...
                                     conf.project '/' conf.pascal.year '/']);
 
@@ -190,7 +193,7 @@ conf = cv(conf, 'training.interval_bg', 4);
 % -------------------------------------------------------------------
 conf = cv(conf, 'eval.interval', 10);
 conf = cv(conf, 'eval.test_set', 'test');
-conf = cv(conf, 'eval.max_thresh', -1.1);
+conf = cv(conf, 'eval.max_thresh', -5.1);   %original : -1.1 --> Lower threshold to get high recall
 conf.pascal.VOCopts.testset = conf.eval.test_set;
 
 
@@ -230,7 +233,9 @@ end
 % devkit is also added to the matlab path.
 function VOCopts = get_voc_opts(conf)
 % cache VOCopts from VOCinit
-persistent voc_opts;
+
+persistent voc_opts; 
+% voc_opts = containers.Map();
 
 key = conf.pascal.year;
 if isempty(voc_opts) || ~voc_opts.isKey(key)

@@ -16,7 +16,7 @@ function train_model(cls, n, note, dotrainval, testyear)
 
 % //DuyCmt//: train_model tuong tu nhu pascal.m, chi khac la chi su dung phan train (bo phan test/evaluate)
 
-startup;
+startup; 
 
 conf = voc_config();
 cachedir = conf.paths.model_dir;
