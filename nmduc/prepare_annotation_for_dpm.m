@@ -2,9 +2,9 @@ function prepare_annotation_for_dpm(data_name, query_pat)
 % prepare_annotation_for_dpm('tv2013', 'query2013')
 
 % 07 Aug 2014 - adding comments and modify codes for INS2013 experiments
-% Input: .src.png - query image and .mask.png - mask image --> located at the same dir (e.g. tv2013/query2013)
-
-% path to src images
+% !!! IMPORTANT !!!
+% Input: .src.png - query image and .mask.png - mask image --> located at the same dir (e.g. tv2013/query2013), format .png
+% Neg-images are located in keyframe-5/tv2013/query2013-neg-images --> format .jpg
 
 work_dir = fullfile ('/net/per610a/export/das11f/ledduy/trecvid-ins-2014/keyframe-5', data_name, query_pat) ; % tv2013/query2013
 neg_img_dir = [work_dir '-neg-images'];
@@ -25,8 +25,8 @@ src_img_dir = work_dir;
 % path to mask images
 mask_img_path = src_img_dir; % all .src and .mask file are in the same folder, e.g. 9069
 
-SEPERATE_REGION = 1; % ????
-MEAN_ROI = 2.9374e+004; % ???
+SEPERATE_REGION = 1; % 1: each ROI = 1 bounding box, 0: all ROI = 1 bounding box (merge all ROI into one)
+MEAN_ROI = 2.9374e+004; % UNUSED
 
 % to deal with small object
 MAX_SCALE_FACTOR = 2.0; % maximum scale --> larger scale requires high computational cost, so should not set larger than 2.0
@@ -232,6 +232,13 @@ for i=1:length(query_folders)
 	
 end
 
+% 9090.cfg - config file
+% Scale : 1.282051
+% Number of sample images: 4
+% Number of discarded images: 0
+
+
+% 9090.1.src.txt - annotation file
 % # PASCAL Annotation Version 1.00
 
 % Image filename : "9090/Images/9090.1.src.jpg"
@@ -260,3 +267,8 @@ end
 % Original label for object 4 "PASquery_9090" : "Query_9090"
 % Bounding box for object 4 "PASquery_9090" (Xmin, Ymin) - (Xmax, Ymax) : (686, 304) - (845, 701)
 
+% trainval_9090.txt
+% 9090.1.src
+% 9090.2.src
+% 9090.3.src
+% 9090.4.src
