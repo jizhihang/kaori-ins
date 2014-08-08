@@ -80,7 +80,7 @@ foreach($arDirList as $szRunID)
     $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szRunID);
     if(file_exists($szFPOutputFN))
     {
-        continue; // skip existing file
+//        continue; // skip existing file
     }
     
     $arTVQRELOutput = array(); // for using trec_eval
@@ -138,7 +138,7 @@ foreach($arDirList as $szRunID)
     $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szRunID);
     $szFPEvalFN = sprintf("%s/%s.eval", $szQueryResultDir1, $szRunID);
     saveDataFromMem2File($arTVQRELOutput, $szFPOutputFN);
-    $szTRECEvalApp = "/net/per900b/raid0/ledduy/bin/trec_eval_video.8.1/trec_eval";
+    $szTRECEvalApp = "/net/per900c/raid0/ledduy/bin/trec_eval_video.8.1/trec_eval";
     $szCmdLine = sprintf("%s -q -a -c %s %s %s > %s", $szTRECEvalApp,
     		$szFPNISTResultFN, $szFPOutputFN, $nMaxDocs, $szFPEvalFN);
     execSysCmd($szCmdLine);
