@@ -21,7 +21,7 @@ try
   load([cachedir cls '_' dataset_fg '_' year]);
 catch
   % Positive examples from the foreground dataset
-  ids      = textread(sprintf(VOCopts.imgsetpath, [dataset_fg '_' year]), '%s'); %trainval_9069.txt
+  ids      = textread(sprintf(VOCopts.imgsetpath, dataset_fg), '%s');
   pos      = [];
   impos    = [];
   numpos   = 0;
@@ -119,7 +119,7 @@ catch
   end
 
   % Negative examples from the background dataset
-  ids    = textread(sprintf(VOCopts.imgsetpath, [dataset_bg '_' year]), '%s'); %train_9069.txt
+  ids    = textread(sprintf(VOCopts.imgsetpath, dataset_bg), '%s');
   neg    = [];
   numneg = 0;
   for i = 1:length(ids);

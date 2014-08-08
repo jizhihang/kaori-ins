@@ -19,14 +19,24 @@ function conf = voc_config(varargin)
 % Please read the next few lines
 
 % Parent directory that everything (model cache, VOCdevkit) is under
-BASE_DIR    = '/var/tmp/rbg';
+%BASE_DIR    = '/var/tmp/rbg';
+
+% Do INS-DPM (co VOCdevkit) dat o duoi thu muc nay (voc-release5/INS-DPM) nen chon nhu vay
+% Thuong thi co the tro? den bat ki thu muc nao chua training data va model, vi du: /net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm
+BASE_DIR    = '/net/per900c/raid0/ledduy/github-projects/kaori-ins2014/voc-release5/'; % CHANGED
 
 % PASCAL dataset year to use
-PASCAL_YEAR = '2007';
+% code cua original dung PASCAL_YEAR cho pascal.dev_kit: conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/VOC' ...
+                                %   conf.pascal.year '/VOCdevkit/']);
+% Doi voi DPM, model cua moi query (e.g 9069) duoc luu rieng 1 thu muc (eg. model/ins-dpm/tv2013/query2013/9069) --> se override trong voc_config_9069.m
+PASCAL_YEAR = 'WILL_BE_OVERRIDE'; % this var will be override to 9069 in voc_config_9069.m % CHANGED
 
 % Models are stored in BASE_DIR/PROJECT/PASCAL_YEAR/
 % e.g., /var/tmp/rbg/voc-release5/2007/
-PROJECT     = 'voc-release5';
+% PROJECT     = 'voc-release5';
+% conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/INS-DPM/VOCdevkit/']);
+% PROJECT duoc dung trong path_model_dir
+PROJECT = 'INS-DPM'; % dir containing VOCdevkit downloaded from PASCAL-VOC site  % CHANGED
 
 % The code will look for your PASCAL VOC devkit in 
 % BASE_DIR/VOC<PASCAL_YEAR>/VOCdevkit
@@ -111,10 +121,14 @@ conf = cv(conf, 'single_byte_size', 4);
 conf = cv(conf, 'pascal.year', PASCAL_YEAR);
 
 % Directory with PASCAL VOC development kit and dataset
-conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/VOC' ...
-                                   conf.pascal.year '/VOCdevkit/']);
+%conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/VOC' ...
+                                %   conf.pascal.year '/VOCdevkit/']);
 % For INRIA person                                   
 %conf = cv(conf, 'pascal.dev_kit', [conf.paths.base_dir '/INRIA/VOCdevkit/']);
+
+% For INS-DPM --> ko can dung conf.pascal.year (i.e. PASCAL_YEAR)
+conf = cv(conf, 'pascal.dev_kit', fullfile(conf.paths.base_dir, 'INS-DPM/VOCdevkit/')); % CHANGED
+
 
 if exist(conf.pascal.dev_kit) == 0
   msg = sprintf(['~~~~~~~~~~~ Hello ~~~~~~~~~~~\n' ...
@@ -137,6 +151,8 @@ conf.pascal.VOCopts = get_voc_opts(conf);
 
 % Directory for caching models, intermediate data, and results
 % [was called 'cachedir' in previous releases]
+
+% DEBUG - want to remove because paths.model_dir is overriden in voc_config_90xx.m  (VOC_CONFIG_OVERRIDE)
 conf = cv(conf, 'paths.model_dir', [conf.paths.base_dir '/' ...
                                     conf.project '/' conf.pascal.year '/']);
 

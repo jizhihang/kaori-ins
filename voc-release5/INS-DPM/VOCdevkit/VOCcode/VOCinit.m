@@ -6,6 +6,8 @@ clear VOCopts
 % of the VOC2012 test set. You don't need to do anything special
 % to submit results for VOC2008-11.
 
+% Used for determining training data (images, annotation) - VOCopts.annopath=[VOCopts.datadir VOCopts.dataset '/Annotations/%s.xml'];
+% these info is overriden in voc_config_90xx --> do not change anything here
 VOCopts.dataset='VOC2012';
 
 % get devkit directory with forward slashes
@@ -32,6 +34,7 @@ VOCopts.testset='val'; % use validation data for development test set
 
 % initialize main challenge paths
 
+% these info is overriden in voc_config_90xx --> do not change anything here
 VOCopts.annopath=[VOCopts.datadir VOCopts.dataset '/Annotations/%s.xml'];
 VOCopts.imgpath=[VOCopts.datadir VOCopts.dataset '/JPEGImages/%s.jpg'];
 VOCopts.imgsetpath=[VOCopts.datadir VOCopts.dataset '/ImageSets/Main/%s.txt'];
