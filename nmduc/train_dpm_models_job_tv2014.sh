@@ -4,7 +4,7 @@
 # Force to use shell sh. Note that #$ is SGE command
 #$ -S /bin/sh
 # Force to limit hosts running jobs
-#$ -q all.q@@bc5hosts
+#$ -q all.q@bc501.hpc.vpl.nii.ac.jp,all.q@bc502.hpc.vpl.nii.ac.jp,all.q@bc503.hpc.vpl.nii.ac.jp,all.q@bc504.hpc.vpl.nii.ac.jp,all.q@bc505.hpc.vpl.nii.ac.jp,all.q@bc506.hpc.vpl.nii.ac.jp
 # Log starting time
 date 
 # include your library here
