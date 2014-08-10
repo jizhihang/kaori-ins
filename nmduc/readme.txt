@@ -1,10 +1,11 @@
 HOW TO TRAIN DPM MODELS
 
 1. Run prepare_annotation_for_dpm to generate training images (pos, neg) and annotations (bounding boxes) based on query images and masks.
+prepare_annotation_for_dpm('tv2013', 'query2013')
 
-my_VOCinit 
-else % always  use this because conf.pascal.VOCopts.imgsetpath is set in voc_config_9069.m
-    VOCopts.imgsetpath = [conf.pascal.VOCopts.imgsetpath]; % we use absolute path in voc_config_9069.m
-end
+2. For debug
+addpath('/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2013/query2013/9069'); global VOC_CONFIG_OVERRIDE; VOC_CONFIG_OVERRIDE = @voc_config_9069;
+train_model( 'query_9069', 1);
 
-/raid0/ledduy/github-projects/kaori-ins2014/voc-release5/star-cascade/data -->
+3. For running on grid: 
+nmduc/train_models_tv2013.sh  (--> nmduc/train_dpm_models_job.sh)
