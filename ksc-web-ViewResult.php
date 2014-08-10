@@ -568,7 +568,10 @@ for($i=$nStartID; $i<$nEndID; $i++)
 			{
 				//print_r($arCoods); exit();
 				//exit("$szKeyFrameIDz - $szImg");
-				if(strstr($szKeyFrameIDz, $szImg))
+				
+			    // Fix this bug: shot200_832_KSC00:43:45.8_000005 - 00:43:45.8_000004.png
+				$szImg1 = str_replace('.png', '', $szImg);
+			    if(strstr($szKeyFrameIDz, $szImg1))
 				{
 				  $nLeft = intval($arCoods['l']*$fScaleFactor);
 				  $nTop = intval($arCoods['t']*$fScaleFactor);
@@ -581,6 +584,7 @@ for($i=$nStartID; $i<$nEndID; $i++)
 				}
 				else  // keep it for the case of no match 
 				{
+				    //printf('<P>No match %s - %s', $szKeyFrameIDz, $szImg);
 					$nLeft = intval($arCoods['l']*$fScaleFactor);
 					$nTop = intval($arCoods['t']*$fScaleFactor);
 					$nRight = intval($arCoods['r']*$fScaleFactor);
