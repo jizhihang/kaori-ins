@@ -7,8 +7,11 @@
  *
  * 		Copyright (C) 2010-2014 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 06 Aug 2014.
+ * 		Last update	: 09 Aug 2014.
  */
+
+// 09 Aug 2014
+// View DPM models if available
 
 // 06 Aug 2014
 // Modify code because the dir structure is changed
@@ -104,6 +107,7 @@ $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
 
 $szPatName4KFDir = sprintf("test%s", $nTVYear); 
+$szPatName4ModelDir = sprintf("query%s", $nTVYear);
 
 // ins.topics.2013.xml  --> list of topics provided by TRECVID
 $szFPInputFN = sprintf("%s/ins.topics.%d.xml", $szMetaDataDir, $nTVYear);
@@ -203,6 +207,7 @@ if($nAction == 1)
 //////////////////// MAIN /////////////////////////////
 $szRootKeyFrameDir = sprintf("%s/keyframe-5", $gszRootBenchmarkDir);
 $szKeyFrameDir = sprintf("%s/%s", $szRootKeyFrameDir, $szTVYear);
+$szRootModelDir = sprintf("%s/model/ins-dpm/%s/%s", $gszRootBenchmarkDir, $szTVYear, $szPatName4ModelDir);
 
 // view query images
 $szQueryIDz = $_REQUEST['vQueryID'];
@@ -236,7 +241,8 @@ foreach($arNISTList[$szQueryID] as $szShotID)
 
 // for DPM config
 $fConfigScale = -1; // meaning [N/A]
-$szFPModelConfigFN = sprintf("%s/%s.cfg", $szMetaDataDir, $szQueryID);
+$szModelDir = sprintf("%s/%s", $szRootModelDir, $szQueryID);
+$szFPModelConfigFN = sprintf("%s/%s.cfg", $szModelDir, $szQueryID);
 if(file_exists($szFPModelConfigFN))
 {
     loadListFile($arRawListz, $szFPModelConfigFN);
@@ -303,6 +309,46 @@ foreach($arQueryImgList as  $szQueryImg)
 		imagedestroy($tmp_img);
 		//		$arOutput[] = sprintf("<IMG SRC='%s' WIDTH='100' TITLE='%s'/> \n", $szURLImg, $szQueryImg);
 }
+$arOutput[] = sprintf("<P><BR>\n");
+
+////////////////// VIEW DPM MODELS /////////////
+$szModelDir = sprintf("%s/model/ins-dpm/%s/%s", $gszRootBenchmarkDir, $szTVYear, $szQueryPatName);
+$szURLImg = sprintf("%s/%s.%s", $szModelDir, $szQueryID, "png");
+if(!file_exists($szURLImg))
+{
+	printf("<!-- File not found [%s] -->\n", $szURLImg);
+}
+else
+{
+    $arOutput[] = sprintf("<P><H1>DPM Model</H1>\n", $szQueryID, $szText);   
+}
+$szRetURL = $szURLImg;
+$imgzz = imagecreatefrompng($szRetURL);
+$widthzz = imagesx($imgzz);
+$heightzz = imagesy($imgzz);
+
+// calculate thumbnail size
+$new_width = $widthzz;
+$new_height = $heightzz;
+
+// create a new temporary image
+$tmp_img = imagecreatetruecolor($new_width, $new_height);
+
+// copy and resize old image into new image
+// imagecopyresized($tmp_img, $imgzz, 0, 0, 0, 0, $new_width, $new_height, $widthzz, $heightzz);
+
+// better quality compared with imagecopyresized
+imagecopyresampled($tmp_img, $imgzz, 0, 0, 0, 0, $new_width, $new_height, $widthzz, $heightzz);
+//output to buffer
+ob_start();
+imagejpeg($tmp_img);
+$szImgContent = base64_encode(ob_get_clean());
+$arOutput[] = sprintf("<IMG  TITLE='%s - %s' SRC='data:image/jpeg;base64,". $szImgContent ."' />", $szQueryImg, $fScore);
+
+imagedestroy($imgzz);
+imagedestroy($tmp_img);
+//		$arOutput[] = sprintf("<IMG SRC='%s' WIDTH='100' TITLE='%s'/> \n", $szURLImg, $szQueryImg);
+
 $arOutput[] = sprintf("<P><BR>\n");
 
 //// VERY SPECIAL ****
