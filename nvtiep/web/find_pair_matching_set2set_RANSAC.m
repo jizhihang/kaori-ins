@@ -17,7 +17,6 @@ work_dir_query = fullfile(root_dir, 'feature/keyframe-5', data_name, query_pat);
 keyframe_dir = fullfile(root_dir, 'keyframe-5', data_name, test_pat); % keyframe-5/tv2014/test2014
 
 if ~isempty(strfind(runID, 'surrey'))
-	% use surrey.hard.soft
 	db_quant_dir = fullfile(work_dir_test, 'hesaff_rootsift_noangle_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_1_sub_quant');
 	db_frame_info_dir = fullfile(work_dir_test, 'hesaff_rootsift_noangle_mat');
 	qr_raw_bow = fullfile(work_dir_query, 'bow.db_1_qr_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat');
@@ -82,13 +81,8 @@ for i = 1:length(lst_qr_frame_name)
 		[rematch, retok] = regexp(db_img, re, 'match', 'tokens');
 		db_shotID = retok{1}{1};
 		db_fname = retok{1}{2};
-
-		disp('DEBUG')
-		output_image = fullfile(output_dir, [qr_fname,'_',db_shotID,'_',db_fname])
-		output_dir
-		qr_fname
-		db_shotID
-		db_fname
+		
+		output_image = fullfile(output_dir, [qr_fname '_' db_shotID '_' db_fname]);
 		
 		%find_pair_matching_RANSAC(lst_qr_frame_name{i}, db_img, output_image, runID);
 		[score, new_output_img, nfg, nbg] = find_pair_matching_RANSAC(data_name, test_pat, query_pat, lst_qr_frame_name{i}, query_id, i, db_img, j, output_image, runID, frame_quant_info, query_filenames, topic_bows, bins, clip_frame, clip_kp);

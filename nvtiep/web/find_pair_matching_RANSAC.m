@@ -22,21 +22,19 @@ end
 
 % base dir
 result_dir = fullfile(root_dir, 'result/ins-dpm', data_name, test_pat);
-result_dir
 base_config_dir = fullfile(result_dir, query_index);
-base_config_dir
 % parse shot_id + frame name
 re = [query_pat '/(.*)/(.*.png)'];
 [rematch, retok] = regexp(qr_image, re, 'match', 'tokens');
 
-qr_shotID = retok{1}{1}
-qr_fname = retok{1}{2}
+qr_shotID = retok{1}{1};
+qr_fname = retok{1}{2};
 
 re = [test_pat '/(.*)/(.*\.png)']
 db_image
 [rematch, retok] = regexp(db_image, re, 'match', 'tokens');
-db_shotID = retok{1}{1}
-db_fname = retok{1}{2}
+db_shotID = retok{1}{1};
+db_fname = retok{1}{2};
 
 
 % get list of visual words of db_image
