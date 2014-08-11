@@ -1,4 +1,4 @@
-function [score, new_output_img, nshares_fg, nshares_bg] = find_pair_matching_RANSAC(qr_image, query_id, topic_id, db_image, frame_id, output_image, runID, frame_quant_info, query_filenames, topic_bows, bins, clip_frame, clip_kp)
+function [score, new_output_img, nshares_fg, nshares_bg] = find_pair_matching_RANSAC(data_name, test_pat, query_pat, qr_image, query_index, topic_id, db_image, frame_id, output_image, runID, frame_quant_info, query_filenames, topic_bows, bins, clip_frame, clip_kp)
 
 if nargin == 0 % default data used for testing
 	qr_image = '/net/per610a/export/das11g/caizhizhu/ins/ins2013/query/frames_png/9069/9069.2.src.png';
@@ -6,28 +6,38 @@ if nargin == 0 % default data used for testing
 	runID = '3.1.run_query2013-new_test2013-new_TiepBoW_10K';
 end
 % base dir
-if ~isempty(strfind(runID, 'No1'))
-	db_quant_dir = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/hesaff_rootsift_noangle_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_1_sub_quant';
-	db_frame_info_dir = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/hesaff_rootsift_noangle_mat';
-	qr_raw_bow = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/query/bow/fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat';
+root_dir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014';
+work_dir_test = fullfile(root_dir, 'feature/keyframe-5', data_name, test_pat); % result/tv2014/test2014
+work_dir_query = fullfile(root_dir, 'feature/keyframe-5', data_name, query_pat); % result/tv2014/test2014
+
+if ~isempty(strfind(runID, 'surrey'))
+	db_quant_dir = fullfile(work_dir_test, 'hesaff_rootsift_noangle_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_1_sub_quant');
+	db_frame_info_dir = fullfile(work_dir_test, 'hesaff_rootsift_noangle_mat');
+	qr_raw_bow = fullfile(work_dir_query, 'bow.db_1_qr_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat');
 else
-	db_quant_dir = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/perdoch_hesaff_rootsift_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_3_sub_quant';
-	db_frame_info_dir = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/perdoch_hesaff_rootsift_mat';
-	qr_raw_bow = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/query/bow/fg+bg_0.1_perdoch_hesaff_rootsift_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat';
+	db_quant_dir = fullfile(work_dir_test, 'perdoch_hesaff_rootsift_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_3_sub_quant');
+	db_frame_info_dir = fullfile(work_dir_test, 'perdoch_hesaff_rootsift_mat');
+	qr_raw_bow = fullfile(work_dir_query, 'bow.db_1_qr_fg+bg_0.1_perdoch_hesaff_rootsift_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat');
 end
 
 % base dir
-base_config_dir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/metadata/keyframe-5/tv2013';
-result_dir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/';
+result_dir = fullfile(root_dir, 'result/ins-dpm', data_name, test_pat);
+result_dir
+base_config_dir = fullfile(result_dir, query_index);
+base_config_dir
 % parse shot_id + frame name
-re = 'frames_png/(.*)/(.*.png)';
+re = [query_pat '/(.*)/(.*.png)'];
 [rematch, retok] = regexp(qr_image, re, 'match', 'tokens');
-qr_shotID = retok{1}{1};
-qr_fname = retok{1}{2};
 
+qr_shotID = retok{1}{1}
+qr_fname = retok{1}{2}
+
+re = [test_pat '/(.*)/(.*\.png)']
+db_image
 [rematch, retok] = regexp(db_image, re, 'match', 'tokens');
-db_shotID = retok{1}{1};
-db_fname = retok{1}{2};
+db_shotID = retok{1}{1}
+db_fname = retok{1}{2}
+
 
 % get list of visual words of db_image
 db_quant_file = fullfile(db_quant_dir, [db_shotID,'.mat']);
@@ -53,12 +63,13 @@ end
 %load(qr_raw_bow); 			% Dung de lay thong tin query_filenames va frame_quant_info
 nquery = length(query_filenames);
 is_break = false;
-for query_id = 1:nquery
-	if length(query_filenames{query_id}) == 1
-		query_filenames{query_id} = query_filenames{query_id}{1};
+re = [query_pat '/(.*)/(.*.png)'];
+for query_index = 1:nquery
+	if length(query_filenames{query_index}) == 1
+		query_filenames{query_index} = query_filenames{query_index}{1};
 	end
-	for topic_id = 1:length(query_filenames{query_id})
-		[rematch, retok] = regexp(query_filenames{query_id}{topic_id}, re, 'match', 'tokens');
+	for topic_id = 1:length(query_filenames{query_index})
+		[rematch, retok] = regexp(query_filenames{query_index}{topic_id}, re, 'match', 'tokens');
 		if strcmp(retok{1}{1}, qr_shotID) && strcmp(retok{1}{2}, qr_fname)
 			is_break = true;
 			break;
@@ -75,12 +86,12 @@ qr_keypoint_fg = [];
 qr_keypoint_bg = [];
 
 if is_break
-	fg_idx = frame_quant_info{query_id}.fg_index{topic_id};
-	bg_idx = frame_quant_info{query_id}.bg_index{topic_id};
-	qr_words_id_fg = frame_quant_info{query_id}.valid_bins{topic_id}(:,fg_idx);
-	qr_words_id_bg = frame_quant_info{query_id}.valid_bins{topic_id}(:,bg_idx);
-	qr_keypoint_fg = frame_quant_info{query_id}.query_kp{topic_id}(:, fg_idx);
-	qr_keypoint_bg = frame_quant_info{query_id}.query_kp{topic_id}(:, bg_idx);
+	fg_idx = frame_quant_info{query_index}.fg_index{topic_id};
+	bg_idx = frame_quant_info{query_index}.bg_index{topic_id};
+	qr_words_id_fg = frame_quant_info{query_index}.valid_bins{topic_id}(:,fg_idx);
+	qr_words_id_bg = frame_quant_info{query_index}.valid_bins{topic_id}(:,bg_idx);
+	qr_keypoint_fg = frame_quant_info{query_index}.query_kp{topic_id}(:, fg_idx);
+	qr_keypoint_bg = frame_quant_info{query_index}.query_kp{topic_id}(:, bg_idx);
 	qr_keypoint_fg(1:2,:) = round(qr_keypoint_fg(1:2,:));
 	qr_keypoint_bg(1:2,:) = round(qr_keypoint_bg(1:2,:)); 
 end
@@ -160,18 +171,23 @@ if ~isempty(strfind(runID, 'combine_DPM'))
 end
 
 %% Compute score of this pair
-if ~isempty(strfind(runID, 'No1'))
+if ~isempty(strfind(runID, 'surrey'))
 	% Load bag of word of all queries
-	load('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/query/bow/fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/bow_full_notrim_clip_idf_nonorm_-1.mat');
+	qr_raw_bowzz = fullfile(work_dir_query, 'bow.db_1_qr_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/bow_full_notrim_clip_idf_nonorm_-1.mat');
+	load(qr_raw_bowzz);
+
 	% Load bag of word of current shot
-	load(['/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/hesaff_rootsift_noangle_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_1/sub_bow/' db_shotID]);
+	db_quant_dirzz = fullfile(work_dir_test, 'hesaff_rootsift_noangle_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_1/sub_bow', db_shotID);
+	load(db_quant_dirzz);
 else
 	% Load bag of word of all queries
-	load('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/query/bow/fg+bg_0.1_perdoch_hesaff_rootsift_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/bow_full_notrim_clip_idf_nonorm_-1.mat');
+	qr_raw_bowzz = fullfile(work_dir_query, 'bow.db_1_qr_fg+bg_0.1_perdoch_hesaff_rootsift_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/bow_full_notrim_clip_idf_nonorm_-1.mat');
+	load(qr_raw_bowzz);
 	% Load bag of word of current shot
-	load(['/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/perdoch_hesaff_rootsift_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_3_0.0125/sub_bow/' db_shotID]);
+	db_quant_dirzz = fullfile(work_dir_test, 'perdoch_hesaff_rootsift_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_3_0.0125/sub_bow/', db_shotID);
+	load(db_quant_dirzz);
 end
-qr_bow = topic_bows{query_id}{1}(:,topic_id);
+qr_bow = topic_bows{query_index}{1}(:,topic_id);
 db_bow = frame_bow(:,frame_id);
 score = 2 - sum(abs(qr_bow/sum(qr_bow)-db_bow/sum(db_bow)));
 new_output_img = [];
