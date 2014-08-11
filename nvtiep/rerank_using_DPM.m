@@ -6,10 +6,12 @@ if nargin == 0
 	%lookup_fname = [query_id,'/TRECVID2013_', num2str(start_video_id),'.res'];
 end
 
-addpath('/net/per610a/export/das09f/satoh-lab/minhduc/resources/object_Detection/voc-release5/features');
-addpath('/net/per610a/export/das09f/satoh-lab/minhduc/resources/object_Detection/voc-release5/gdetect');
-addpath('/net/per610a/export/das09f/satoh-lab/minhduc/resources/object_Detection/voc-release5/bin');
-addpath('/net/per610a/export/das09f/satoh-lab/minhduc/resources/object_Detection/voc-release5/model');
+dpm_code_dir = '/net/per900c/raid0/ledduy/github-projects/kaori-ins2014/voc-release5';
+addpath(fullfile(dpm_code_dir, 'features'));
+addpath(fullfile(dpm_code_dir, 'gdetect'));
+addpath(fullfile(dpm_code_dir, 'bin'));
+addpath(fullfile(dpm_code_dir, 'model'));
+
 n_keyframes = 0;
 
 % number of detection per frame to save
@@ -17,14 +19,14 @@ N_DETECTIONS = 1;	% just save the first one (i.e the one with highest score)
 DETECTION_THRESHOLD = -2.0;
 
 % base level path configuration
-LOOK_UP_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/2.1.run_query2013-new_test2013-new_TiepBoW_No1_10K/tv2013/test2013-new';
+LOOK_UP_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/result/tv2014/test2014/R2_tv2013.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5';
 LOG_FILE = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/rerank_using_DMP.txt';
 BASE_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/';
 BASE_IMG_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/keyframe-5/tv2013/test2013-new/';
-BASE_RESULT_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/2.2.run_query2013-new_test2013-new_TiepBoW_No1_10K_combine_DPM/tv2013/test2013-new';
-BASE_MODEL_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/model/';
-BASE_CONFIG_DIR = [BASE_DIR 'metadata/keyframe-5/tv2013/']; 
-BASE_LOOKUP_PATH = [BASE_CONFIG_DIR 'test2013-new/'];
+BASE_RESULT_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/result/tv2014/test2014/R3_DPMrerank_tv2013.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5';
+BASE_MODEL_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2014/query2014';
+BASE_CONFIG_DIR = fullfile(BASE_DIR, 'metadata/keyframe-5/tv2013/'); 
+BASE_LOOKUP_PATH = fullfile(BASE_CONFIG_DIR, 'test2013-new/');
 LOCAL_DIR = '/tmp/dpm/';
 TEMP_IMG_DIR = [LOCAL_DIR 'untar_kf/'];
 
@@ -38,10 +40,20 @@ if ~exist(TEMP_IMG_DIR, 'dir')
 	end
 end
 
-for q_id = 9098:-1:9069
+if ~exist(BASE_RESULT_DIR, 'dir')
+	try
+		mkdir(BASE_RESULT_DIR);
+		% make folder writable by all users
+		fileattrib(BASE_RESULT_DIR, '+w', 'a');
+	catch
+		error('error creating BASE_RESULT_DIR');
+	end
+end
+
+for q_id = 9099:9128
 	query_id = num2str(q_id);
 	% load model
-	model_path = [BASE_MODEL_DIR query_id '/query_' query_id '_final.mat'];
+	model_path = fullfile(BASE_MODEL_DIR, query_id, ['query_' query_id '_final.mat']);
 	temp = load(model_path);
 	model = temp.model;
 
@@ -58,7 +70,7 @@ for q_id = 9098:-1:9069
 	end
 
 	% get scale factor 
-	query_config_path = [BASE_MODEL_DIR 'comp1/tv2013/' query_id '/' query_id '.cfg'];
+	query_config_path = fullfile(BASE_MODEL_DIR, query_id, [query_id '.cfg']);
 	query_config_file = fopen(query_config_path, 'r');
 	tline = fgetl(query_config_file);
 	r = regexp(tline, ':', 'split');
