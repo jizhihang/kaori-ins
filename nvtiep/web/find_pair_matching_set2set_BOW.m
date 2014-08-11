@@ -68,7 +68,7 @@ for i = 1:length(query_set)
 
 		output_image = fullfile(output_dir, [qr_fname,'_',db_shotID,db_fname]);
 		
-		[score, new_output_img, nfg, nbg] = find_pair_matching(query_set{i}, query_id, i, db_img, j, output_image, runID);
+		[score, new_output_img, nfg, nbg] = find_pair_matching(query_set{i}, query_id, i, db_img, j, output_image, runID, frame_quant_info, query_filenames, topic_bows, bins, clip_frame, clip_kp);
 		%find_pair_matching(query_set{i}, db_img, output_image, runID)
 		
 		num_output = num_output+1;

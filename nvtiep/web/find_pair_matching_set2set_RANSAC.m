@@ -20,23 +20,25 @@ else
 	qr_raw_bow = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/query/bow/fg+bg_0.1_perdoch_hesaff_rootsift_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat';
 end
 
-% get list of visual words of db_image
+%% Load all data
 db_quant_file = fullfile(db_quant_dir, [db_shotID,'.mat']);
 load(db_quant_file);		% dung de lay thong tin bins
 db_frame_info_file = fullfile(db_frame_info_dir, [db_shotID,'.mat']);
 load(db_frame_info_file);	% dung de lay thong tin clip_frame
 nframe_per_shot = length(clip_frame);
-% Tim frame_id cua db_image trong danh sach frame cua db_shotID
-db_set = cell(1, nframe_per_shot);
-for db_frame_id = 1:nframe_per_shot
-	db_set{db_frame_id} = clip_frame{db_frame_id};
+load(qr_raw_bow); 			% Dung de lay thong tin query_filenames va frame_quant_info
+nquery = length(query_filenames);
+
+% Lay danh sach cac frame cua db_shotID
+lst_db_frame_name = cell(1, nframe_per_shot);
+for frame_index = 1:nframe_per_shot
+	lst_db_frame_name{frame_index} = clip_frame{frame_index};
 end
 
 % get list of visual words of qr_image
 re = 'frames_png/(.*)/(.*.png)';		
-load(qr_raw_bow); 			% Dung de lay thong tin query_filenames va frame_quant_info
-nquery = length(query_filenames);
-query_set = cell(0);
+
+lst_qr_frame_name = cell(0);
 count = 0;
 for query_id = 1:nquery
 	if length(query_filenames{query_id}) == 1
@@ -46,35 +48,35 @@ for query_id = 1:nquery
 		[rematch, retok] = regexp(query_filenames{query_id}{topic_id}, re, 'match', 'tokens');
 		if strcmp(qr_shotID, retok{1}{1})
 			count = count+1;
-			query_set{count} = fullfile('/net/per610a/export/das11g/caizhizhu/ins/ins2013/query/frames_png', retok{1}{1}, retok{1}{2});
+			lst_qr_frame_name{count} = fullfile('/net/per610a/export/das11g/caizhizhu/ins/ins2013/query/frames_png', retok{1}{1}, retok{1}{2});
 		end
 	end
 end
 
-sampling_rate = max(floor(length(db_set)/5), 1);
+sampling_rate = max(floor(length(lst_db_frame_name)/5), 1);
 list_output = cell(0);
 list_score = zeros(0);
 list_fg = zeros(0);
 list_bg = zeros(0);
 num_output = 0;
 
-for i = 1:length(query_set)
-	for j=1:sampling_rate:length(db_set)
+for i = 1:length(lst_qr_frame_name)
+	for j=1:sampling_rate:length(lst_db_frame_name)
 		% parse shot_id + frame name
 
-		[rematch, retok] = regexp(query_set{i}, re, 'match', 'tokens');
+		[rematch, retok] = regexp(lst_qr_frame_name{i}, re, 'match', 'tokens');
 		qr_shotID = retok{1}{1};
 		qr_fname = retok{1}{2};
 
-		db_img = ['/net/per610a/export/das11g/caizhizhu/ins/ins2013/frames_png/',db_shotID, '/', db_set{j},'.png'];
+		db_img = ['/net/per610a/export/das11g/caizhizhu/ins/ins2013/frames_png/',db_shotID, '/', lst_db_frame_name{j},'.png'];
 		[rematch, retok] = regexp(db_img, re, 'match', 'tokens');
 		db_shotID = retok{1}{1};
 		db_fname = retok{1}{2};
 
 		output_image = fullfile(output_dir, [qr_fname,'_',db_shotID,db_fname]);
 		
-		%find_pair_matching_RANSAC(query_set{i}, db_img, output_image, runID);
-		[score, new_output_img, nfg, nbg] = find_pair_matching_RANSAC(query_set{i}, query_id, i, db_img, j, output_image, runID);
+		%find_pair_matching_RANSAC(lst_qr_frame_name{i}, db_img, output_image, runID);
+		[score, new_output_img, nfg, nbg] = find_pair_matching_RANSAC(lst_qr_frame_name{i}, query_id, i, db_img, j, output_image, runID, frame_quant_info, query_filenames, topic_bows, bins, clip_frame, clip_kp);
 		if ~isempty(new_output_img)
 			num_output = num_output+1;
 			[pathstr,name,ext] = fileparts(new_output_img);

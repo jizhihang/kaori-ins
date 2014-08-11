@@ -1,4 +1,4 @@
-function [score, new_output_img, nshares_fg, nshares_bg] = find_pair_matching_RANSAC(qr_image, query_id, topic_id, db_image, frame_id, output_image, runID)
+function [score, new_output_img, nshares_fg, nshares_bg] = find_pair_matching_RANSAC(qr_image, query_id, topic_id, db_image, frame_id, output_image, runID, frame_quant_info, query_filenames, topic_bows, bins, clip_frame, clip_kp)
 
 if nargin == 0 % default data used for testing
 	qr_image = '/net/per610a/export/das11g/caizhizhu/ins/ins2013/query/frames_png/9069/9069.2.src.png';
@@ -31,9 +31,9 @@ db_fname = retok{1}{2};
 
 % get list of visual words of db_image
 db_quant_file = fullfile(db_quant_dir, [db_shotID,'.mat']);
-load(db_quant_file);		% dung de lay thong tin bins
+%load(db_quant_file);		% dung de lay thong tin bins
 db_frame_info_file = fullfile(db_frame_info_dir, [db_shotID,'.mat']);
-load(db_frame_info_file);	% dung de lay thong tin clip_frame
+%load(db_frame_info_file);	% dung de lay thong tin clip_frame
 nframe_per_shot = length(clip_frame);
 % Tim frame_id cua db_image trong danh sach frame cua db_shotID
 for db_frame_id = 1:nframe_per_shot+1
@@ -50,7 +50,7 @@ if db_frame_id <= nframe_per_shot
 end
 
 % get list of visual words of qr_image
-load(qr_raw_bow); 			% Dung de lay thong tin query_filenames va frame_quant_info
+%load(qr_raw_bow); 			% Dung de lay thong tin query_filenames va frame_quant_info
 nquery = length(query_filenames);
 is_break = false;
 for query_id = 1:nquery
@@ -88,8 +88,8 @@ end
 % find shared word between foreground/background of query image and db image
 [shared_words_fg, iqr_fg, idb_fg] = intersect(qr_words_id_fg(:), db_words_id(1,:));
 [shared_words_bg, iqr_bg, idb_bg] = intersect(qr_words_id_bg(:), db_words_id(1,:));
-nshares_fg = length(shared_words_fg);
-nshares_bg = length(shared_words_bg);
+%nshares_fg = length(shared_words_fg);
+%nshares_bg = length(shared_words_bg);
 
 knn=size(qr_words_id_fg,1);
 iqr_fg = floor((iqr_fg+knn-1)/knn);
@@ -109,12 +109,12 @@ run('/net/per610a/export/das11f/ledduy/plsang/nvtiep/libs/vlfeat-0.9.18/toolbox/
 %matches = [1:size(frame1,2); 1:size(frame1,2)];
 %[inliers, H] = geometricVerification(frame1, frame2, matches, 'numRefinementIterations', 10)
 
-frame1 = [qr_keypoint_fg(:, iqr_fg)];
-frame2 = [db_keypoint(:,idb_fg)];
-matches = [1:size(frame1,2); 1:size(frame1,2)];
-
-inliers = [];
-H = [];
+frame1_fg = [qr_keypoint_fg(:, iqr_fg)];
+frame2_fg = [db_keypoint(:,idb_fg)];
+matches_fg = [1:size(frame1_fg,2); 1:size(frame1_fg,2)];
+frame1_bg = [qr_keypoint_bg(:, iqr_bg)];
+frame2_bg = [db_keypoint(:,idb_bg)];
+matches_bg = [1:size(frame1_bg,2); 1:size(frame1_bg,2)];
 
 if ~isempty(strfind(runID, 'combine_DPM'))
 	%% Plot DPM bounding box
@@ -176,36 +176,69 @@ db_bow = frame_bow(:,frame_id);
 score = 2 - sum(abs(qr_bow/sum(qr_bow)-db_bow/sum(db_bow)));
 new_output_img = [];
 %% Plot BoW shared words
-if size(frame1,2) > 0
-	[inliers, H] = geometricVerification(frame1, frame2, matches, 'numRefinementIterations', 10)
-
+inliers_fg = [];
+inliers_bg = [];
+if size(frame1_fg, 2)>0
+	[inliers_fg, H] = geometricVerification(frame1_fg, frame2_fg, matches_fg, 'numRefinementIterations', 10)
 	% draw shared words of foreground and db image
-	for i=1:length(inliers)
-		I(qr_keypoint_fg(2,iqr_fg(inliers(i))), qr_keypoint_fg(1,iqr_fg(i)), :) = [255, 0, 0];
-		I(qr_keypoint_fg(2,iqr_fg(inliers(i)))+1, qr_keypoint_fg(1,iqr_fg(inliers(i))), :) = [255, 0, 0];
-		I(qr_keypoint_fg(2,iqr_fg(inliers(i)))-1, qr_keypoint_fg(1,iqr_fg(inliers(i))), :) = [255, 0, 0];
-		I(qr_keypoint_fg(2,iqr_fg(inliers(i)))+2, qr_keypoint_fg(1,iqr_fg(inliers(i))), :) = [255, 0, 0];
-		I(qr_keypoint_fg(2,iqr_fg(inliers(i)))-2, qr_keypoint_fg(1,iqr_fg(inliers(i))), :) = [255, 0, 0];
-		I(qr_keypoint_fg(2,iqr_fg(inliers(i))), qr_keypoint_fg(1,iqr_fg(inliers(i)))+1, :) = [255, 0, 0];
-		I(qr_keypoint_fg(2,iqr_fg(inliers(i))), qr_keypoint_fg(1,iqr_fg(inliers(i)))-1, :) = [255, 0, 0];
-		I(qr_keypoint_fg(2,iqr_fg(inliers(i))), qr_keypoint_fg(1,iqr_fg(inliers(i)))+2, :) = [255, 0, 0];
-		I(qr_keypoint_fg(2,iqr_fg(inliers(i))), qr_keypoint_fg(1,iqr_fg(inliers(i)))-2, :) = [255, 0, 0];
+	for i=1:length(inliers_fg)
+		I(qr_keypoint_fg(2,iqr_fg(inliers_fg(i))), qr_keypoint_fg(1,iqr_fg(i)), :) = [255, 0, 0];
+		I(qr_keypoint_fg(2,iqr_fg(inliers_fg(i)))+1, qr_keypoint_fg(1,iqr_fg(inliers_fg(i))), :) = [255, 0, 0];
+		I(qr_keypoint_fg(2,iqr_fg(inliers_fg(i)))-1, qr_keypoint_fg(1,iqr_fg(inliers_fg(i))), :) = [255, 0, 0];
+		I(qr_keypoint_fg(2,iqr_fg(inliers_fg(i)))+2, qr_keypoint_fg(1,iqr_fg(inliers_fg(i))), :) = [255, 0, 0];
+		I(qr_keypoint_fg(2,iqr_fg(inliers_fg(i)))-2, qr_keypoint_fg(1,iqr_fg(inliers_fg(i))), :) = [255, 0, 0];
+		I(qr_keypoint_fg(2,iqr_fg(inliers_fg(i))), qr_keypoint_fg(1,iqr_fg(inliers_fg(i)))+1, :) = [255, 0, 0];
+		I(qr_keypoint_fg(2,iqr_fg(inliers_fg(i))), qr_keypoint_fg(1,iqr_fg(inliers_fg(i)))-1, :) = [255, 0, 0];
+		I(qr_keypoint_fg(2,iqr_fg(inliers_fg(i))), qr_keypoint_fg(1,iqr_fg(inliers_fg(i)))+2, :) = [255, 0, 0];
+		I(qr_keypoint_fg(2,iqr_fg(inliers_fg(i))), qr_keypoint_fg(1,iqr_fg(inliers_fg(i)))-2, :) = [255, 0, 0];
 	end
 
-	for i=1:length(inliers)
-		I(db_keypoint(2,idb_fg(inliers(i))),   w+db_keypoint(1,idb_fg(inliers(i))), :) = [255, 0, 0];
-		I(db_keypoint(2,idb_fg(inliers(i)))+1, w+db_keypoint(1,idb_fg(inliers(i))), :) = [255, 0, 0];
-		I(db_keypoint(2,idb_fg(inliers(i)))-1, w+db_keypoint(1,idb_fg(inliers(i))), :) = [255, 0, 0];
-		I(db_keypoint(2,idb_fg(inliers(i)))+2, w+db_keypoint(1,idb_fg(inliers(i))), :) = [255, 0, 0];
-		I(db_keypoint(2,idb_fg(inliers(i)))-2, w+db_keypoint(1,idb_fg(inliers(i))), :) = [255, 0, 0];
-		I(db_keypoint(2,idb_fg(inliers(i))),   w+db_keypoint(1,idb_fg(inliers(i)))+1, :) = [255, 0, 0];
-		I(db_keypoint(2,idb_fg(inliers(i))),   w+db_keypoint(1,idb_fg(inliers(i)))-1, :) = [255, 0, 0];
-		I(db_keypoint(2,idb_fg(inliers(i))),   w+db_keypoint(1,idb_fg(inliers(i)))+2, :) = [255, 0, 0];
-		I(db_keypoint(2,idb_fg(inliers(i))),   w+db_keypoint(1,idb_fg(inliers(i)))-2, :) = [255, 0, 0];
+	for i=1:length(inliers_fg)
+		I(db_keypoint(2,idb_fg(inliers_fg(i))),   w+db_keypoint(1,idb_fg(inliers_fg(i))), :) = [255, 0, 0];
+		I(db_keypoint(2,idb_fg(inliers_fg(i)))+1, w+db_keypoint(1,idb_fg(inliers_fg(i))), :) = [255, 0, 0];
+		I(db_keypoint(2,idb_fg(inliers_fg(i)))-1, w+db_keypoint(1,idb_fg(inliers_fg(i))), :) = [255, 0, 0];
+		I(db_keypoint(2,idb_fg(inliers_fg(i)))+2, w+db_keypoint(1,idb_fg(inliers_fg(i))), :) = [255, 0, 0];
+		I(db_keypoint(2,idb_fg(inliers_fg(i)))-2, w+db_keypoint(1,idb_fg(inliers_fg(i))), :) = [255, 0, 0];
+		I(db_keypoint(2,idb_fg(inliers_fg(i))),   w+db_keypoint(1,idb_fg(inliers_fg(i)))+1, :) = [255, 0, 0];
+		I(db_keypoint(2,idb_fg(inliers_fg(i))),   w+db_keypoint(1,idb_fg(inliers_fg(i)))-1, :) = [255, 0, 0];
+		I(db_keypoint(2,idb_fg(inliers_fg(i))),   w+db_keypoint(1,idb_fg(inliers_fg(i)))+2, :) = [255, 0, 0];
+		I(db_keypoint(2,idb_fg(inliers_fg(i))),   w+db_keypoint(1,idb_fg(inliers_fg(i)))-2, :) = [255, 0, 0];
 	end
-	new_output_img = [output_image '_' num2str(size(inliers,2)) '_' num2str(score) '.jpg' ];
-	imwrite(I, new_output_img);
-	fileattrib(new_output_img, '+w', 'a');
 end
+if size(frame1_bg, 2) > 0
+	[inliers_bg, H] = geometricVerification(frame1_bg, frame2_bg, matches_bg, 'numRefinementIterations', 10)
+
+
+	% draw shared words of background and db image
+	for i=1:length(inliers_bg)
+		I(qr_keypoint_bg(2,iqr_bg(inliers_bg(i))), qr_keypoint_bg(1,iqr_bg(i)), :) = [255, 0, 0];
+		I(qr_keypoint_bg(2,iqr_bg(inliers_bg(i)))+1, qr_keypoint_bg(1,iqr_bg(inliers_bg(i))), :) = [0, 255, 0];
+		I(qr_keypoint_bg(2,iqr_bg(inliers_bg(i)))-1, qr_keypoint_bg(1,iqr_bg(inliers_bg(i))), :) = [0, 255, 0];
+		I(qr_keypoint_bg(2,iqr_bg(inliers_bg(i)))+2, qr_keypoint_bg(1,iqr_bg(inliers_bg(i))), :) = [0, 255, 0];
+		I(qr_keypoint_bg(2,iqr_bg(inliers_bg(i)))-2, qr_keypoint_bg(1,iqr_bg(inliers_bg(i))), :) = [0, 255, 0];
+		I(qr_keypoint_bg(2,iqr_bg(inliers_bg(i))), qr_keypoint_bg(1,iqr_bg(inliers_bg(i)))+1, :) = [0, 255, 0];
+		I(qr_keypoint_bg(2,iqr_bg(inliers_bg(i))), qr_keypoint_bg(1,iqr_bg(inliers_bg(i)))-1, :) = [0, 255, 0];
+		I(qr_keypoint_bg(2,iqr_bg(inliers_bg(i))), qr_keypoint_bg(1,iqr_bg(inliers_bg(i)))+2, :) = [0, 255, 0];
+		I(qr_keypoint_bg(2,iqr_bg(inliers_bg(i))), qr_keypoint_bg(1,iqr_bg(inliers_bg(i)))-2, :) = [0, 255, 0];
+	end
+
+	for i=1:length(inliers_bg)
+		I(db_keypoint(2,idb_bg(inliers_bg(i))),   w+db_keypoint(1,idb_bg(inliers_bg(i))), :) = [0, 255, 0];
+		I(db_keypoint(2,idb_bg(inliers_bg(i)))+1, w+db_keypoint(1,idb_bg(inliers_bg(i))), :) = [0, 255, 0];
+		I(db_keypoint(2,idb_bg(inliers_bg(i)))-1, w+db_keypoint(1,idb_bg(inliers_bg(i))), :) = [0, 255, 0];
+		I(db_keypoint(2,idb_bg(inliers_bg(i)))+2, w+db_keypoint(1,idb_bg(inliers_bg(i))), :) = [0, 255, 0];
+		I(db_keypoint(2,idb_bg(inliers_bg(i)))-2, w+db_keypoint(1,idb_bg(inliers_bg(i))), :) = [0, 255, 0];
+		I(db_keypoint(2,idb_bg(inliers_bg(i))),   w+db_keypoint(1,idb_bg(inliers_bg(i)))+1, :) = [0, 255, 0];
+		I(db_keypoint(2,idb_bg(inliers_bg(i))),   w+db_keypoint(1,idb_bg(inliers_bg(i)))-1, :) = [0, 255, 0];
+		I(db_keypoint(2,idb_bg(inliers_bg(i))),   w+db_keypoint(1,idb_bg(inliers_bg(i)))+2, :) = [0, 255, 0];
+		I(db_keypoint(2,idb_bg(inliers_bg(i))),   w+db_keypoint(1,idb_bg(inliers_bg(i)))-2, :) = [0, 255, 0];
+	end
+end
+
+nshares_fg = size(inliers_fg,2);
+nshares_bg = size(inliers_bg,2);
+new_output_img = [output_image '_' num2str(size(inliers_fg,2)) '_' num2str(size(inliers_bg,2)) '_' num2str(score) '.jpg' ];
+imwrite(I, new_output_img);
+fileattrib(new_output_img, '+w', 'a');
 
 end

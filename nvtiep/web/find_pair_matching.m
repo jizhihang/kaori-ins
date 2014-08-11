@@ -1,4 +1,4 @@
-function [score, new_output_img, nshares_fg, nshares_bg] = find_pair_matching(qr_image, query_id, topic_id, db_image, frame_id, output_image, runID)
+function [score, new_output_img, nshares_fg, nshares_bg] = find_pair_matching(qr_image, query_id, topic_id, db_image, frame_id, output_image, runID, frame_quant_info, query_filenames, topic_bows, bins, clip_frame, clip_kp)
 
 if nargin == 0 % default data used for testing
 	qr_image = '/net/per610a/export/das11g/caizhizhu/ins/ins2013/query/frames_png/9071/9071.3.src.png';
@@ -29,9 +29,9 @@ db_fname = retok{1}{2};
 
 % get list of visual words of db_image
 db_quant_file = fullfile(db_quant_dir, [db_shotID,'.mat']);
-load(db_quant_file);		% dung de lay thong tin bins
+%load(db_quant_file);		% dung de lay thong tin bins
 db_frame_info_file = fullfile(db_frame_info_dir, [db_shotID,'.mat']);
-load(db_frame_info_file);	% dung de lay thong tin clip_frame
+%load(db_frame_info_file);	% dung de lay thong tin clip_frame
 nframe_per_shot = length(clip_frame);
 % Tim frame_id cua db_image trong danh sach frame cua db_shotID
 for db_frame_id = 1:nframe_per_shot+1
@@ -47,7 +47,7 @@ if db_frame_id <= nframe_per_shot
 end
 
 % get list of visual words of qr_image
-load(qr_raw_bow); 			% Dung de lay thong tin query_filenames va frame_quant_info
+%load(qr_raw_bow); 			% Dung de lay thong tin query_filenames va frame_quant_info
 nquery = length(query_filenames);
 is_break = false;
 for query_id = 1:nquery
