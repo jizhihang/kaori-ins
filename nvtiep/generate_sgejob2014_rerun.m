@@ -1,4 +1,4 @@
-function generate_sgejob2014(nindex, ncoreperjob)
+function generate_sgejob2014_rerun(nindex, ncoreperjob)
 % Example run:
 % nindex: tong so videoID
 % ncoreperjob: so cores per job
@@ -8,7 +8,7 @@ function generate_sgejob2014(nindex, ncoreperjob)
 % Co tong cong 30 queries --> 22 queries chay tren grid, 4 queries chay tren moi server
 
 sh_command_file = '/net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nvtiep/sge_script/rerank_using_DPM2014.sgejob.sh';
-sge_script_file = '/net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nvtiep/sge_script/runme.qsub.rerank_using_DPM2014.ins2014';
+sge_script_file = '/net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nvtiep/sge_script/runme.qsub.rerank_using_DPM2014.ins2014-rerun';
 
 % Grid config - query chay tu 9099 -> 9118
 sge_script_file_grid = [sge_script_file '.sh'];
@@ -31,7 +31,7 @@ fclose(fid);
 
 % server A
 sge_script_file_per910b = [sge_script_file '_per910b.sh'];
-ncore = 30; % chay 30 jobs dong thoi tren 1 server
+ncore = 15; % chay 30 jobs dong thoi tren 1 server
 fid = fopen(sge_script_file_per910b, 'w');
 delta = ceil(nindex/ncore);
 endID = 0;
@@ -49,7 +49,7 @@ fclose(fid);
 
 % server B
 sge_script_file_per910c = [sge_script_file '_per910c.sh'];
-ncore = 30; % chay 30 jobs dong thoi tren 1 serverncore = 30; % chay 30 jobs dong thoi tren 1 server
+ncore = 15; % chay 30 jobs dong thoi tren 1 serverncore = 30; % chay 30 jobs dong thoi tren 1 server
 fid = fopen(sge_script_file_per910c, 'w');
 delta = ceil(nindex/ncore);
 endID = 0;

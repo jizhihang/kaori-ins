@@ -203,6 +203,12 @@ for ($nQueryID = $nQueryIDStart; $nQueryID <= $nQueryIDEnd; $nQueryID ++) {
     execSysCmd($szCmdLine);
 }
 
+
+// update Jul 11, 2014
+$szFPOutputFN = sprintf("%s/%s.log", $szQueryResultDir1, $szOutRunID);
+saveDataFromMem2File($arLog, $szFPOutputFN);
+exit();
+
 exit();
 
 // ////////////////////////////// FUNCTIONS ///////////////////////////////////

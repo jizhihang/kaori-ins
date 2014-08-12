@@ -5,10 +5,16 @@
  * 		@brief 	View matches between query and shot.
  *		@author Duy-Dinh Le (ledduy@gmail.com, ledduy@ieee.org).
  *
- * 		Copyright (C) 2010-2013 Duy-Dinh Le.
+ * 		Copyright (C) 2010-2014 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 13 Jul 2014.
+ * 		Last update	: 06 Aug 2014.
  */
+
+// 06 Aug 2014
+// Modify code because the dir structure is changed
+// Before: runID/tv2013/test2013
+// Current: tv2013/test2013/runID
+// Do not use szPatName
 
 //  13 Jul 2014
 // Copied from ksc-web-ViewResult.php
@@ -36,9 +42,20 @@ $szImgFormat = "jpg";
 
 $nTVYear = $_REQUEST['vTVYear'];
 $szTVYear = sprintf("tv%d", $nTVYear);
+
+$szRootKeyFrameDir = sprintf("%s/keyframe-5", $gszRootBenchmarkDir);
+$szKeyFrameDir = sprintf("%s/%s", $szRootKeyFrameDir, $szTVYear);
+
 $szRootMetaDataDir = sprintf("%s/metadata/keyframe-5", $gszRootBenchmarkDir);
 $szMetaDataDir = sprintf("%s/%s", $szRootMetaDataDir, $szTVYear);
-$szPatName = $_REQUEST['vPatName'];
+$szQueryPat= sprintf("query%d", $nTVYear);
+$szTestPat= sprintf("test%d", $nTVYear);
+$szTmpDirz1 = sprintf("%s/tmp", $gszRootBenchmarkDir);
+
+$szPatName4KFDir = sprintf("test%s", $nTVYear); //duplicate
+$szPatName4ModelDir = sprintf("query%s", $nTVYear);
+
+$szRootModelDir = sprintf("%s/model/ins-dpm/%s/%s", $gszRootBenchmarkDir, $szTVYear, $szPatName4ModelDir);
 
 // ins.topics.2013.xml 
 $szFPInputFN = sprintf("%s/ins.topics.%d.xml", $szMetaDataDir, $nTVYear);
@@ -58,7 +75,6 @@ if(file_exists($szFPInputFN))
     }
 }
 
-$szVideoPath = sprintf("%s/%s", $szTVYear, $szPatName);
 
 $szResultDir = sprintf("%s/result", $gszRootBenchmarkDir);
 $arDirList = collectDirsInOneDir($szResultDir);
@@ -75,10 +91,10 @@ $szText = trim($arTmp[1]);
 $szRunID = $_REQUEST['vRunID'];
 
 // include both jpg and png file
-$szQueryPatName = sprintf("query%s-new", $nTVYear);
-$szFPQueryImgListFN = sprintf("%s/%s/%s.prg", $szMetaDataDir, $szQueryPatName, $szQueryID);
-loadListFile($arQueryImgList, $szFPQueryImgListFN);
-//print_r($arQueryImgList);
+$szQueryPatName = sprintf("query%s", $nTVYear);
+$szQueryKeyFrameDir = sprintf("%s/%s/%s", $szKeyFrameDir, $szQueryPatName, $szQueryID);
+$arQueryImgList = collectFilesInOneDir($szQueryKeyFrameDir, ".src.", ".png");
+//print_r($arQueryImgList);exit();
 //ins.search.qrels.tv2011
 $szFPNISTResultFN = sprintf("%s/ins.search.qrels.%s", $szMetaDataDir, $szTVYear);
 
@@ -95,7 +111,9 @@ foreach($arNISTList[$szQueryID] as $szShotID)
     $arAnnList[$szShotID] = 1;    
 }
 
-$szFPModelConfigFN = sprintf("%s/%s.cfg", $szMetaDataDir, $szQueryID);
+$fConfigScale = -1; // meaning [N/A]
+$szModelDir = sprintf("%s/%s", $szRootModelDir, $szQueryID);
+$szFPModelConfigFN = sprintf("%s/%s.cfg", $szModelDir, $szQueryID);
 if(file_exists($szFPModelConfigFN))
 {
     loadListFile($arRawListz, $szFPModelConfigFN);
@@ -131,13 +149,16 @@ $arOutput[] = sprintf("<P><H1>Query - %s</H1>\n", $szText);
 $arOutput[] = sprintf("<P><H1>Scale factor (to scale up the test image using DPM model) - %0.4f</H1><BR>\n", $fConfigScale);
 foreach($arQueryImgList as  $szQueryImg)
 {
-		$szURLImg = sprintf("%s/%s/%s/%s.%s", $szKeyFrameDir, $szQueryPatName, $szQueryID, $szQueryImg, "jpg");
-		//exit($szURLImg);
+		$szURLImg = sprintf("%s/%s/%s/%s.%s", $szKeyFrameDir, $szQueryPatName, $szQueryID, $szQueryImg, "png");
+		if(!file_exists($szURLImg))
+		{
+            printf("<!-- File not found [%s] -->\n", $szURLImg);		  
+		}
 		$szRetURL = $szURLImg;
 		
 		// TIEP: Em co duoc ds cac QueryImg tu cho nay
 
-		$imgzz = imagecreatefromjpeg($szRetURL);
+		$imgzz = imagecreatefrompng($szRetURL);
 		$widthzz = imagesx($imgzz);
 		$heightzz = imagesy($imgzz);
 
@@ -299,7 +320,7 @@ $arOutput[] = sprintf("<P><H1>ShotID - %s</H1>\n", $szShotID);
 $nMatchingMethod = $_REQUEST['vMatchMethod'];
 $nMatchingMethod = 1; //default
 $arMatchingMethodDesc = array(
-0 => "BOW", 
+//0 => "BOW", 
 1 => "RANSAC");
 
 foreach($arMatchingMethodDesc as $nMatchingMethod => $szDesc)
@@ -307,11 +328,9 @@ foreach($arMatchingMethodDesc as $nMatchingMethod => $szDesc)
 	$arOutput[] = sprintf("<P><H1>Matching Result by Using [%s] </H1>\n", $szDesc);
 	
 	printf("<!-- Matching by [%s] -->", $szDesc);
-	$szCodeDir = "/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/code/web"; // must be set to 777 before running
-	$szOutputDirz = "/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/web"; // must be set to 777 before running
-	makeDir($szOutputDirz);
-	$szCmdLine = sprintf("chmod 777 %s", $szOutputDirz);
-	system($szCmdLine);
+	$szCodeDir = "/net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nvtiep/web"; // must be set to 777 before running
+
+	$szOutputDirz = $szTmpDirz1; // must be set to 777 before running
 	
 	// unique dir for each pair (query, shot)
 	$szTmpOutputDir = sprintf("%s/%s-%s-%s", $szOutputDirz, $szDesc, $szQueryID, $szShotID);
@@ -319,30 +338,65 @@ foreach($arMatchingMethodDesc as $nMatchingMethod => $szDesc)
 	$szCmdLine = sprintf("chmod 777 %s", $szTmpOutputDir);
 	system($szCmdLine);
 	printf("<!-- Making dir: [%s]-->", $szTmpOutputDir); 
-
+	
+	// for commands
 	$szTmpOutputFN = sprintf("%s/zz%s-%s.sh", $szTmpOutputDir, $szQueryID, $szShotID);
+	
+	// for output data
+	$szFPOutputFNz = sprintf("%s/zz%s-%s-%s.logz", $szTmpOutputDir, $szQueryID, $szShotID, $nMatchingMethod);
+	
 	$arCmdLine = array();
 	$arCmdLine[] = sprintf("export MATLAB_PREFDIR=%s", $szTmpOutputDir);   // change pref dir to avoid permission error
 	$arCmdLine[] = sprintf("cd %s", $szCodeDir);
 	
 	if($nMatchingMethod == 0)
 	{
-		$arCmdLine[] = sprintf("/usr/local/matlab/bin/matlab -nodisplay -nojvm -r \"find_pair_matching_set2set_BOW('%s' , '%s', '%s')\"", $szQueryID, $szShotID, $szTmpOutputDir);
+		$arCmdLine[] = sprintf("/usr/local/matlab/bin/matlab -nodisplay -nojvm -r \"find_pair_matching_set2set_BOW('%s' , '%s', '%s' , '%s', '%s', '%s' , '%s', '%s')\"", 
+		    $szTVYear, $szTestPat, $szQueryPat, $szFPOutputFNz, $szRunID, $szQueryID, $szShotID, $szTmpOutputDir);
 	}
 
 	if($nMatchingMethod == 1)
 	{
-		$arCmdLine[] = sprintf("/usr/local/matlab/bin/matlab -nodisplay -nojvm -r \"find_pair_matching_set2set_RANSAC('%s' , '%s', '%s')\"", $szQueryID, $szShotID, $szTmpOutputDir);
+		$arCmdLine[] = sprintf("/usr/local/matlab/bin/matlab -nodisplay -nojvm -r \"find_pair_matching_set2set_RANSAC('%s' , '%s', '%s' , '%s', '%s', '%s' , '%s', '%s')\"", 
+		    $szTVYear, $szTestPat, $szQueryPat, $szFPOutputFNz, $szRunID, $szQueryID, $szShotID, $szTmpOutputDir);
 	}
 	saveDataFromMem2File($arCmdLine, $szTmpOutputFN);
 	$szCmdLine = sprintf("chmod 777 %s", $szTmpOutputFN);
 	system($szCmdLine);
 	print_r($arCmdLine);
 	system($szTmpOutputFN);
-	$arMatchingImgList = collectFilesInOneDir($szTmpOutputDir, "", ".jpg");
-	//print_r($arMatchingImgList);
-	foreach($arMatchingImgList as $szImg)
+	
+	if(!file_exists($szFPOutputFNz))
 	{
+	    printf("<P>Error result file not found [%s]\n", $szFPOutputFNz);
+	    continue;
+	}
+	loadListFile($arTmpzz, $szFPOutputFNz);
+	$arScoreList = array();
+	$arFGMatchList = array();
+	$arBGMatchList = array();
+	foreach($arTmpzz as $szLine)
+	{
+		$arT = explode("#$#", $szLine);
+		$szImageID = trim($arT[0]);
+		$nNumFGMatch = intval($arT[1]);
+		$nNumBGMatch = intval($arT[2]);
+		$fScore = floatval($arT[3]);
+		
+		$arScoreList[$szImageID] = $fScore;
+		$arFGMatchList[$szImageID] = $nNumFGMatch;
+		$arBGMatchList[$szImageID] = $nNumBGMatch;
+	}
+	arsort($arScoreList);
+//	$arMatchingImgList = collectFilesInOneDir($szTmpOutputDir, "", ".jpg");
+	//print_r($arMatchingImgList);
+	
+	$nCount = 0;
+	foreach($arScoreList as $szImg => $fScore)
+	{
+		$nNumFGMatch = $arFGMatchList[$szImg];
+		$nNumBGMatch = $arBGMatchList[$szImg];
+	
 		$szRetURL = sprintf("%s/%s.jpg", $szTmpOutputDir, $szImg);
 		//printf("Loading image [%s]\n", $szRetURL);
 
@@ -351,12 +405,9 @@ foreach($arMatchingMethodDesc as $nMatchingMethod => $szDesc)
 		$heightzz = imagesy($imgzz);
 
 		// calculate thumbnail size
-//		$new_width = $thumbWidth;  // to reduce loading time
-//		$new_height = floor($heightzz*($thumbWidth/$widthzz));
-		
-		$new_width = $widthzz;
-		$new_height = $heightzz;
-
+		$thumbWidth = intval($widthzz*0.75);
+		$new_width = $thumbWidth;  // to reduce loading time
+		$new_height = floor($heightzz*($thumbWidth/$widthzz));
 
 		// create a new temporary image
 		$tmp_img = imagecreatetruecolor($new_width, $new_height);
@@ -370,10 +421,14 @@ foreach($arMatchingMethodDesc as $nMatchingMethod => $szDesc)
 		ob_start();
 		imagejpeg($tmp_img);
 		$szImgContent = base64_encode(ob_get_clean());
-		$arOutput[] = sprintf("<P><IMG  TITLE='%s' SRC='data:image/jpeg;base64,". $szImgContent ."' />", $szImg);
+		$arOutput[] = sprintf("<P><IMG  TITLE='%s - Score: %0.4f' SRC='data:image/jpeg;base64,". $szImgContent ."' /> - [%dfg+%dbg - %0.6f]", $szImg, $fScore, $nNumFGMatch, $nNumBGMatch, $fScore);
 
 		imagedestroy($imgzz);
 		imagedestroy($tmp_img);
+		
+		$nCount++;
+		if($nCount>5)
+			break;  // to speedup
 	}
 	// SAU KHI LOAD XONG HET THI XOA CAC FILE TRONG DAY
 	$szCmdLine = sprintf("rm -rf %s", $szTmpOutputDir);
