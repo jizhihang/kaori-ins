@@ -74,13 +74,13 @@ db_frame_info_dir = fullfile(ROOT_FEATURE_DIR, data_name, test_pat, TESTDB_RAW_F
 %is_compute_RANSAC = 0; DEL
 
 debug_mode = false;
-is_using_RANSAC = 0;
+is_using_RANSAC = 1;
 
 %% base level path configuration
 ex_bounding_box = 0; % NOT USED
 
 
-RESULT_RUN_ID = ['R0_', data_name, '.', base_feature, '+DPM';
+RESULT_RUN_ID = ['R0_', data_name, '.', base_feature, '+DPM'];
 
 if is_using_RANSAC
 	RESULT_RUN_ID = ['R0_', data_name, '.', base_feature, '+DPM+RANSAC'];
@@ -224,6 +224,7 @@ if is_using_RANSAC
 					%N_fg = N_fg+size(fg_kp,2);
 					%N_bg = N_bg+size(bg_kp,2); % version 2.0
 					N_bg = size(bg_kp,2);		% version 3.0
+					N_fg = size(fg_kp,2);		% version 4.0, bo DPM
 					Nd = 0;
 					if ~isempty(fg_kp)
 						Nd = sum(fg_kp(1,:)>=left(frame_locs(frame_idx))&fg_kp(1,:)<=right(frame_locs(frame_idx))&...
@@ -235,7 +236,13 @@ if is_using_RANSAC
 					% N_bg = number of shares words in foreground region of query image and frames images				
 					%new_scores(end+1) = exp(Nd)*log2(max(2,N_bg))*P_score;				% Cong thuc goc
 					%new_scores(end+1) = (Nd+0.001)*log2(max(2,N_bg))*P_score; 	% binh thuong, co epsilon
-					new_scores(end+1) = max(1,Nd)*log2(max(2,N_bg))*P_score; 	% remove epsilon
+					%new_scores(end+1) = max(1,Nd)*log2(max(2,N_bg))*P_score; 	% remove epsilon
+					%new_scores(end+1) = max(1,N_fg)*log2(max(2,N_bg))*P_score; 	% remove DPM
+					new_scores(end+1) = max(1,Nd)*max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 	% using both Nd and Nfg
+					%new_scores(end+1) = max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 			% using both Nd and Nfg 1
+					%new_scores(end+1) = max(1,Nd)*max(1,Nd)*max(1,N_fg)*log2(max(2,N_bg))*P_score; 	% using both Nd and Nfg 2
+					%new_scores(end+1) = max(1,Nd)*max(1,Nd)*max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 	% using both Nd and Nfg 3 
+					%new_scores(end+1) = max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 			% using both Nd and Nfg 4
 					%new_scores(end+1) = P_score; 								% fuse 2 : 1
 					
 					if debug_mode
