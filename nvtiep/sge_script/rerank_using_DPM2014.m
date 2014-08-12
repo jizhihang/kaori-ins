@@ -1,7 +1,4 @@
-function rerank_using_DPM_final(feature_id, start_video_id, end_video_id, query_start, query_end)
-
-% feature_id: 'surrey.soft.soft'
-
+function rerank_using_DPM(start_video_id, end_video_id, query_start, query_end)
 if nargin == 0
 	%query_id = '9074';
 	start_video_id = 0;
@@ -22,43 +19,15 @@ N_DETECTIONS = 1;	% just save the first one (i.e the one with highest score)
 DETECTION_THRESHOLD = -2.0;
 
 % base level path configuration
-data_name = 'tv2014';
-test_pat = 'test2014';
-query_pat = 'query2014'
-
-arrInput = containers.Map;
-arrInput('surrey.hard.soft') = 'R2_tv2013.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5';
-arrInput('surrey.soft.soft') = 'R2_tv2013.surrey.soft.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_3_0.0125_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5';
-arrInput('CaizhiBest') = 'R2_tv2013.CaizhiBest'; 
-
-arrOutput = containers.Map;
-arrOutput('surrey.hard.soft') = 'R3_tv2013.DPM.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5';
-arrOutput('surrey.soft.soft') = 'R3_tv2013.DPM.surrey.soft.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_3_0.0125_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5';
-arrOutput('CaizhiBest') = 'R3_tv2013.DPM.CaizhiBest';
-
-if ~isKey(arrInput, feature_id)
-	disp('Feature id not found (surrey.soft.soft, surrey.hard.soft, CaizhiBest)');
-	quit;
-end
-
-% arPath = 'tv2014/test2014/';
-ROOT_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/'
-ROOT_RESULT_DIR = fullfile(ROOT_DIR, 'result', data_name, test_pat);
-
-LOOK_UP_DIR = fullfile(ROOT_RESULT_DIR, arrInput(feature_id));
-LOG_FILE = fullfile(ROOT_DIR, 'tmp/rerank_using_DMP.txt');
-
-BASE_RESULT_DIR = fullfile(ROOT_RESULT_DIR, arrOutput(feature_id));
-BASE_MODEL_DIR = fullfile(ROOT_DIR, '/model/ins-dpm/', data_name, query_pat);
-
-% tam thoi KO THAY DOI vi duoc dung de lay cac tap tin .prg --> TO CHUC thanh cac video TRECVID2013_1, etc
+LOOK_UP_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/result/tv2014/test2014/R2_tv2013.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5';
+LOG_FILE = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/rerank_using_DMP.txt';
 BASE_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/';
 BASE_IMG_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/keyframe-5/tv2013/test2013-new/';
+BASE_RESULT_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/result/tv2014/test2014/R3_DPMrerank_tv2013.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5';
+BASE_MODEL_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/model/ins-dpm/tv2014/query2014';
 BASE_CONFIG_DIR = fullfile(BASE_DIR, 'metadata/keyframe-5/tv2013/'); 
 BASE_LOOKUP_PATH = fullfile(BASE_CONFIG_DIR, 'test2013-new/');
-
-LOCAL_DIR = fullfile('/tmp/dpm/', arrInput(feature_id));
-
+LOCAL_DIR = '/tmp/dpm/';
 TEMP_IMG_DIR = [LOCAL_DIR 'untar_kf/'];
 
 if ~exist(TEMP_IMG_DIR, 'dir')

@@ -13,12 +13,12 @@ sge_script_file = '/net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nvtie
 % Grid config - query chay tu 9099 -> 9118
 sge_script_file_grid = [sge_script_file '.sh'];
 % ncore: tong so job sinh ra
-ncore = 400;
+ncore = 1000;
 fid = fopen(sge_script_file_grid, 'w');
 delta = ceil(nindex/ncore);
 endID = 0;
 query_start = 9099;
-query_end = 9120;
+query_end = 9128;
 for i=1:ncore
 	startID = endID+1;
 	if startID > nindex

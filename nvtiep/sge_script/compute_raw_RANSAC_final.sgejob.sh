@@ -13,6 +13,6 @@ cd /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/nvtiep/
 pwd
 # run your command with parameters ($1, $2,...) here, string variable is put in ' '
 # compute_raw_RANSAC_final(feature_id, start_video_id, end_video_id, query_start, query_end)
-matlab -nodisplay -r "compute_raw_RANSAC_final( $1, $2, $3, $4, $5 )"
+matlab -nodisplay -r "compute_raw_RANSAC_final( '$1', $2, $3, $4, $5 )"
 # Log ending time
 date

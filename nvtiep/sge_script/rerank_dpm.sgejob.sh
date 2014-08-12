@@ -4,7 +4,7 @@
 # Force to use shell sh. Note that #$ is SGE command
 #$ -S /bin/sh
 # Force to limit hosts running jobs
-#$ -q all.q@@bc4hosts,all.q@@bc3hosts,all.q@bc201.hpc.vpl.nii.ac.jp,all.q@bc202.hpc.vpl.nii.ac.jp,all.q@bc203.hpc.vpl.nii.ac.jp,all.q@bc204.hpc.vpl.nii.ac.jp,all.q@bc205.hpc.vpl.nii.ac.jp,all.q@bc206.hpc.vpl.nii.ac.jp
+#$ -q all.q@@bc4hosts,all.q@@bc3hosts,all.q@bc201.hpc.vpl.nii.ac.jp,all.q@bc202.hpc.vpl.nii.ac.jp,all.q@bc203.hpc.vpl.nii.ac.jp,all.q@bc204.hpc.vpl.nii.ac.jp,all.q@bc205.hpc.vpl.nii.ac.jp,all.q@bc206.hpc.vpl.nii.ac.jp,all.q@bc207.hpc.vpl.nii.ac.jp,all.q@bc208.hpc.vpl.nii.ac.jp,all.q@bc209.hpc.vpl.nii.ac.jp,all.q@bc210.hpc.vpl.nii.ac.jp
 # Log starting time
 date 
 # change to your code directory here
