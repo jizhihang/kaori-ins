@@ -191,3 +191,22 @@ ln -s /net/per900c/raid0/ledduy/github-projects/kaori-ins2014/ kaori-ins2014
 
 *** 07Aug2014
 1. Chỉnh code của DPM để chạy
+
+
+
+*** 13 Aug 2014
+
+1. Chạy fusion R1_tv2013.fusion-surrey.hard.soft+DPM[2-1] --> surrey.hard.soft + DPM.surrey.hard.soft (dùng web ksc-web-LateFusion4MultiRuns)
+Fusion run config
+NormScoreMethod: Z-Score by Using Mean and Std
+TVYear: tv2014
+Output Name: R1_tv2013.fusion-surrey.hard.soft+DPM[2-1]
+R0: R2_tv2013.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5 - Weight: 2.00
+R1: R3_tv2013.DPM.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5 - Weight: 1.00
+<P>QueryID = 9099 - Mean = 0.1159 - Std = 0.0151 - Path: /net/per610a/export/das11f/ledduy/trecvid-ins-2014/result/tv2014/test2014/R2_tv2013.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5/9099<BR>
+
+2. Chạy fusion của Tiệp --> R0_tv2013.surrey.hard.soft+DPM+RANSAC
+
+3. Chạy ksc-ProcessOneRun-Rank.php 2014 R0_tv2013.surrey.hard.soft+DPM+RANSAC --> để sinh ra các file .rank
+
+4. Chạy ksc-Tool-Convert2NISTSubmissionFormat-tv2014.php --> .xml lưu ở NISTSubmission và R0_tv2013.surrey.hard.soft+DPM+RANSAC (đòi hỏi file .rank phải có trước)

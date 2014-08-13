@@ -14,30 +14,29 @@ require_once "ksc-AppConfig.php";
 
 /////////////////////////////
 
-$szRunID1 = "";
-$szResultDir = sprintf("%s/result/tv2014/test2014/%s", $gszRootBenchmarkDir, $szRunID1);
+$arRunList = array();
 
-$szOutputDir = $szResultDir;
+$arRunList["NII-UIT.Sakura.Saigon"]['ResultDir'] = "R0_tv2013.surrey.hard.soft+DPM+RANSAC";  // dir name in result/ 
+$arRunList["NII-UIT.Sakura.Saigon"]['Desc'] = "Fusion of BOW+DPM+RANSAC: BoW (HesAff - 1M codebook, hard-DB.soft-QUERY assignment, soft assignment-3NN), DPM (voc-release5, default setting- 2comps-8parts), FACE (Viola-Jones Face Detector, VGG-Face Feature, L1-dist).";
+$arRunList["NII-UIT.Sakura.Saigon"]['Priority'] = 2; 
 
-$arSysID = array(
-"NII-UIT.Sakura.Tiep" => "Fusion of BOW+DPM+RANSAC: BoW (HesAff - 1M codebook, hard-DB.soft-QUERY assignment, soft assignment-3NN), DPM (voc-release5, default setting- 2comps-8parts), FACE (Viola-Jones Face Detector, VGG-Face Feature, L2-dist).",
-);
+$szAllSubmissionDir = sprintf("%s/result/tv2014/test2014/NISTSubmission", $gszRootBenchmarkDir);
 
-$arSysIDPriority = array(
-    "NII-UIT.Sakura.Tiep" => 2,	
-);
-
-
-foreach($arSysID as $szSysID => $szSysDesc)
+foreach($arRunList as $szSysID =>$arInfo)
 {
-	$szInputDir = $szResultDir;
+    $szRunID = $arInfo['ResultDir'];
+    $szResultDir = sprintf("%s/result/tv2014/test2014/%s", $gszRootBenchmarkDir, $szRunID);
+    
+    $szOutputDir = $szResultDir;
+    $szInputDir = $szResultDir;
 	
 	$arFinalNISTOutput = array();
 	
 	$arFinalNISTOutput[] = sprintf("<!DOCTYPE videoSearchResults SYSTEM \"http://www-nlpir.nist.gov/projects/tv2014/dtds/videoSearchResults.dtd\">");
 	$arFinalNISTOutput[] = sprintf("<videoSearchResults>");
 	
-	$nPriority = $arSysIDPriority[$szSysID];
+	$nPriority = $arInfo['Priority'];
+	$szSysDesc  = $arInfo['Desc'];
 	
 	//<videoSearchRunResult pType="F"  pid="SiriusCyberCo" priority="2" condition="NO" exampleSet="C"
 	//desc="This automatic run uses algorithm 1" >
@@ -57,7 +56,12 @@ foreach($arSysID as $szSysID => $szSysDesc)
 		$nRank = 1;
 		
 		$szFPInputFN = sprintf("%s/%s.rank", $szInputDir, $nQueryID);
-		loadListFile($arRankList, $szFPInputFN);
+		$nNumRowszz = loadListFile($arRankList, $szFPInputFN);
+		
+		if($nNumRowszz != 10000)
+		{
+		    printf("Serious error numRows [%d] != 10K \n", $nNumRowszz);
+		}
 		foreach($arRankList as $szLine)
 		{
 			$arTmp = explode("#$#", $szLine);
@@ -82,8 +86,11 @@ foreach($arSysID as $szSysID => $szSysDesc)
 	$szFPOutputFN = sprintf("%s/%s.R%s.xml", $szOutputDir, $szSysID, $nPriority);
 
 	saveDataFromMem2File($arFinalNISTOutput, $szFPOutputFN, "wt");
-
-	$nPriority++;
+	
+	// make a copy to AllSubmissionDir
+	$szFPOutputFN = sprintf("%s/%s.R%s.xml", $szAllSubmissionDir, $szSysID, $nPriority);
+	saveDataFromMem2File($arFinalNISTOutput, $szFPOutputFN, "wt");
+	
 }
 
 /*

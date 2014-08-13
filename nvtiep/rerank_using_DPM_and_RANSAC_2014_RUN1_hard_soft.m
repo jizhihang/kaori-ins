@@ -1,4 +1,4 @@
-function rerank_using_DPM_and_RANSAC_2014(data_name, base_feature, base_BOW_fusion, base_RANSAC, base_DPM, start_video_id, end_video_id)
+function rerank_using_DPM_and_RANSAC_2014_RUN1_hard_soft(data_name, base_feature, base_BOW_fusion, base_RANSAC, base_DPM, start_video_id, end_video_id)
 % Example:
 % rerank_using_DPM_and_RANSAC_2014('tv2014', 'surrey.hard.soft', 'R1_tv2013.fusion', 
 % 'R4_rawRANSAC_tv2013.surrey.hard.soft.latefusion.asym', 'R3_tv2013.DPM.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_3_0.0125_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5', 1, 2)
@@ -18,6 +18,17 @@ function rerank_using_DPM_and_RANSAC_2014(data_name, base_feature, base_BOW_fusi
 % base_DPM: can check CONSISTENT tuong tu base_RANSAC
 
 % base_feature: chi moi support surrey.hard.soft
+
+if nargin == 0
+	data_name = 'tv2014';
+	base_feature = 'surrey.hard.soft'
+	base_BOW_fusion = 'R1_tv2013.fusion-surrey.hard.soft+DPM[2-1]';
+	base_RANSAC = 'R4_tv2013.rawRANSAC.surrey.hard.soft.latefusion.asym';
+	base_DPM = 'R3_tv2013.DPM.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5';
+	start_video_id = 1
+	end_video_id = 1000
+end
+
 
 if isempty(strfind(base_RANSAC, base_feature))
 	disp ('Insconsistency between base_featue and base_RANSAC');
@@ -54,8 +65,6 @@ if strcmp(data_name, 'tv2014')
 	query_pat = 'query2014';
 	test_pat = 'test2014';
 end
-
-base_feature = 'surrey.hard.soft';
 
 if strcmp(base_feature, 'surrey.hard.soft')
 	QUERY_FEATURE_CONFIGZ = 'bow.db_1_qr_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125';
@@ -224,6 +233,7 @@ if is_using_RANSAC
 					%N_fg = N_fg+size(fg_kp,2);
 					%N_bg = N_bg+size(bg_kp,2); % version 2.0
 					N_bg = size(bg_kp,2);		% version 3.0
+					N_fg = size(fg_kp,2);		% version 4.0, bo DPM
 					Nd = 0;
 					if ~isempty(fg_kp)
 						Nd = sum(fg_kp(1,:)>=left(frame_locs(frame_idx))&fg_kp(1,:)<=right(frame_locs(frame_idx))&...
@@ -235,7 +245,13 @@ if is_using_RANSAC
 					% N_bg = number of shares words in foreground region of query image and frames images				
 					%new_scores(end+1) = exp(Nd)*log2(max(2,N_bg))*P_score;				% Cong thuc goc
 					%new_scores(end+1) = (Nd+0.001)*log2(max(2,N_bg))*P_score; 	% binh thuong, co epsilon
-					new_scores(end+1) = max(1,Nd)*log2(max(2,N_bg))*P_score; 	% remove epsilon
+					%new_scores(end+1) = max(1,Nd)*log2(max(2,N_bg))*P_score; 	% remove epsilon
+					%new_scores(end+1) = max(1,N_fg)*log2(max(2,N_bg))*P_score; 	% remove DPM
+					new_scores(end+1) = max(1,Nd)*max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 	% using both Nd and Nfg
+					%new_scores(end+1) = max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 			% using both Nd and Nfg 1
+					%new_scores(end+1) = max(1,Nd)*max(1,Nd)*max(1,N_fg)*log2(max(2,N_bg))*P_score; 	% using both Nd and Nfg 2
+					%new_scores(end+1) = max(1,Nd)*max(1,Nd)*max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 	% using both Nd and Nfg 3 
+					%new_scores(end+1) = max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 			% using both Nd and Nfg 4
 					%new_scores(end+1) = P_score; 								% fuse 2 : 1
 					
 					if debug_mode
