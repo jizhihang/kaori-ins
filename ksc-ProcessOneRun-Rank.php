@@ -102,6 +102,7 @@ foreach($arDirList as $szRunID)
         {
             if((($nTVYear == 2013) || ($nTVYear == 2014)) &&(strstr($szShotID, "shot0_")))
             {
+                printf("Skipping [%s]\n", $szShotID);
                 continue; // skip shot0_
             }
             
@@ -115,7 +116,6 @@ foreach($arDirList as $szRunID)
         	}
             $nRank++;
         }
-        
         $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szQueryID);
         saveDataFromMem2File($arRawList, $szFPOutputFN);
         
@@ -242,7 +242,7 @@ function loadRankedList($szResultDir, $nTVYear)
         	$fScore = floatval($arTmp[2]);
         	 
             $arTmp1 = explode("_", $szTestKeyFrameID);
-        	if($nTVYear != 2013)
+        	if($nTVYear < 2013)
         	{
                 $szShotID = trim($arTmp1[0]);
         	}
