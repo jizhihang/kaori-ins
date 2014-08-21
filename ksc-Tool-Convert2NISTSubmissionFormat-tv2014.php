@@ -16,9 +16,27 @@ require_once "ksc-AppConfig.php";
 
 $arRunList = array();
 
-$arRunList["NII-UIT.Sakura.Saigon"]['ResultDir'] = "R0_tv2013.surrey.hard.soft+DPM+RANSAC";  // dir name in result/ 
-$arRunList["NII-UIT.Sakura.Saigon"]['Desc'] = "Fusion of BOW+DPM+RANSAC: BoW (HesAff - 1M codebook, hard-DB.soft-QUERY assignment, soft assignment-3NN), DPM (voc-release5, default setting- 2comps-8parts), FACE (Viola-Jones Face Detector, VGG-Face Feature, L1-dist).";
-$arRunList["NII-UIT.Sakura.Saigon"]['Priority'] = 2; 
+/*
+// base = fusion of surrey.hard.soft + CZBest + DPM.surrey.hard.soft[1-1-1]
+$arRunList["NII-UIT.Momiji.Tiger"]['ResultDir'] = "R0_tv2013.fusion-surrey.hard.soft+DPM+RANSAC+CZB+FACE[1000-1]";  // dir name in result/
+$arRunList["NII-UIT.Momiji.Tiger"]['Desc'] = "Fusion of BOW+DPM+RANSAC: BoW (surrey.hesaff.hard.soft + CZBest, DPM (voc-release5, 2comps-8parts), FACE (surrey.hard.soft - VGG).";
+$arRunList["NII-UIT.Momiji.Tiger"]['Priority'] = 3;
+
+// base = fusion of surrey.hard.soft + DPM.surrey.hard.soft[2-1]
+$arRunList["NII-UIT.Sakura.Dragon"]['ResultDir'] = "R0_tv2013.surrey.hard.soft+DPM+RANSAC";  // dir name in result/
+$arRunList["NII-UIT.Sakura.Dragon"]['Desc'] = "Fusion of BOW+DPM+RANSAC: BoW (surrey.hesaff.hard.soft, DPM (voc-release5, 2comps-8parts).";
+$arRunList["NII-UIT.Sakura.Dragon"]['Priority'] = 2;
+
+// base = fusion of surrey.soft.soft + perdoch.soft.soft + DPM.surrey.soft.soft[2-1-1]
+$arRunList["NII-UIT.Tokyo.Saigon"]['ResultDir'] = "R0_tv2013.surrey.soft.soft+DPM+RANSAC";  // dir name in result/
+$arRunList["NII-UIT.Tokyo.Saigon"]['Desc'] = "Fusion of BOW+DPM+RANSAC: BoW (surrey.hesaff.soft.soft + perdoch.hesaff.soft.soft, DPM (voc-release5, 2comps-8parts).";
+$arRunList["NII-UIT.Tokyo.Saigon"]['Priority'] = 1;
+*/
+
+// base = fusion of surrey.soft.soft + perdoch.soft.soft + DPM.surrey.soft.soft[2-1-1]
+$arRunList["NII.D-T-Th-S-C"]['ResultDir'] = "R1_tv2014.fusion-surrey.soft.soft+DPM+RANSAC+runE1[1-1]";  // dir name in result/
+$arRunList["NII.D-T-Th-S-C"]['Desc'] = "Fusion of surrey.soft.soft+DPM+RANSAC+runE1[1-1].";
+$arRunList["NII.D-T-Th-S-C"]['Priority'] = 8;
 
 $szAllSubmissionDir = sprintf("%s/result/tv2014/test2014/NISTSubmission", $gszRootBenchmarkDir);
 
@@ -41,8 +59,8 @@ foreach($arRunList as $szSysID =>$arInfo)
 	//<videoSearchRunResult pType="F"  pid="SiriusCyberCo" priority="2" condition="NO" exampleSet="C"
 	//desc="This automatic run uses algorithm 1" >
 	
-	$arFinalNISTOutput[] = sprintf("<videoSearchRunResult pType=\"F\"  pid=\"%s\" priority=\"%d\" condition=\"NO\" exampleSet=\"D\" 
-	desc=\"%s\" >", $szSysID, $nPriority, $szSysDesc);
+	$arFinalNISTOutput[] = sprintf("<videoSearchRunResult pType=\"F\"  pid=\"NII\" priority=\"%d\" condition=\"NO\" exampleSet=\"D\" 
+	desc=\"%s\" >", $nPriority, $szSysDesc);
 
 	// for each query
 	for($nQueryID=9099; $nQueryID<=9128; $nQueryID++)
@@ -88,7 +106,7 @@ foreach($arRunList as $szSysID =>$arInfo)
 	saveDataFromMem2File($arFinalNISTOutput, $szFPOutputFN, "wt");
 	
 	// make a copy to AllSubmissionDir
-	$szFPOutputFN = sprintf("%s/%s.R%s.xml", $szAllSubmissionDir, $szSysID, $nPriority);
+	$szFPOutputFN = sprintf("%s/%s.D%s.xml", $szAllSubmissionDir, $szSysID, $nPriority);
 	saveDataFromMem2File($arFinalNISTOutput, $szFPOutputFN, "wt");
 	
 }
