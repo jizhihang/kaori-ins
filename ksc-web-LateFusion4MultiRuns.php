@@ -7,8 +7,15 @@
  *
  * 		Copyright (C) 2010-2014 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 08 Aug 2014.
+ * 		Last update	: 17 Sep 2014.
  */
+
+// Update Sep 17, 2014
+// Fix bug of the case of lacking score of one shot in other list.
+// --> Previous Aug 08, 2014: assume R1 is the biggest list
+// --> case 1: (if one shot S2 in R2 is not in R1, then ignore score of S2 --> no use weight f2)
+// --> case 2: (if one shot S1 in R1 is not in R2, then no use weight f2) --> Found BUG (Sep 17, 2014)
+// --> Now Sep 17, 2014 --> if case 2, use f2*fMinScore of R2
 
 // Update Jul 11, 2014
 /**
@@ -178,8 +185,8 @@ for ($nQueryID = $nQueryIDStart; $nQueryID <= $nQueryIDEnd; $nQueryID ++) {
     execSysCmd($szCmdLine);
     
     $szFPOutputFN = sprintf("%s/%s.rank", $szQueryResultDir1, $szQueryIDz);
-    //printf("<P>****** %s", $szFPOutputFN);
-    //exit("<P>******** DEBUG *******");
+    // printf("<P>****** %s", $szFPOutputFN);
+    // exit("<P>******** DEBUG *******");
     $arRawListz = fuseRankedList($szQueryIDz, $nNormMethod, $arRunList, $arWeightList, $szResultDir, $nTVYear);
     $arRawList = array();
     $nCount = 0;
@@ -202,7 +209,6 @@ for ($nQueryID = $nQueryIDStart; $nQueryID <= $nQueryIDEnd; $nQueryID ++) {
     $szCmdLine = sprintf("chmod 777 %s", $szFPScoreOutputFN);
     execSysCmd($szCmdLine);
 }
-
 
 // update Jul 11, 2014
 $szFPOutputFN = sprintf("%s/%s.log", $szQueryResultDir1, $szOutRunID);
@@ -283,8 +289,8 @@ function fuseRankedList($szQueryIDz, $nNormMethod, $arRunList, $arWeightList, $s
     $arResultRankList = array();
     $nRound = 1;
     
-    //print_r($arResultDirList);
-    //exit();
+    // print_r($arResultDirList);
+    // exit();
     // first - compute shot score = max scores of keyframes
     $arTmpList = array();
     foreach ($arResultDirList as $szResultDir) {
@@ -321,57 +327,71 @@ function fuseRankedList($szQueryIDz, $nNormMethod, $arRunList, $arWeightList, $s
         $nCount = 0;
         $fSum = 0;
         $fSumSq = 0;
+        
+        $fMin = 1E10;
+        $fMax = - 1E10;
         foreach ($arRankList as $szShotID => $fScore) {
             $fSum += $fScore;
             $fSumSq += $fScore * $fScore;
             $nCount ++;
+            
+            $fMin = min($fMin, $fScore);
+            $fMax = max($fMax, $fScore);
         }
         $fMean = $fSum / $nCount;
         $fStd = $fSumSq / $nCount - $fMean * $fMean;
         $fStd = sqrt($fStd);
         $arLog[] = sprintf("<P>QueryID = %s - Mean = %0.4f - Std = %0.4f - Path: %s<BR>\n", $nQueryID, $fMean, $fStd, $szResultDir);
-        // then fuse scores - before fusion, normalize scores
-        foreach ($arRankList as $szShotID => $fScore) {
-            
-            if ($nRound == 1) {
-                if (isset($arResultRankList[$szShotID]["score"])) {
-                    exit("Serious ERROR - BUGGY!\n");
-                } else {
-                    if ($nNormMethod == 0) {
-                        $arResultRankList[$szShotID]["score"] = $arWeightList[$nRound - 1] * normScoreSigmoid($fScore);
-                    }
-                    
-                    if ($nNormMethod == 1) {
-                        $arResultRankList[$szShotID]["score"] = $arWeightList[$nRound - 1] * normScoreZMethod($fScore, $fMean, $fStd);
-                    }
-                    
-                    $arResultRankList[$szShotID]["weight"] = $arWeightList[$nRound - 1];
+        
+        // assign scores of the first ranked list
+        
+        if ($nRound == 1) {
+            foreach ($arRankList as $szShotID => $fScore) {
+                if ($nNormMethod == 0) {
+                    $arResultRankList[$szShotID]["score"] = $arWeightList[$nRound - 1] * normScoreSigmoid($fScore);
                 }
-            } else {
                 
-                if (isset($arResultRankList[$szShotID]["score"])) {
-                    if ($nNormMethod == 0) {
-                        $arResultRankList[$szShotID]["score"] += $arWeightList[$nRound - 1] * normScoreSigmoid($fScore);
-                    }
-                    if ($nNormMethod == 1) {
-                        $arResultRankList[$szShotID]["score"] += $arWeightList[$nRound - 1] * normScoreZMethod($fScore, $fMean, $fStd);
-                    }
-                    $arResultRankList[$szShotID]["weight"] += $arWeightList[$nRound - 1];
-                } else {
-/*                    
-                    if ($nNormMethod == 0) {
-                        $arResultRankList[$szShotID]["score"] = $arWeightList[$nRound - 1] * normScoreSigmoid($fScore);
-                    }
-                    
-                    if ($nNormMethod == 1) {
-                        $arResultRankList[$szShotID]["score"] = $arWeightList[$nRound - 1] * normScoreZMethod($fScore, $fMean, $fStd);
-                    }
-                    
-                    $arResultRankList[$szShotID]["weight"] = $arWeightList[$nRound - 1];
-*/                    
+                if ($nNormMethod == 1) {
+                    $arResultRankList[$szShotID]["score"] = $arWeightList[$nRound - 1] * normScoreZMethod($fScore, $fMean, $fStd);
                 }
-                    
+                
+                $arResultRankList[$szShotID]["weight"] = $arWeightList[$nRound - 1];
             }
+/*            
+            $arKeys = array_keys($arResultRankList);
+            
+            for ($k = 0; $k < 10; $k ++) {
+                printf("<BR>[%d][%d].%s - %0.4f - %d\n", $nRound, $k, $arKeys[$k], $arResultRankList[$arKeys[$k]]["score"], $arResultRankList[$arKeys[$k]]["weight"]);
+            }
+*/            
+        } else {
+            // iterate over $arResultRankList
+            $arKeys = array_keys($arResultRankList);
+            $nRankz = 1;
+            $nDocCount = sizeof($arKeys);
+            foreach ($arKeys as $szShotID) {
+                if (isset($arRankList[$szShotID])) { // check whether it occurs in ranked list 2, 3, etc
+                    $fScore = $arRankList[$szShotID];
+                } else {
+                    //$fScore = 0; // --> worse than $fScore = $fMin
+                    $fScore = $fMin; // AD-HOC - ah
+                    // $fScore = $fMin*(1.0 - 1.0*$nRankz/$nDocCount); // estimate true score using fMin and nRankz --> worst than $fScore = $fMin
+                }
+                if ($nNormMethod == 0) {
+                    $arResultRankList[$szShotID]["score"] += $arWeightList[$nRound - 1] * normScoreSigmoid($fScore);
+                }
+                if ($nNormMethod == 1) {
+                    $arResultRankList[$szShotID]["score"] += $arWeightList[$nRound - 1] * normScoreZMethod($fScore, $fMean, $fStd);
+                }
+                $arResultRankList[$szShotID]["weight"] += $arWeightList[$nRound - 1];
+                
+                $nRankz++;
+            }
+/*            
+            for ($k = 0; $k < 10; $k ++) {
+                printf("<BR>[%d][%d].%s - %0.4f - %d\n", $nRound, $k, $arKeys[$k], $arResultRankList[$arKeys[$k]]["score"], $arResultRankList[$arKeys[$k]]["weight"]);
+            }
+*/            
         }
         $nRound ++;
     }
@@ -397,7 +417,7 @@ function normScoreSigmoid($fScore)
 function normScoreZMethod($fScore, $fMean, $fStd)
 {
     $fReturn = ($fScore - $fMean) / ($fStd + 1); // $fStd+1 to avoid error of dividing to zero
-                                             
+                                                 
     // printf("<P>Score = %0.4f - Norm Score = %0.4f <BR>\n", $fScore, $fReturn);exit();
     
     return $fReturn;
