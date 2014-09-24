@@ -1,25 +1,48 @@
 function [score, new_output_img, nshares_fg, nshares_bg] = find_pair_matching_RANSAC(data_name, test_pat, query_pat, qr_image, query_index, topic_id, db_image, frame_id, output_image, runID, frame_quant_info, query_filenames, topic_bows, bins, clip_frame, clip_kp)
-% Example run:
-% find_pair_matching_set2set_RANSAC('tv2014' , 'test2014', 'query2014' , '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/tmp/RANSAC-9102-shot174_350/zz9102-shot174_350-1.logz', 'R0_tv2013.surrey.hard.soft+DPM+RANSAC', '9102' , 'shot174_350', '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/tmp/RANSAC-9102-shot174_350')
+qr_image, query_index, topic_id, db_image, frame_id
 
+if nargin == 0 % default data used for testing
+	qr_image = '/net/per610a/export/das11g/caizhizhu/ins/ins2013/query/frames_png/9069/9069.2.src.png';
+	db_image = '/net/per610a/export/das11g/caizhizhu/ins/ins2013/frames_png/shot101_1118/01:00:26.52_000002.png';
+	runID = '3.1.run_query2013-new_test2013-new_TiepBoW_10K';
+end
 % base dir
 root_dir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014';
 work_dir_test = fullfile(root_dir, 'feature/keyframe-5', data_name, test_pat); % result/tv2014/test2014
 work_dir_query = fullfile(root_dir, 'feature/keyframe-5', data_name, query_pat); % result/tv2014/test2014
 
+if ~isempty(strfind(runID, 'surrey'))
+	db_quant_dir = fullfile(work_dir_test, 'hesaff_rootsift_noangle_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_1_sub_quant');
+	db_frame_info_dir = fullfile(work_dir_test, 'hesaff_rootsift_noangle_mat');
+	qr_raw_bow = fullfile(work_dir_query, 'bow.db_1_qr_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat');
+else
+	db_quant_dir = fullfile(work_dir_test, 'perdoch_hesaff_rootsift_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_3_sub_quant');
+	db_frame_info_dir = fullfile(work_dir_test, 'perdoch_hesaff_rootsift_mat');
+	qr_raw_bow = fullfile(work_dir_query, 'bow.db_1_qr_fg+bg_0.1_perdoch_hesaff_rootsift_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat');
+end
+
+% base dir
+result_dir = fullfile(root_dir, 'result/ins-dpm', data_name, test_pat);
+base_config_dir = fullfile(result_dir, query_index);
 % parse shot_id + frame name
 re = [query_pat '/(.*)/(.*.png)'];
 [rematch, retok] = regexp(qr_image, re, 'match', 'tokens');
+
 qr_shotID = retok{1}{1};
 qr_fname = retok{1}{2};
 
 re = [test_pat '/(.*)/(.*\.png)'];
+db_image
 [rematch, retok] = regexp(db_image, re, 'match', 'tokens');
 db_shotID = retok{1}{1};
 db_fname = retok{1}{2};
 
 
 % get list of visual words of db_image
+db_quant_file = fullfile(db_quant_dir, [db_shotID,'.mat']);
+%load(db_quant_file);		% dung de lay thong tin bins
+db_frame_info_file = fullfile(db_frame_info_dir, [db_shotID,'.mat']);
+%load(db_frame_info_file);	% dung de lay thong tin clip_frame
 nframe_per_shot = length(clip_frame);
 % Tim frame_id cua db_image trong danh sach frame cua db_shotID
 for db_frame_id = 1:nframe_per_shot+1
@@ -38,21 +61,39 @@ end
 % get list of visual words of qr_image
 %load(qr_raw_bow); 			% Dung de lay thong tin query_filenames va frame_quant_info
 nquery = length(query_filenames);
+is_break = false;
+re = [query_pat '/(.*)/(.*.png)'];
+for query_index = 1:nquery
+	if length(query_filenames{query_index}) == 1
+		query_filenames{query_index} = query_filenames{query_index}{1};
+	end
+	for topic_id = 1:length(query_filenames{query_index})
+		[rematch, retok] = regexp(query_filenames{query_index}{topic_id}, re, 'match', 'tokens');
+		if strcmp(retok{1}{1}, qr_shotID) && strcmp(retok{1}{2}, qr_fname)
+			is_break = true;
+			break;
+		end
+	end
+	if is_break
+		break; 
+	end
+end
 
 qr_words_id_fg = [];
 qr_words_id_bg = [];
 qr_keypoint_fg = [];
 qr_keypoint_bg = [];
 
-fg_idx = frame_quant_info{query_index}.fg_index{topic_id};
-bg_idx = frame_quant_info{query_index}.bg_index{topic_id};
-qr_words_id_fg = frame_quant_info{query_index}.valid_bins{topic_id}(:,fg_idx);
-qr_words_id_bg = frame_quant_info{query_index}.valid_bins{topic_id}(:,bg_idx);
-qr_keypoint_fg = frame_quant_info{query_index}.query_kp{topic_id}(:, fg_idx);
-qr_keypoint_bg = frame_quant_info{query_index}.query_kp{topic_id}(:, bg_idx);
-qr_keypoint_fg(1:2,:) = round(qr_keypoint_fg(1:2,:));
-qr_keypoint_bg(1:2,:) = round(qr_keypoint_bg(1:2,:));
-
+if is_break
+	fg_idx = frame_quant_info{query_index}.fg_index{topic_id};
+	bg_idx = frame_quant_info{query_index}.bg_index{topic_id};
+	qr_words_id_fg = frame_quant_info{query_index}.valid_bins{topic_id}(:,fg_idx);
+	qr_words_id_bg = frame_quant_info{query_index}.valid_bins{topic_id}(:,bg_idx);
+	qr_keypoint_fg = frame_quant_info{query_index}.query_kp{topic_id}(:, fg_idx);
+	qr_keypoint_bg = frame_quant_info{query_index}.query_kp{topic_id}(:, bg_idx);
+	qr_keypoint_fg(1:2,:) = round(qr_keypoint_fg(1:2,:));
+	qr_keypoint_bg(1:2,:) = round(qr_keypoint_bg(1:2,:)); 
+end
 
 % find shared word between foreground/background of query image and db image
 [shared_words_fg, iqr_fg, idb_fg] = intersect(qr_words_id_fg(:), db_words_id(1,:));
@@ -85,12 +126,7 @@ frame1_bg = [qr_keypoint_bg(:, iqr_bg)];
 frame2_bg = [db_keypoint(:,idb_bg)];
 matches_bg = [1:size(frame1_bg,2); 1:size(frame1_bg,2)];
 
-% DPM base dir
-DPM_model_dir = fullfile(root_dir, 'model/ins-dpm', data_name, query_pat);
-result_dir = fullfile(root_dir, 'result', data_name, test_pat);
-base_config_dir = fullfile(DPM_model_dir, qr_shotID);
-
-if ~isempty(strfind(runID, '.DPM.'))
+if ~isempty(strfind(runID, 'combine_DPM'))
 	%% Plot DPM bounding box
 	% Load DPM scale factor
 	scale_factor_file = fullfile(base_config_dir, [qr_shotID '.cfg']);
@@ -102,7 +138,7 @@ if ~isempty(strfind(runID, '.DPM.'))
 
 	% Find VideoID that contains db_shot_id
 	for vid = 1:999
-		fid = fopen(fullfile(result_dir, runID, qr_shotID, ['TRECVID2013_',num2str(vid),'.res']), 'r');
+		fid = fopen(fullfile(result_dir, runID, 'tv2013', 'test2013-new', qr_shotID, ['TRECVID2013_',num2str(vid),'.res']), 'r');
 		if fid == -1
 			continue;
 		end
@@ -158,7 +194,7 @@ new_output_img = [];
 inliers_fg = [];
 inliers_bg = [];
 if size(frame1_fg, 2)>0
-	[inliers_fg, H] = geometricVerification(frame1_fg, frame2_fg, matches_fg, 'numRefinementIterations', 10);
+	[inliers_fg, H] = geometricVerification(frame1_fg, frame2_fg, matches_fg, 'numRefinementIterations', 10)
 	% draw shared words of foreground and db image
 	for i=1:length(inliers_fg)
 		x_qr = qr_keypoint_fg(2,iqr_fg(inliers_fg(i)));
@@ -172,7 +208,7 @@ if size(frame1_fg, 2)>0
 	end
 end
 if size(frame1_bg, 2) > 0
-	[inliers_bg, H] = geometricVerification(frame1_bg, frame2_bg, matches_bg, 'numRefinementIterations', 10);
+	[inliers_bg, H] = geometricVerification(frame1_bg, frame2_bg, matches_bg, 'numRefinementIterations', 10)
 	% draw shared words of background and db image
 	for i=1:length(inliers_bg)
 		x_qr = qr_keypoint_bg(2,iqr_bg(inliers_bg(i)));

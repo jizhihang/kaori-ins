@@ -56,6 +56,7 @@ for q_id = start_query_id:end_query_id
 	
 	% create folder containing result file for this video id
 	final_result_dir = fullfile(BASE_TMP_RANSAC_DIR, qr_shotID);
+	local_result_dir = fullfile(LOCAL_DIR, qr_shotID);
 	if ~exist(final_result_dir, 'dir')
 		try
 			mkdir(final_result_dir);
@@ -63,6 +64,15 @@ for q_id = start_query_id:end_query_id
 			fileattrib(final_result_dir, '+w', 'a');
 		catch
 			error('error creating final_result_dir');
+		end
+	end
+	if ~exist(local_result_dir, 'dir')
+		try
+			mkdir(local_result_dir);
+			% make folder writable by all users
+			fileattrib(local_result_dir, '+w', 'a');
+		catch
+			error('error creating local_result_dir');
 		end
 	end
 
@@ -107,6 +117,7 @@ for q_id = start_query_id:end_query_id
 		% create result file at temporary directory
 		video_id = ['TRECVID2013_' int2str(id)];
 		result_file = fullfile(final_result_dir, [video_id '.mat']);
+		local_result_file = fullfile(local_result_dir, [video_id '.mat']);
 		
 		% RANSAC
 		if exist(result_file, 'file')
@@ -133,7 +144,9 @@ for q_id = start_query_id:end_query_id
 				db_set=clip_frame;
 				inliers_struct.frame_name{shot_idx} = db_set;
 				inliers_struct.fg_inlier_loc{shot_idx} = cell(1,nframe_per_shot);
+				inliers_struct.fg_inlier_id{shot_idx} = cell(1,nframe_per_shot);
 				inliers_struct.bg_inlier_loc{shot_idx} = cell(1,nframe_per_shot);
+				inliers_struct.bg_inlier_id{shot_idx} = cell(1,nframe_per_shot);
 				inliers_struct.fg_bg_inlier{shot_idx} = cell(1,nframe_per_shot);
 				
 				% Use RANSAC to find no. of inliers
@@ -142,6 +155,9 @@ for q_id = start_query_id:end_query_id
 					db_words_id = bins{db_frame_id};
 					db_keypoint = round(clip_kp{db_frame_id}(:,:));
 					inliers_struct.fg_inlier_loc{shot_idx}{db_frame_id} = cell(1, length(query_set));
+					inliers_struct.fg_inlier_id{shot_idx}{db_frame_id} = cell(1, length(query_set));
+					inliers_struct.bg_inlier_loc{shot_idx}{db_frame_id} = cell(1, length(query_set));
+					inliers_struct.bg_inlier_id{shot_idx}{db_frame_id} = cell(1, length(query_set));
 					
 					for topic_id = 1:length(query_set)	% For all frames of a query
 						% parse shot_id + frame name
@@ -171,6 +187,7 @@ for q_id = start_query_id:end_query_id
 							[inliers, H] = geometricVerification(frame1, frame2, matches, 'numRefinementIterations', 10);
 							%num_bg_inliers = num_bg_inliers+length(inliers);
 							inliers_struct.fg_inlier_loc{shot_idx}{db_frame_id}{topic_id} = frame2(1:2,inliers); % Chi lay nhung points tren db image
+							inliers_struct.fg_inlier_id{shot_idx}{db_frame_id}{topic_id} = shared_words_fg(inliers); % Chi lay nhung points tren db image
 						end
 						
 						% RANSAC on background only
@@ -181,22 +198,24 @@ for q_id = start_query_id:end_query_id
 							[inliers, H] = geometricVerification(frame1, frame2, matches, 'numRefinementIterations', 10);
 							%num_bg_inliers = num_bg_inliers+length(inliers);
 							inliers_struct.bg_inlier_loc{shot_idx}{db_frame_id}{topic_id} = frame2(1:2,inliers); % Chi lay nhung points tren db image
+							inliers_struct.bg_inlier_id{shot_idx}{db_frame_id}{topic_id} = shared_words_bg(inliers); % Chi lay nhung points tren db image
 						end
 						% RANSAC on foreground and background
-						frame1 = [qr_keypoint_fg(:, iqr_fg) qr_keypoint_bg(:, iqr_bg)];
-						frame2 = [db_keypoint(:,idb_fg) db_keypoint(:,idb_bg)];
-						matches = [1:size(frame1,2); 1:size(frame1,2)];
+						%frame1 = [qr_keypoint_fg(:, iqr_fg) qr_keypoint_bg(:, iqr_bg)];
+						%frame2 = [db_keypoint(:,idb_fg) db_keypoint(:,idb_bg)];
+						%matches = [1:size(frame1,2); 1:size(frame1,2)];
 						
-						if size(frame1, 2) > 0
-							[inliers, H] = geometricVerification(frame1, frame2, matches, 'numRefinementIterations', 10);
-							inliers_struct.fg_bg_inlier{shot_idx}{db_frame_id}{topic_id}.fg_loc = frame2(1:2,inliers<=length(iqr_fg)); % Chi lay nhung points tren db image
-							inliers_struct.fg_bg_inlier{shot_idx}{db_frame_id}{topic_id}.bg_loc = frame2(1:2,inliers<=length(iqr_bg)); % Chi lay nhung points tren db image
-						end
+						%if size(frame1, 2) > 0
+						%	[inliers, H] = geometricVerification(frame1, frame2, matches, 'numRefinementIterations', 10);
+						%	inliers_struct.fg_bg_inlier{shot_idx}{db_frame_id}{topic_id}.fg_loc = frame2(1:2,inliers<=length(iqr_fg)); % Chi lay nhung points tren db image
+						%	inliers_struct.fg_bg_inlier{shot_idx}{db_frame_id}{topic_id}.bg_loc = frame2(1:2,inliers<=length(iqr_bg)); % Chi lay nhung points tren db image
+						%end
 					end
 				end
 				% free memory
 			end
-			save(result_file, 'inliers_struct', '-v6');
+			save(local_result_file, 'inliers_struct', '-v6');
+			unix(['mv ' local_result_file ' ' result_file]);
 			fileattrib(result_file, '+w', 'a');
 		end
 	end

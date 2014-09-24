@@ -43,7 +43,7 @@ end
 
 % get list of visual words of qr_image
 re = ['/' qr_shotID '/(.*.png)'];		
-
+query_index = [];
 lst_qr_frame_name = cell(0);
 count = 0;
 for query_id = 1:nquery
@@ -51,9 +51,10 @@ for query_id = 1:nquery
 		query_filenames{query_id} = query_filenames{query_id}{1};
 	end
 	for topic_id = 1:length(query_filenames{query_id})
-		
+	
 		[rematch, retok] = regexp(query_filenames{query_id}{topic_id}, re, 'match', 'tokens');
 		if ~isempty(retok)
+			query_index = query_id;
 			count = count+1;
 			lst_qr_frame_name{count} = query_filenames{query_id}{topic_id};
 		end
@@ -85,7 +86,7 @@ for i = 1:length(lst_qr_frame_name)
 		output_image = fullfile(output_dir, [qr_fname '_' db_shotID '_' db_fname]);
 		
 		%find_pair_matching_RANSAC(lst_qr_frame_name{i}, db_img, output_image, runID);
-		[score, new_output_img, nfg, nbg] = find_pair_matching_RANSAC(data_name, test_pat, query_pat, lst_qr_frame_name{i}, query_id, i, db_img, j, output_image, runID, frame_quant_info, query_filenames, topic_bows, bins, clip_frame, clip_kp);
+		[score, new_output_img, nfg, nbg] = find_pair_matching_RANSAC(data_name, test_pat, query_pat, lst_qr_frame_name{i}, query_index, i, db_img, j, output_image, runID, frame_quant_info, query_filenames, topic_bows, bins, clip_frame, clip_kp);
 		if ~isempty(new_output_img)
 			num_output = num_output+1;
 			[pathstr,name,ext] = fileparts(new_output_img);

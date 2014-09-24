@@ -1,49 +1,126 @@
-function rerank_using_DPM_and_RANSAC(start_video_id, end_video_id)
-start_query_id = 9099;
-end_query_id = 9128;
-is_compute_RANSAC = 1;
+function rerank_using_RANSAC_fg_and_bg(start_video_id, end_video_id)
+start_query_id = 9069;
+end_query_id = 9098;
+is_compute_RANSAC = 0;
 debug_mode = false;
-is_rerank = 0;
 is_using_RANSAC = 1;
+if nargin == 0
+	start_video_id = 511;
+	end_video_id = 511;
+	start_query_id = 9071;
+	end_query_id = 9071;
+	debug_shot = 'shot121_200';	% truong hop nay sai, check tai sao fg_locs tang nhanh sau 2 vong lap
+	
+	%start_video_id = 676;
+	%end_video_id = 676;
+	%start_query_id = 9071;
+	%end_query_id = 9071;
+	%debug_shot = 'shot163_376';
+	
+	%start_video_id = 450;
+	%end_video_id = 450;
+	%start_query_id = 9069;
+	%end_query_id = 9069;
+	%debug_shot = 'shot105_834';
+	
+	%start_video_id = 437;
+	%end_video_id = 437;
+	%start_query_id = 9069;
+	%end_query_id = 9069;
+	%debug_shot = 'shot101_1124';
+	
+	%start_video_id = 156;
+	%end_video_id = 156;
+	%start_query_id = 9069;
+	%end_query_id = 9069;
+	%debug_shot = 'shot37_262';
+	
+	% Push UP
+	start_video_id = 876;
+	end_video_id = 876;
+	start_query_id = 9069;
+	end_query_id = 9069;
+	debug_shot = 'shot214_1709';
+	
+	%start_video_id = 446;
+	%end_video_id = 446;
+	%start_query_id = 9069;
+	%end_query_id = 9069;
+	%debug_shot = 'shot104_1334';
+	
+	%start_video_id = 251;
+	%end_video_id = 251;
+	%start_query_id = 9069;
+	%end_query_id = 9069;
+	%debug_shot = 'shot57_1251';
+
+	%start_video_id = 284;
+	%end_video_id = 284;
+	%start_query_id = 9069;
+	%end_query_id = 9069;
+	%debug_shot = 'shot65_618';
+	
+	%start_video_id = 615;
+	%end_video_id = 615;
+	%start_query_id = 9069;
+	%end_query_id = 9069;
+	%debug_shot = 'shot148_1058';
+	
+	% Push DOWN
+	start_video_id = 804;
+	end_video_id = 804;
+	start_query_id = 9069;
+	end_query_id = 9069;
+	debug_shot = 'shot196_1078';
+	
+	%start_video_id = 917;
+	%end_video_id = 917;
+	%start_query_id = 9069;
+	%end_query_id = 9069;
+	%debug_shot = 'shot224_1609';
+	
+	%start_video_id = 708;
+	%end_video_id = 708;
+	%start_query_id = 9069;
+	%end_query_id = 9069;
+	%debug_shot = 'shot171_181';
+	
+	%start_video_id = 745;
+	%end_video_id = 745;
+	%start_query_id = 9069;
+	%end_query_id = 9069;
+	%debug_shot = 'shot181_1784';
+	
+	debug_mode = true;
+end
 
 %% base level path configuration
 ex_bounding_box = 0;
-RESULT_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/result/tv2014/test2014/';
-LOOK_UP_DIR = fullfile(RESULT_DIR, 'R2_tv2013.surrey.hard.soft.latefusion.asym_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_v1_f1_1_avg_pooling_full_notrim_clip_idf_nonorm_kdtree_3_0.0125_-1_dist_avg_autoasym_ivf_0.5');
-BASE_TMP_RANSAC_DIR = fullfile(RESULT_DIR, 'R4_rawRANSAC_tv2013.surrey.hard.soft.latefusion.asym');
-BASE_RESULT_DIR = fullfile(RESULT_DIR, 'R1_DPM+RANSAC_max_remove_epsilon_remove_accumulation_nd_nfg_tv2013.surrey.hard.soft.latefusion.asym');
-LOG_FILE = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/rerank_using_DPM_RANSAC.txt';
+LOOK_UP_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/2.1.run_query2013-new_test2013-new_TiepBoW_No1_10K/tv2013/test2013-new';
+BASE_RESULT_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/2.3.run_query2013-new_test2013-new_TiepBoW_No1_10K_combine_RANSAC_fg_and_bg/tv2013/test2013-new';
+BASE_TMP_RANSAC_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/result/2.7.run_query2013-new_test2013-new_TiepBoW_No1_10K_combine_DPM_RANSAC/tv2013/test2013-new';
+LOG_FILE = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/log/rerank_using_DMP.txt';
 BASE_DIR = '/net/per610a/export/das11f/ledduy/trecvid-ins-2013/';
 BASE_CONFIG_DIR = [BASE_DIR 'metadata/keyframe-5/tv2013/']; 
 BASE_LOOKUP_PATH = [BASE_CONFIG_DIR 'test2013-new/'];
 LOCAL_DIR = '/tmp/dpm/';
 
 % Change when using different features BoW
-%qr_raw_bow = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/query/bow/fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat';
-qr_raw_bow = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/feature/keyframe-5/tv2014/query2014/bow.db_1_qr_fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat';
-db_quant_dir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/feature/keyframe-5/tv2014/test2014/hesaff_rootsift_noangle_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_1_sub_quant';
-db_frame_info_dir = '/net/per610a/export/das11f/ledduy/trecvid-ins-2014/feature/keyframe-5/tv2014/test2014/hesaff_rootsift_noangle_mat';
+qr_raw_bow = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/query/bow/fg+bg_0.1_hesaff_rootsift_noangle_akmeans_1000000_100000000_50_kdtree_8_800_kdtree_3_0.0125/raw_bow.mat';
+db_quant_dir = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/hesaff_rootsift_noangle_cluster/akmeans_1000000_100000000_50/kdtree_8_800/v1_f1_1_sub_quant';
+db_frame_info_dir = '/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/INS2013/hesaff_rootsift_noangle_mat';
 addpath('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/code');
 addpath('/net/per610a/export/das11f/ledduy/plsang/nvtiep/INS/code/web');
 run('/net/per610a/export/das11f/ledduy/plsang/nvtiep/libs/vlfeat-0.9.18/toolbox/vl_setup.m');
 
+% Create result folder
+if ~exist(BASE_RESULT_DIR, 'dir')
+	mkdir(BASE_RESULT_DIR);
+	fileattrib(BASE_RESULT_DIR, '+w', 'a');
+end
 
 % Run RANSAC for fg only, bg only, both bg and fg
 if is_compute_RANSAC==1
-	% Create directory for saving raw RANSAC data
-	if ~exist(BASE_TMP_RANSAC_DIR, 'dir')
-		try
-			mkdir(BASE_TMP_RANSAC_DIR);
-			% make folder writable by all users
-			fileattrib(BASE_TMP_RANSAC_DIR, '+w', 'a');
-		catch
-			error('Error creating BASE_TMP_RANSAC_DIR');
-		end
-	end
-	% Load all query
-	load(qr_raw_bow); 			% Dung de lay thong tin query_filenames va frame_quant_info
-	nquery = length(query_filenames);
-	
 	for q_id = start_query_id:end_query_id
 		qr_shotID = num2str(q_id);
 		
@@ -60,16 +137,18 @@ if is_compute_RANSAC==1
 		end
 
 		% get list of query images
-		re = ['/' qr_shotID '/(.*.png)'];		
+		re = 'frames_png/(.*)/(.*.png)';		
+		load(qr_raw_bow); 			% Dung de lay thong tin query_filenames va frame_quant_info
+		nquery = length(query_filenames);
 		query_set = cell(0);
 		count = 0;
 		query_id = -1;
 		for i = 1:nquery	% find all frames of given query
 			for topic_id = 1:length(query_filenames{i})
 				[rematch, retok] = regexp(query_filenames{i}{topic_id}, re, 'match', 'tokens');
-				if ~isempty(retok)
+				if strcmp(qr_shotID, retok{1}{1})
 					count = count+1;
-					query_set{count} = query_filenames{i}{topic_id};
+					query_set{count} = fullfile('/net/per610a/export/das11g/caizhizhu/ins/ins2013/query/frames_png', retok{1}{1}, retok{1}{2});
 					query_id = i;
 				end
 			end
@@ -105,7 +184,6 @@ if is_compute_RANSAC==1
 			if exist(result_file, 'file')
 				continue;
 			else
-				clear inliers_struct
 				% inliers_struct{ shot_list frame_name fg_inlier_loc bg_inlier_loc fg_bg_inlier{fg_loc bg_loc} } Luu trong file "TRECVID2013_XXX.mat"
 				inliers_struct.shot_list = db_shot_list;
 				nshot = length(inliers_struct.shot_list);
@@ -114,14 +192,12 @@ if is_compute_RANSAC==1
 				
 				for shot_idx=1:nshot	% For all shots in the res file
 					db_shotID = inliers_struct.shot_list{shot_idx};
-					
 					% get list of visual words of db_image
 					db_quant_file = fullfile(db_quant_dir, [db_shotID,'.mat']);
 					load(db_quant_file);		% dung de lay thong tin bins
 					db_frame_info_file = fullfile(db_frame_info_dir, [db_shotID,'.mat']);
 					load(db_frame_info_file);	% dung de lay thong tin clip_frame
 					nframe_per_shot = length(clip_frame);
-					
 					% Tim frame_id cua db_image trong danh sach frame cua db_shotID
 					db_set=clip_frame;
 					inliers_struct.frame_name{shot_idx} = db_set;
@@ -138,8 +214,8 @@ if is_compute_RANSAC==1
 						
 						for topic_id = 1:length(query_set)	% For all frames of a query
 							% parse shot_id + frame name
-							%[rematch, retok] = regexp(query_set{topic_id}, re, 'match', 'tokens');
-							%qr_fname = retok{1}{1};
+							[rematch, retok] = regexp(query_set{topic_id}, re, 'match', 'tokens');
+							qr_fname = retok{1}{2};
 							
 							% query image info
 							fg_idx = frame_quant_info{query_id}.fg_index{topic_id};
@@ -186,6 +262,8 @@ if is_compute_RANSAC==1
 								inliers_struct.fg_bg_inlier{shot_idx}{db_frame_id}{topic_id}.bg_loc = frame2(1:2,inliers<=length(iqr_bg)); % Chi lay nhung points tren db image
 							end
 						end
+						% write results
+						%fprintf(fout, '%s #$# %s #$# %f \n', [db_shotID '_KSC' db_fname], db_shotID, num_bg_inliers);
 					end
 					% free memory
 				end
@@ -194,16 +272,6 @@ if is_compute_RANSAC==1
 			end
 		end
 	end
-end
-
-if ~is_rerank
-	return;
-end
-
-% Create result folder
-if ~exist(BASE_RESULT_DIR, 'dir')
-	mkdir(BASE_RESULT_DIR);
-	fileattrib(BASE_RESULT_DIR, '+w', 'a');
 end
 
 if is_using_RANSAC
@@ -320,6 +388,7 @@ if is_using_RANSAC
 					%N_fg = N_fg+size(fg_kp,2);
 					%N_bg = N_bg+size(bg_kp,2); % version 2.0
 					N_bg = size(bg_kp,2);		% version 3.0
+					N_fg = size(fg_kp,2);		% version 4.0, bo DPM 
 					Nd = 0;
 					if ~isempty(fg_kp)
 						Nd = sum(fg_kp(1,:)>=left(frame_locs(frame_idx))&fg_kp(1,:)<=right(frame_locs(frame_idx))&...
@@ -331,7 +400,14 @@ if is_using_RANSAC
 					% N_bg = number of shares words in foreground region of query image and frames images				
 					%new_scores(end+1) = exp(Nd)*log2(max(2,N_bg))*P_score;				% Cong thuc goc
 					%new_scores(end+1) = (Nd+0.001)*log2(max(2,N_bg))*P_score; 	% binh thuong, co epsilon
-					new_scores(end+1) = max(1,Nd)*log2(max(2,N_bg))*P_score; 	% remove epsilon
+					%new_scores(end+1) = max(1,Nd)*log2(max(2,N_bg))*P_score; 	% remove epsilon
+					%new_scores(end+1) = max(1,N_fg)*log2(max(2,N_bg))*P_score; 	% remove DPM
+					%new_scores(end+1) = max(1,Nd)*max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 	% using both Nd and Nfg
+					%new_scores(end+1) = max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 			% using both Nd and Nfg 1
+					%new_scores(end+1) = max(1,Nd)*max(1,Nd)*max(1,N_fg)*log2(max(2,N_bg))*P_score; 	% using both Nd and Nfg 2
+					%new_scores(end+1) = max(1,Nd)*max(1,Nd)*max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 	% using both Nd and Nfg 3 
+					%new_scores(end+1) = max(1,Nd)*max(1,N_fg-Nd)*log2(max(2,N_bg))*P_score; 	% using both Nd and Nfg 4
+					new_scores(end+1) = N_fg*log2(max(2,N_bg)); 	% using N_fg and N_bg without using DPM and best fusion
 					%new_scores(end+1) = P_score; 								% fuse 2 : 1
 					
 					if debug_mode
@@ -404,16 +480,16 @@ else
 		fclose(fid);
 		
 		% get list of query images
-		re = ['/' qr_shotID '/(.*.png)'];		
+		re = 'frames_png/(.*)/(.*.png)';		
 		query_set = cell(0);
 		count = 0;
 		query_id = -1;
 		for i = 1:nquery	% find all frames of given query
 			for topic_id = 1:length(query_filenames{i})
 				[rematch, retok] = regexp(query_filenames{i}{topic_id}, re, 'match', 'tokens');
-				if ~isempty(retok)
+				if strcmp(qr_shotID, retok{1}{1})
 					count = count+1;
-					query_set{count} = query_filenames{i}{topic_id};
+					query_set{count} = fullfile('/net/per610a/export/das11g/caizhizhu/ins/ins2013/query/frames_png', retok{1}{1}, retok{1}{2});
 					query_id = i;
 				end
 			end
