@@ -245,7 +245,7 @@ function computeTVAveragePrecision(&$arAnnList, &$arScoreList, $nMaxDocs=2000)
 	$nHits = 0;
 	$nNumCounts = min($nMaxDocs, $nNumDocs);
 	
-	printf("MaxDocs: [%s] - NumDocs: [%s]", $nMaxDocs, $nNumDocs);
+	//printf("MaxDocs: [%s] - NumDocs: [%s]", $nMaxDocs, $nNumDocs);
 	
 	$arRecList = array();
 	$arPrecList = array();

@@ -320,7 +320,7 @@ $arOutput[] = sprintf("<P><H1>ShotID - %s</H1>\n", $szShotID);
 $nMatchingMethod = $_REQUEST['vMatchMethod'];
 $nMatchingMethod = 1; //default
 $arMatchingMethodDesc = array(
-//0 => "BOW", 
+0 => "BOW", 
 1 => "RANSAC");
 
 foreach($arMatchingMethodDesc as $nMatchingMethod => $szDesc)

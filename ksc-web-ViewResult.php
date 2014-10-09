@@ -146,6 +146,12 @@ foreach($arDirList as $szDirName)
 
 $szImgFormat = $arImgFormatLUT[$nTVYear]; // to support keyframes in png or jpg format
 
+$szTargetRunID = "";
+
+if(isset($_REQUEST['vRunID']))
+{
+    $szTargetRunID = $_REQUEST['vRunID'];
+}
 //print_r($arQueryListCount);
 // show form
 if($nAction == 1)
@@ -181,12 +187,20 @@ if($nAction == 1)
 	printf("<SELECT NAME='vRunID'>\n");
 	foreach($arDirList as $szRunID)
 	{
-	    if(!strstr($szRunID, $nTVYear))
+	    if($szTargetRunID != "")
 	    {
-//	        continue;
+	       // only ONE option
+	       if($szTargetRunID == $szRunID)
+	       {
+	           printf("<OPTION VALUE='%s'>%s</OPTION>\n", $szRunID, $szRunID);
+	           break;
+	       }    
 	    }
-	     
-	   printf("<OPTION VALUE='%s'>%s</OPTION>\n", $szRunID, $szRunID);
+
+	    else
+	    {
+	        printf("<OPTION VALUE='%s'>%s</OPTION>\n", $szRunID, $szRunID);  
+	    }
 	}
 	printf("</SELECT>\n");
 

@@ -187,7 +187,7 @@ foreach($arRunMAP as $szRunID => $fMAP)
 {
 	$arTmp = $arScoreBoard[$szRunID];
 	printf("<TR>\n");
-	printf("<TD> %s</TD>\n", substr($szRunID, 0, 100));
+	printf("<TD> %s</TD>\n", substr($szRunID, 0, 60));
 	printf("<TD> %0.2f </TD>\n", $arTmp["MAP"]);
 	foreach($arQueryList as $nQueryID => $fTmp)
 	{
