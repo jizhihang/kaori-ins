@@ -7,9 +7,12 @@
  *
  * 		Copyright (C) 2010-2013 Duy-Dinh Le.
  * 		All rights reserved.
- * 		Last update	: 06 Aug 2014.
+ * 		Last update	: 16 Apr 2015.
  */
 
+// 16 Apr 2015 
+// Adding graph view
+ 
 // 06 Aug 2014
 // Modify code because the dir structure is changed
 // Before: runID/tv2013/test2013
@@ -25,6 +28,9 @@
 require_once "ksc-AppConfig.php";
 require_once "ksc-Tool-EvalMAP.php";
 
+require_once ('./jpgraph-3.5.0b1/src/jpgraph.php');
+require_once ('./jpgraph-3.5.0b1/src/jpgraph_bar.php');
+require_once ('./jpgraph-3.5.0b1/src/jpgraph_line.php');
 
 ////////////////// START //////////////////
 
@@ -183,6 +189,8 @@ arsort($arRunMAP);
 //print_r($arRunMAP);
 
 //foreach($arScoreBoard as $szRunID => $arTmp)
+
+$ydata = array();
 foreach($arRunMAP as $szRunID => $fMAP)
 {
 	$arTmp = $arScoreBoard[$szRunID];
@@ -198,12 +206,100 @@ foreach($arRunMAP as $szRunID => $fMAP)
 		printf("<TD> <A TITLE=\"%s - %s - %s\" HREF=\"%s\" TARGET=_blank>%0.2f</A> </TD>\n", 
 		$szRunID, $arQueryListLUT[$nQueryID], $arQueryListCount[$nQueryID], 
 		$szURL, $arTmp[$nQueryID]);
+		
+		$ydata[$szRunID][$nQueryID] = $arTmp[$nQueryID];
 	}
 	printf("</TR>\n");
 
 }
 printf("</TABLE>\n");
 
+printf("<P><P>\n");
+
+// 16 Apr 2015
+// Adding graph view
+
+$nNumRuns = sizeof($arRunMAP);
+if($nNumRuns > 5)
+{
+	//exit(); // only view max 4 runs
+}
+
+// Create the graph. These two calls are always required
+
+$arKeyQueryList = array_keys($arQueryList);
+$xtickdata = array_values($arKeyQueryList);
+
+$arColorList = array("red", "aqua", "aquamarine4", "azure4", "bisque", "blue", "blueviolet", "brown", 
+"cadetblue", "chartreuse4", "darkolivegreen3", "darkorchid3", "hotpink3"); // http://jpgraph.net/download/manuals/chunkhtml/apd.html
+
+$arColorList = array("red", "aqua", "aquamarine4", "azure4", "bisque", "blue", "blueviolet", "brown", 
+"cadetblue", "chartreuse4", "darkolivegreen3", "darkorchid3", "hotpink3"); // http://jpgraph.net/download/manuals/chunkhtml/apd.html
+
+shuffle($arColorList);
+//print_r($arColorList);
+//print_r($xtickdata);
+$nWidth = 50*sizeof($xtickdata);  // 50
+$nHeight = 600;
+$graph = new Graph($nWidth,$nHeight);  // --> important (size, auto)
+$graph->SetScale('textlin'); // x-axis ~ text, y-axis ~ number
+// Add a drop shadow
+//$graph->SetShadow();
+
+$theme_class = new UniversalTheme;
+$graph->SetTheme($theme_class);
+
+// Adjust the margin a bit to make more room for titles
+$graph->SetMargin(40,30,20,40);
+$graph->legend->SetColumns(1); // important
+$graph->xaxis->SetTickLabels($xtickdata); // important
+
+$nPlotType = 1;
+if($nPlotType==1)
+{
+	$colorID = 0;
+	foreach($arRunMAP as $szRunID => $fMAP)
+	{
+		// Create the linear plot
+		$ytickdata = array_values($ydata[$szRunID]);
+		$lineplot = new LinePlot($ytickdata);
+		$lineplot->SetColor($arColorList[$colorID]); 
+		$colorID++;
+		$lineplot->SetWeight( 2 );   // Two pixel wide
+		//$lineplot1->mark->SetType(MARK_UTRIANGLE);
+		//$lineplot1->mark->SetType(MARK_IMG,$arFaceLegend[$szTargetName1],'0.5');
+		//	$lineplot1->mark->SetFillColor('red');
+		$lineplot->SetFillFromYMin(5); // important
+
+		// Set the legends for the plots
+		$szRunID2 = sprintf("%s", $szRunID);
+		$lineplot->SetLegend($szRunID2);
+
+		// Add the plot to the graph
+		$graph->Add($lineplot);
+	}
+}
+
+// Setup the titles
+$graph->title->Set("MAP");
+$graph->xaxis->title->Set('Query');
+$graph->yaxis->title->Set('MAP');
+
+$graph->title->SetFont(FF_FONT1,FS_BOLD);
+$graph->yaxis->title->SetFont(FF_FONT1,FS_BOLD);
+$graph->xaxis->title->SetFont(FF_FONT1,FS_BOLD);
+
+$szOutputName = sprintf("mygraphINS");
+$szOutputName = str_replace(" ", "+", $szOutputName);
+$szOutputDir = "/net/per900c/raid0/ledduy/tmpann/kaori-person-search/graph";
+$szOutputFN = sprintf("%s/%s.jpg", $szOutputDir, $szOutputName);
+// Display the graph
+$graph->Stroke($szOutputFN);
+$szImgContent = file_get_contents($szOutputFN);
+printf("<IMG SRC='data:image/jpeg;base64,".base64_encode($szImgContent)."' />");
+deleteFile($szOutputFN);
+
+exit();
 
 /**
  <videoInstanceTopic
